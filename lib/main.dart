@@ -1,13 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
+import 'package:provider/provider.dart';
 import 'screens/translate_screen.dart';
 import 'screens/alarm_screen.dart';
 import 'screens/group_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/settings_screen.dart';
-// ...existing code...
+import 'utils/database_service.dart';
+import 'providers/alarm_provider.dart';
+import 'providers/translation_provider.dart';
+import 'providers/settings_provider.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize Hive database
+  await DatabaseService.init();
+  
   runApp(const SmartStudentApp());
 }
 
@@ -16,52 +25,63 @@ class SmartStudentApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Smart Student Tools',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme(
-          brightness: Brightness.light,
-          primary: const Color(0xFF2196F3), // Xanh lạnh
-          onPrimary: Colors.white,
-          secondary: const Color(0xFF00BCD4), // Xanh ngọc
-          onSecondary: Colors.white,
-          error: const Color(0xFFB71C1C),
-          onError: Colors.white,
-          surface: const Color(0xFFB3E5FC), // Bề mặt xanh mát
-          onSurface: Colors.black,
-        ),
-        scaffoldBackgroundColor: const Color(0xFFE3F2FD),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Color(0xFF2196F3),
-          foregroundColor: Colors.white,
-          elevation: 2,
-          titleTextStyle: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-            letterSpacing: 1.1,
-          ),
-        ),
-        textTheme: const TextTheme(
-          headlineMedium: TextStyle(
-            color: Color(0xFF1565C0),
-            fontWeight: FontWeight.bold,
-          ),
-          titleMedium: TextStyle(
-            color: Color(0xFF1976D2),
-            fontWeight: FontWeight.w600,
-          ),
-          bodyMedium: TextStyle(color: Color(0xFF263238)),
-        ),
-        fontFamily: 'Roboto',
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AlarmProvider()),
+        ChangeNotifierProvider(create: (_) => TranslationProvider()),
+        ChangeNotifierProvider(create: (_) => SettingsProvider()),
+      ],
+      child: Consumer<SettingsProvider>(
+        builder: (context, settingsProvider, child) {
+          return MaterialApp(
+            title: 'Smart Student Tools',
+            debugShowCheckedModeBanner: false,
+            theme: ThemeData(
+              useMaterial3: true,
+              colorScheme: ColorScheme(
+                brightness: Brightness.light,
+                primary: const Color(0xFF2196F3), // Xanh lạnh
+                onPrimary: Colors.white,
+                secondary: const Color(0xFF00BCD4), // Xanh ngọc
+                onSecondary: Colors.white,
+                error: const Color(0xFFB71C1C),
+                onError: Colors.white,
+                surface: const Color(0xFFB3E5FC), // Bề mặt xanh mát
+                onSurface: Colors.black,
+              ),
+              scaffoldBackgroundColor: const Color(0xFFE3F2FD),
+              appBarTheme: const AppBarTheme(
+                backgroundColor: Color(0xFF2196F3),
+                foregroundColor: Colors.white,
+                elevation: 2,
+                titleTextStyle: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  letterSpacing: 1.1,
+                ),
+              ),
+              textTheme: const TextTheme(
+                headlineMedium: TextStyle(
+                  color: Color(0xFF1565C0),
+                  fontWeight: FontWeight.bold,
+                ),
+                titleMedium: TextStyle(
+                  color: Color(0xFF1976D2),
+                  fontWeight: FontWeight.w600,
+                ),
+                bodyMedium: TextStyle(color: Color(0xFF263238)),
+              ),
+              fontFamily: 'Roboto',
+            ),
+            home: const MainNavigation(),
+            routes: {
+              '/profile': (context) => const ProfileScreen(),
+              '/translate': (context) => const TranslateScreen(),
+            },
+          );
+        },
       ),
-      home: const MainNavigation(),
-      routes: {
-        '/profile': (context) => const ProfileScreen(),
-        '/translate': (context) => const TranslateScreen(),
-      },
     );
   }
 }

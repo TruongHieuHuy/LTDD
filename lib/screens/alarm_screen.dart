@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import 'dart:math' as math;
+import '../models/alarm_model.dart';
+import '../providers/alarm_provider.dart';
 
 class AlarmScreen extends StatefulWidget {
   const AlarmScreen({super.key});
@@ -11,9 +14,7 @@ class AlarmScreen extends StatefulWidget {
 
 class _AlarmScreenState extends State<AlarmScreen>
     with TickerProviderStateMixin {
-  final List<AlarmItem> _alarms = [];
   bool _isListening = false;
-  String _voiceResult = '';
   late AnimationController _waveController;
   late AnimationController _pulseController;
   static const MethodChannel _channel = MethodChannel('smart_student_tools');
@@ -74,17 +75,15 @@ class _AlarmScreenState extends State<AlarmScreen>
           final time = result['time'] as String? ?? '';
 
           if (success && time.isNotEmpty) {
-            // Thêm báo thức vào danh sách
-            setState(() {
-              _alarms.add(
-                AlarmItem(
-                  time: time,
-                  label: 'Báo thức giọng nói',
-                  repeatDays: '',
-                  isEnabled: true,
-                ),
-              );
-            });
+            // Thêm báo thức vào Hive database
+            final alarm = AlarmModel(
+              id: DateTime.now().millisecondsSinceEpoch.toString(),
+              time: time,
+              label: 'Báo thức giọng nói',
+              isEnabled: true,
+            );
+            
+            await context.read<AlarmProvider>().addAlarm(alarm);
             _showConfirmationSnackbar(message);
           } else {
             _showConfirmationSnackbar(message);
