@@ -200,7 +200,101 @@ class ProfileScreen extends StatelessWidget {
 
             const SizedBox(height: 25),
 
-            // --- Phần 4: Tiện ích / Action Buttons ---
+            // --- Phần 4: Mini Games ---
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    '🎮 Mini Games',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey,
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildGameCard(
+                          context: context,
+                          emoji: '🎲',
+                          title: 'Đoán Số',
+                          subtitle: 'Thần Kinh Game',
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFFFF10F0), Color(0xFFFFFF00)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          onTap: () => Navigator.pushNamed(
+                            context,
+                            '/guess_number_game',
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 15),
+                      Expanded(
+                        child: _buildGameCard(
+                          context: context,
+                          emoji: '🐮',
+                          title: 'Bò & Bê',
+                          subtitle: 'Trại Bò Bất Ổn',
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF00FFFF), Color(0xFF00FF00)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          onTap: () =>
+                              Navigator.pushNamed(context, '/cows_bulls_game'),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 15),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildGameCard(
+                          context: context,
+                          emoji: '🏆',
+                          title: 'Leaderboard',
+                          subtitle: 'Bảng Xếp Hạng',
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          onTap: () =>
+                              Navigator.pushNamed(context, '/leaderboard'),
+                        ),
+                      ),
+                      const SizedBox(width: 15),
+                      Expanded(
+                        child: _buildGameCard(
+                          context: context,
+                          emoji: '🏅',
+                          title: 'Achievements',
+                          subtitle: 'Huy Hiệu',
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF9C27B0), Color(0xFFE91E63)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          onTap: () =>
+                              Navigator.pushNamed(context, '/achievements'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 25),
+
+            // --- Phần 5: Tiện ích / Action Buttons ---
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Column(
@@ -309,6 +403,60 @@ class ProfileScreen extends StatelessWidget {
                   color: color,
                   fontWeight: FontWeight.bold,
                   fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Widget con: Game card
+  Widget _buildGameCard({
+    required BuildContext context,
+    required String emoji,
+    required String title,
+    required String subtitle,
+    required Gradient gradient,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          height: 120,
+          decoration: BoxDecoration(
+            gradient: gradient,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(emoji, style: const TextStyle(fontSize: 40)),
+              const SizedBox(height: 8),
+              Text(
+                title,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+              Text(
+                subtitle,
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.8),
+                  fontSize: 11,
                 ),
               ),
             ],

@@ -19,12 +19,16 @@ class AppSettingsModel extends HiveObject {
   @HiveField(4)
   String appVersion;
 
+  @HiveField(5)
+  double alarmVolume;
+
   AppSettingsModel({
     this.isDarkMode = true,
     this.notificationsEnabled = true,
     this.biometricEnabled = false,
     this.selectedLanguage = 'vi',
     this.appVersion = '1.0.0',
+    this.alarmVolume = 0.7,
   });
 
   Map<String, dynamic> toJson() => {
@@ -33,6 +37,7 @@ class AppSettingsModel extends HiveObject {
     'biometricEnabled': biometricEnabled,
     'selectedLanguage': selectedLanguage,
     'appVersion': appVersion,
+    'alarmVolume': alarmVolume,
   };
 
   factory AppSettingsModel.fromJson(Map<String, dynamic> json) =>
@@ -42,5 +47,6 @@ class AppSettingsModel extends HiveObject {
         biometricEnabled: json['biometricEnabled'] ?? false,
         selectedLanguage: json['selectedLanguage'] ?? 'vi',
         appVersion: json['appVersion'] ?? '1.0.0',
+        alarmVolume: (json['alarmVolume'] ?? 0.7).toDouble(),
       );
 }

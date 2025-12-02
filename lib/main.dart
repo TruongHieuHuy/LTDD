@@ -6,10 +6,15 @@ import 'screens/alarm_screen.dart';
 import 'screens/group_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/settings_screen.dart';
+import 'screens/games/guess_number_game_screen.dart';
+import 'screens/games/cows_bulls_game_screen.dart';
+import 'screens/games/leaderboard_screen.dart';
+import 'screens/games/achievement_screen.dart';
 import 'utils/database_service.dart';
 import 'providers/alarm_provider.dart';
 import 'providers/translation_provider.dart';
 import 'providers/settings_provider.dart';
+import 'providers/game_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -30,6 +35,7 @@ class SmartStudentApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AlarmProvider()),
         ChangeNotifierProvider(create: (_) => TranslationProvider()),
         ChangeNotifierProvider(create: (_) => SettingsProvider()),
+        ChangeNotifierProvider(create: (_) => GameProvider()..initialize()),
       ],
       child: Consumer<SettingsProvider>(
         builder: (context, settingsProvider, child) {
@@ -78,6 +84,10 @@ class SmartStudentApp extends StatelessWidget {
             routes: {
               '/profile': (context) => const ProfileScreen(),
               '/translate': (context) => const TranslateScreen(),
+              '/guess_number_game': (context) => const GuessNumberGameScreen(),
+              '/cows_bulls_game': (context) => const CowsBullsGameScreen(),
+              '/leaderboard': (context) => const LeaderboardScreen(),
+              '/achievements': (context) => const AchievementScreen(),
             },
           );
         },

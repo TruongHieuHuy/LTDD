@@ -30,6 +30,10 @@ class MainActivity : FlutterActivity() {
 
 	override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
 		super.configureFlutterEngine(flutterEngine)
+		
+		// Initialize game audio
+		GameAudioManager.initialize(this)
+		
 		methodChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL)
 		
 		methodChannel.setMethodCallHandler { call, result ->
@@ -47,6 +51,19 @@ class MainActivity : FlutterActivity() {
 				"setAlarm" -> {
 					val millis = call.argument<Int>("millis") ?: 0
 					AlarmService.setAlarm(this, millis.toLong())
+					result.success(null)
+				}
+				"playGameSound" -> {
+					val soundName = call.argument<String>("soundName") ?: ""
+					val volume = call.argument<Double>("volume")?.toFloat() ?: 1.0f
+					val streamId = GameAudioManager.playSound(soundName, volume)
+					result.success(streamId)
+				}
+				"stopGameSound" -> {
+					val streamId = call.argument<Int>("streamId") ?: -1
+					if (streamId >= 0) {
+						GameAudioManager.stopSound(streamId)
+					}
 					result.success(null)
 				}
 				"speechToText" -> {
@@ -470,6 +487,7 @@ class MainActivity : FlutterActivity() {
 	
 	override fun onDestroy() {
 		speechRecognizer?.destroy()
+		GameAudioManager.release()
 		super.onDestroy()
 	}
 }

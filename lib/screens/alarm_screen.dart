@@ -30,6 +30,11 @@ class _AlarmScreenState extends State<AlarmScreen>
       vsync: this,
       duration: const Duration(milliseconds: 1000),
     )..repeat(reverse: true);
+
+    // Load alarms from Hive database
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<AlarmProvider>().loadAlarms();
+    });
   }
 
   @override
@@ -127,20 +132,18 @@ class _AlarmScreenState extends State<AlarmScreen>
     );
   }
 
-  void _toggleAlarm(int index) {
-    setState(() {
-      _alarms[index].isEnabled = !_alarms[index].isEnabled;
-    });
+  void _toggleAlarm(String alarmId) {
+    context.read<AlarmProvider>().toggleAlarm(alarmId);
   }
 
-  void _deleteAlarm(int index) {
-    setState(() {
-      _alarms.removeAt(index);
-    });
+  void _deleteAlarm(String alarmId) {
+    context.read<AlarmProvider>().deleteAlarm(alarmId);
   }
 
   @override
   Widget build(BuildContext context) {
+    final alarmProvider = context.watch<AlarmProvider>();
+    final alarms = alarmProvider.alarms;
     final now = DateTime.now();
     final greeting = _getGreeting(now.hour);
 
@@ -149,9 +152,11 @@ class _AlarmScreenState extends State<AlarmScreen>
       body: SafeArea(
         child: Column(
           children: [
-            _buildHeader(greeting, now),
+            _buildHeader(greeting, now, alarms),
             Expanded(
-              child: _alarms.isEmpty ? _buildEmptyState() : _buildAlarmList(),
+              child: alarms.isEmpty
+                  ? _buildEmptyState()
+                  : _buildAlarmList(alarms),
             ),
             _buildBottomActionBar(),
           ],
@@ -166,7 +171,15 @@ class _AlarmScreenState extends State<AlarmScreen>
     return 'Chào buổi tối';
   }
 
-  Widget _buildHeader(String greeting, DateTime now) {
+  String _formatRepeatDays(List<int> days) {
+    if (days.isEmpty) return '';
+    const weekdays = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+    return days.map((d) => weekdays[d % 7]).join(', ');
+  }
+
+  Widget _buildHeader(String greeting, DateTime now, List<AlarmModel> alarms) {
+    final enabledAlarms = alarms.where((a) => a.isEnabled).toList();
+
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -197,7 +210,7 @@ class _AlarmScreenState extends State<AlarmScreen>
               letterSpacing: -2,
             ),
           ),
-          if (_alarms.where((a) => a.isEnabled).isNotEmpty)
+          if (enabledAlarms.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(top: 8),
               child: Row(
@@ -209,7 +222,7 @@ class _AlarmScreenState extends State<AlarmScreen>
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'Báo thức tiếp theo: ${_getNextAlarm()}',
+                    'Báo thức tiếp theo: ${enabledAlarms.first.time}',
                     style: const TextStyle(
                       color: Color(0xFF4A9FFF),
                       fontSize: 14,
@@ -221,12 +234,6 @@ class _AlarmScreenState extends State<AlarmScreen>
         ],
       ),
     );
-  }
-
-  String _getNextAlarm() {
-    final enabled = _alarms.where((a) => a.isEnabled).toList();
-    if (enabled.isEmpty) return '--:--';
-    return enabled.first.time;
   }
 
   Widget _buildEmptyState() {
@@ -266,13 +273,14 @@ class _AlarmScreenState extends State<AlarmScreen>
     );
   }
 
-  Widget _buildAlarmList() {
+  Widget _buildAlarmList(List<AlarmModel> alarms) {
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      itemCount: _alarms.length,
+      itemCount: alarms.length,
       itemBuilder: (context, index) {
+        final alarm = alarms[index];
         return Dismissible(
-          key: Key(_alarms[index].time),
+          key: Key(alarm.id),
           direction: DismissDirection.endToStart,
           background: Container(
             alignment: Alignment.centerRight,
@@ -283,14 +291,14 @@ class _AlarmScreenState extends State<AlarmScreen>
             ),
             child: const Icon(Icons.delete, color: Colors.white),
           ),
-          onDismissed: (direction) => _deleteAlarm(index),
-          child: _buildAlarmCard(_alarms[index], index),
+          onDismissed: (direction) => _deleteAlarm(alarm.id),
+          child: _buildAlarmCard(alarm),
         );
       },
     );
   }
 
-  Widget _buildAlarmCard(AlarmItem alarm, int index) {
+  Widget _buildAlarmCard(AlarmModel alarm) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(20),
@@ -340,7 +348,7 @@ class _AlarmScreenState extends State<AlarmScreen>
                   Padding(
                     padding: const EdgeInsets.only(top: 8),
                     child: Text(
-                      alarm.repeatDays,
+                      _formatRepeatDays(alarm.repeatDays),
                       style: TextStyle(
                         color: alarm.isEnabled
                             ? const Color(0xFF4A9FFF)
@@ -354,7 +362,7 @@ class _AlarmScreenState extends State<AlarmScreen>
           ),
           Switch(
             value: alarm.isEnabled,
-            onChanged: (value) => _toggleAlarm(index),
+            onChanged: (value) => _toggleAlarm(alarm.id),
             activeThumbColor: const Color(0xFF4A9FFF),
             activeTrackColor: const Color(0xFF4A9FFF).withValues(alpha: 0.3),
           ),
@@ -575,16 +583,15 @@ class _AlarmScreenState extends State<AlarmScreen>
                           millis += const Duration(days: 1).inMilliseconds;
                         }
 
-                        setState(() {
-                          _alarms.add(
-                            AlarmItem(
-                              time: selectedTime.format(context),
-                              label: '',
-                              repeatDays: '',
-                              isEnabled: true,
-                            ),
-                          );
-                        });
+                        // Save alarm to Hive database
+                        final newAlarm = AlarmModel(
+                          id: DateTime.now().millisecondsSinceEpoch.toString(),
+                          time: selectedTime.format(context),
+                          label: '',
+                          isEnabled: true,
+                        );
+
+                        await context.read<AlarmProvider>().addAlarm(newAlarm);
 
                         try {
                           await _channel.invokeMethod('setAlarm', {
@@ -629,21 +636,6 @@ class _AlarmScreenState extends State<AlarmScreen>
       },
     );
   }
-}
-
-// Model class cho Alarm Item
-class AlarmItem {
-  final String time;
-  final String label;
-  final String repeatDays;
-  bool isEnabled;
-
-  AlarmItem({
-    required this.time,
-    required this.label,
-    required this.repeatDays,
-    required this.isEnabled,
-  });
 }
 
 // Custom painter cho hiệu ứng sóng âm thanh

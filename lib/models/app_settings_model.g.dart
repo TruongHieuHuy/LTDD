@@ -22,13 +22,14 @@ class AppSettingsModelAdapter extends TypeAdapter<AppSettingsModel> {
       biometricEnabled: fields[2] as bool,
       selectedLanguage: fields[3] as String,
       appVersion: fields[4] as String,
+      alarmVolume: fields[5] as double,
     );
   }
 
   @override
   void write(BinaryWriter writer, AppSettingsModel obj) {
     writer
-      ..writeByte(5)
+      ..writeByte(6)
       ..writeByte(0)
       ..write(obj.isDarkMode)
       ..writeByte(1)
@@ -38,7 +39,9 @@ class AppSettingsModelAdapter extends TypeAdapter<AppSettingsModel> {
       ..writeByte(3)
       ..write(obj.selectedLanguage)
       ..writeByte(4)
-      ..write(obj.appVersion);
+      ..write(obj.appVersion)
+      ..writeByte(5)
+      ..write(obj.alarmVolume);
   }
 
   @override

@@ -100,6 +100,21 @@ class _TranslateScreenState extends State<TranslateScreen>
       });
 
       _animController.forward(from: 0.0);
+
+      // Save translation history to Hive database
+      if (mounted) {
+        final history = TranslationHistoryModel(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          sourceText: _sourceController.text,
+          translatedText: translation.text,
+          sourceLang: _sourceLang,
+          targetLang: _targetLang,
+          timestamp: DateTime.now(),
+          isFromOCR: _selectedImages.isNotEmpty,
+        );
+
+        await context.read<TranslationProvider>().addTranslation(history);
+      }
     } catch (e) {
       setState(() {
         _translatedText = 'Lỗi: ${e.toString()}';
@@ -145,7 +160,9 @@ class _TranslateScreenState extends State<TranslateScreen>
       String extractedText = recognizedText.text;
 
       if (extractedText.isEmpty) {
-        _showError('Không tìm thấy văn bản trong ảnh ${_selectedImages.length}');
+        _showError(
+          'Không tìm thấy văn bản trong ảnh ${_selectedImages.length}',
+        );
         setState(() => _isLoading = false);
         return;
       }
@@ -156,19 +173,15 @@ class _TranslateScreenState extends State<TranslateScreen>
           _accumulatedOCRText = extractedText;
         } else {
           // Thêm separator giữa các ảnh
-          _accumulatedOCRText += '\n\n--- Ảnh ${_selectedImages.length} ---\n\n' + extractedText;
+          _accumulatedOCRText +=
+              '\n\n--- Ảnh ${_selectedImages.length} ---\n\n' + extractedText;
         }
         _sourceController.text = _accumulatedOCRText;
         _isLoading = false;
       });
 
-      // Tự động dịch sau khi nhận diện
+      // Tự động dịch sau khi nhận diện (đã có save history trong _translateText)
       await _translateText();
-      
-      // Save to history
-      if (_translatedText.isNotEmpty) {
-        _saveToHistory();
-      }
     } catch (e) {
       setState(() => _isLoading = false);
       _showError('Lỗi nhận diện văn bản: ${e.toString()}');
@@ -185,35 +198,198 @@ class _TranslateScreenState extends State<TranslateScreen>
     });
   }
 
-  // Xóa một ảnh cụ thể (TODO: rebuild text from remaining images)
-  void _removeImage(int index) {
-    setState(() {
-      _selectedImages.removeAt(index);
-      // TODO: Re-OCR all remaining images to rebuild text
-    });
-  }
-
-  void _saveToHistory() {
-    if (_sourceController.text.isEmpty || _translatedText.isEmpty) return;
-    
-    final history = TranslationHistoryModel(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      sourceText: _sourceController.text,
-      translatedText: _translatedText,
-      sourceLang: _sourceLang,
-      targetLang: _targetLang,
-      isFromOCR: _selectedImages.isNotEmpty,
-    );
-    
-    context.read<TranslationProvider>().addTranslation(history);
-  }
-
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
         backgroundColor: Colors.red,
         behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  void _showHistoryDialog() async {
+    final translationProvider = context.read<TranslationProvider>();
+    await translationProvider.loadHistory();
+
+    if (!mounted) return;
+
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: const Color(0xFF1B263B),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: const BoxDecoration(
+                color: Color(0xFF0D1B2A),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Lịch sử dịch',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(
+                      Icons.delete_sweep,
+                      color: Color(0xFFE63946),
+                    ),
+                    onPressed: () async {
+                      await translationProvider.clearHistory();
+                      if (context.mounted) Navigator.pop(context);
+                    },
+                  ),
+                ],
+              ),
+            ),
+            Consumer<TranslationProvider>(
+              builder: (context, provider, child) {
+                final history = provider.history;
+
+                if (history.isEmpty) {
+                  return const Padding(
+                    padding: EdgeInsets.all(40),
+                    child: Text(
+                      'Chưa có lịch sử dịch',
+                      style: TextStyle(color: Color(0xFF778DA9)),
+                    ),
+                  );
+                }
+
+                return SizedBox(
+                  height: 400,
+                  child: ListView.builder(
+                    itemCount: history.length,
+                    itemBuilder: (context, index) {
+                      final item = history[index];
+                      final date = item.timestamp;
+                      final timeStr =
+                          '${date.hour}:${date.minute.toString().padLeft(2, '0')} ${date.day}/${date.month}';
+
+                      return Container(
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0D1B2A),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: const Color(0xFF415A77),
+                            width: 0.5,
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  '${_languages[item.sourceLang] ?? item.sourceLang} → ${_languages[item.targetLang] ?? item.targetLang}',
+                                  style: const TextStyle(
+                                    color: Color(0xFF4A9FFF),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                Row(
+                                  children: [
+                                    if (item.isFromOCR)
+                                      Container(
+                                        margin: const EdgeInsets.only(right: 8),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 6,
+                                          vertical: 2,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: const Color(
+                                            0xFF4A9FFF,
+                                          ).withValues(alpha: 0.2),
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
+                                        ),
+                                        child: const Row(
+                                          children: [
+                                            Icon(
+                                              Icons.image,
+                                              size: 12,
+                                              color: Color(0xFF4A9FFF),
+                                            ),
+                                            SizedBox(width: 4),
+                                            Text(
+                                              'OCR',
+                                              style: TextStyle(
+                                                color: Color(0xFF4A9FFF),
+                                                fontSize: 10,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    Text(
+                                      timeStr,
+                                      style: const TextStyle(
+                                        color: Color(0xFF778DA9),
+                                        fontSize: 11,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              item.sourceText.length > 50
+                                  ? '${item.sourceText.substring(0, 50)}...'
+                                  : item.sourceText,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 14,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              item.translatedText.length > 50
+                                  ? '${item.translatedText.substring(0, 50)}...'
+                                  : item.translatedText,
+                              style: const TextStyle(
+                                color: Color(0xFF778DA9),
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                );
+              },
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text(
+                  'Đóng',
+                  style: TextStyle(color: Color(0xFF4A9FFF)),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -353,9 +529,7 @@ class _TranslateScreenState extends State<TranslateScreen>
         actions: [
           IconButton(
             icon: const Icon(Icons.history, color: Color(0xFF778DA9)),
-            onPressed: () {
-              // TODO: Show translation history
-            },
+            onPressed: _showHistoryDialog,
           ),
         ],
       ),

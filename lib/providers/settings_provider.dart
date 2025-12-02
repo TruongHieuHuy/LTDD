@@ -10,6 +10,7 @@ class SettingsProvider with ChangeNotifier {
   bool get notificationsEnabled => _settings.notificationsEnabled;
   bool get biometricEnabled => _settings.biometricEnabled;
   String get selectedLanguage => _settings.selectedLanguage;
+  double get alarmVolume => _settings.alarmVolume;
 
   SettingsProvider() {
     loadSettings();
@@ -26,8 +27,20 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> updateTheme(String theme) async {
+    _settings.isDarkMode = theme == 'dark';
+    await DatabaseService.updateSettings(_settings);
+    notifyListeners();
+  }
+
   Future<void> toggleNotifications() async {
     _settings.notificationsEnabled = !_settings.notificationsEnabled;
+    await DatabaseService.updateSettings(_settings);
+    notifyListeners();
+  }
+
+  Future<void> updateNotifications(bool enabled) async {
+    _settings.notificationsEnabled = enabled;
     await DatabaseService.updateSettings(_settings);
     notifyListeners();
   }
@@ -40,6 +53,18 @@ class SettingsProvider with ChangeNotifier {
 
   Future<void> setLanguage(String languageCode) async {
     _settings.selectedLanguage = languageCode;
+    await DatabaseService.updateSettings(_settings);
+    notifyListeners();
+  }
+
+  Future<void> updateLanguage(String languageCode) async {
+    _settings.selectedLanguage = languageCode;
+    await DatabaseService.updateSettings(_settings);
+    notifyListeners();
+  }
+
+  Future<void> updateVolume(double volume) async {
+    _settings.alarmVolume = volume;
     await DatabaseService.updateSettings(_settings);
     notifyListeners();
   }
