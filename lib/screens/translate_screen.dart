@@ -3,8 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:translator/translator.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
+import 'package:provider/provider.dart';
 import 'dart:io';
 import 'dart:async';
+import '../models/translation_history_model.dart';
+import '../providers/translation_provider.dart';
 
 class TranslateScreen extends StatefulWidget {
   const TranslateScreen({super.key});
@@ -25,6 +28,7 @@ class _TranslateScreenState extends State<TranslateScreen>
   String _targetLang = 'en';
   bool _isLoading = false;
   List<File> _selectedImages = [];
+  String _accumulatedOCRText = ''; // Text gộp từ nhiều ảnh
   Timer? _debounce;
 
   late AnimationController _animController;
@@ -141,22 +145,67 @@ class _TranslateScreenState extends State<TranslateScreen>
       String extractedText = recognizedText.text;
 
       if (extractedText.isEmpty) {
-        _showError('Không tìm thấy văn bản trong ảnh');
+        _showError('Không tìm thấy văn bản trong ảnh ${_selectedImages.length}');
         setState(() => _isLoading = false);
         return;
       }
 
+      // GỘP văn bản thay vì ghi đè (đáp ứng kịch bản đề tài)
       setState(() {
-        _sourceController.text = extractedText;
+        if (_accumulatedOCRText.isEmpty) {
+          _accumulatedOCRText = extractedText;
+        } else {
+          // Thêm separator giữa các ảnh
+          _accumulatedOCRText += '\n\n--- Ảnh ${_selectedImages.length} ---\n\n' + extractedText;
+        }
+        _sourceController.text = _accumulatedOCRText;
         _isLoading = false;
       });
 
       // Tự động dịch sau khi nhận diện
       await _translateText();
+      
+      // Save to history
+      if (_translatedText.isNotEmpty) {
+        _saveToHistory();
+      }
     } catch (e) {
       setState(() => _isLoading = false);
       _showError('Lỗi nhận diện văn bản: ${e.toString()}');
     }
+  }
+
+  // Xóa tất cả ảnh và text accumulated
+  void _clearAllImages() {
+    setState(() {
+      _selectedImages.clear();
+      _accumulatedOCRText = '';
+      _sourceController.clear();
+      _translatedText = '';
+    });
+  }
+
+  // Xóa một ảnh cụ thể (TODO: rebuild text from remaining images)
+  void _removeImage(int index) {
+    setState(() {
+      _selectedImages.removeAt(index);
+      // TODO: Re-OCR all remaining images to rebuild text
+    });
+  }
+
+  void _saveToHistory() {
+    if (_sourceController.text.isEmpty || _translatedText.isEmpty) return;
+    
+    final history = TranslationHistoryModel(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      sourceText: _sourceController.text,
+      translatedText: _translatedText,
+      sourceLang: _sourceLang,
+      targetLang: _targetLang,
+      isFromOCR: _selectedImages.isNotEmpty,
+    );
+    
+    context.read<TranslationProvider>().addTranslation(history);
   }
 
   void _showError(String message) {
@@ -418,16 +467,24 @@ class _TranslateScreenState extends State<TranslateScreen>
                 ),
               ),
               if (_sourceController.text.isNotEmpty)
-                IconButton(
-                  icon: const Icon(Icons.clear, size: 20),
-                  color: const Color(0xFF778DA9),
-                  onPressed: () {
-                    setState(() {
-                      _sourceController.clear();
-                      _translatedText = '';
-                      _selectedImages.clear();
-                    });
-                  },
+                Row(
+                  children: [
+                    if (_selectedImages.isNotEmpty)
+                      TextButton.icon(
+                        icon: const Icon(Icons.delete_outline, size: 18),
+                        label: Text('Xóa ${_selectedImages.length} ảnh'),
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.red,
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                        ),
+                        onPressed: _clearAllImages,
+                      ),
+                    IconButton(
+                      icon: const Icon(Icons.clear, size: 20),
+                      color: const Color(0xFF778DA9),
+                      onPressed: _clearAllImages,
+                    ),
+                  ],
                 ),
             ],
           ),
@@ -588,10 +645,34 @@ class _TranslateScreenState extends State<TranslateScreen>
             onTap: _listenVoiceForTranslation,
           ),
           const SizedBox(width: 12),
-          _buildBottomButton(
-            icon: Icons.photo_camera,
-            label: 'Ảnh',
-            onTap: _showImagePickerOptions,
+          Stack(
+            children: [
+              _buildBottomButton(
+                icon: Icons.photo_camera,
+                label: 'Ảnh',
+                onTap: _showImagePickerOptions,
+              ),
+              if (_selectedImages.isNotEmpty)
+                Positioned(
+                  right: -4,
+                  top: -4,
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF4CAF50),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Text(
+                      '${_selectedImages.length}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
           ),
           const SizedBox(width: 12),
           Expanded(

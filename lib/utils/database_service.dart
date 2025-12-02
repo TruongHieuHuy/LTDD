@@ -30,8 +30,9 @@ class DatabaseService {
 
     // Open boxes
     _alarmsBox = await Hive.openBox<AlarmModel>(alarmsBoxName);
-    _translationsBox =
-        await Hive.openBox<TranslationHistoryModel>(translationsBoxName);
+    _translationsBox = await Hive.openBox<TranslationHistoryModel>(
+      translationsBoxName,
+    );
     _settingsBox = await Hive.openBox<AppSettingsModel>(settingsBoxName);
 
     // Initialize settings if not exists
@@ -87,7 +88,8 @@ class DatabaseService {
   // ============ TRANSLATION HISTORY OPERATIONS ============
 
   static Future<void> saveTranslation(
-      TranslationHistoryModel translation) async {
+    TranslationHistoryModel translation,
+  ) async {
     await _translationsBox!.put(translation.id, translation);
   }
 
@@ -107,9 +109,11 @@ class DatabaseService {
 
   static List<TranslationHistoryModel> searchTranslations(String query) {
     return _translationsBox!.values
-        .where((trans) =>
-            trans.sourceText.toLowerCase().contains(query.toLowerCase()) ||
-            trans.translatedText.toLowerCase().contains(query.toLowerCase()))
+        .where(
+          (trans) =>
+              trans.sourceText.toLowerCase().contains(query.toLowerCase()) ||
+              trans.translatedText.toLowerCase().contains(query.toLowerCase()),
+        )
         .toList()
       ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
   }

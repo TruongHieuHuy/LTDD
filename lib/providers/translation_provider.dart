@@ -11,11 +11,15 @@ class TranslationProvider with ChangeNotifier {
       return _history;
     }
     return _history
-        .where((trans) =>
-            trans.sourceText.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-            trans.translatedText
-                .toLowerCase()
-                .contains(_searchQuery.toLowerCase()))
+        .where(
+          (trans) =>
+              trans.sourceText.toLowerCase().contains(
+                _searchQuery.toLowerCase(),
+              ) ||
+              trans.translatedText.toLowerCase().contains(
+                _searchQuery.toLowerCase(),
+              ),
+        )
         .toList();
   }
 

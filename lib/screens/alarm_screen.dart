@@ -82,7 +82,7 @@ class _AlarmScreenState extends State<AlarmScreen>
               label: 'Báo thức giọng nói',
               isEnabled: true,
             );
-            
+
             await context.read<AlarmProvider>().addAlarm(alarm);
             _showConfirmationSnackbar(message);
           } else {

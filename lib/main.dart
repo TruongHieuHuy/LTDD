@@ -13,10 +13,10 @@ import 'providers/settings_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Initialize Hive database
   await DatabaseService.init();
-  
+
   runApp(const SmartStudentApp());
 }
 

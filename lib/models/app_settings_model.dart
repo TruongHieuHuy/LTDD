@@ -28,12 +28,12 @@ class AppSettingsModel extends HiveObject {
   });
 
   Map<String, dynamic> toJson() => {
-        'isDarkMode': isDarkMode,
-        'notificationsEnabled': notificationsEnabled,
-        'biometricEnabled': biometricEnabled,
-        'selectedLanguage': selectedLanguage,
-        'appVersion': appVersion,
-      };
+    'isDarkMode': isDarkMode,
+    'notificationsEnabled': notificationsEnabled,
+    'biometricEnabled': biometricEnabled,
+    'selectedLanguage': selectedLanguage,
+    'appVersion': appVersion,
+  };
 
   factory AppSettingsModel.fromJson(Map<String, dynamic> json) =>
       AppSettingsModel(

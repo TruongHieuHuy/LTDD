@@ -36,14 +36,14 @@ class TranslationHistoryModel extends HiveObject {
   }) : timestamp = timestamp ?? DateTime.now();
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'sourceText': sourceText,
-        'translatedText': translatedText,
-        'sourceLang': sourceLang,
-        'targetLang': targetLang,
-        'timestamp': timestamp.toIso8601String(),
-        'isFromOCR': isFromOCR,
-      };
+    'id': id,
+    'sourceText': sourceText,
+    'translatedText': translatedText,
+    'sourceLang': sourceLang,
+    'targetLang': targetLang,
+    'timestamp': timestamp.toIso8601String(),
+    'isFromOCR': isFromOCR,
+  };
 
   factory TranslationHistoryModel.fromJson(Map<String, dynamic> json) =>
       TranslationHistoryModel(
