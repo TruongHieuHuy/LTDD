@@ -4,6 +4,7 @@ import '../models/translation_history_model.dart';
 import '../models/app_settings_model.dart';
 import '../models/game_score_model.dart';
 import '../models/achievement_model.dart';
+import '../models/auth_model.dart';
 
 class DatabaseService {
   static const String alarmsBoxName = 'alarms';
@@ -37,6 +38,7 @@ class DatabaseService {
     Hive.registerAdapter(AppSettingsModelAdapter());
     Hive.registerAdapter(GameScoreModelAdapter());
     Hive.registerAdapter(AchievementModelAdapter());
+    Hive.registerAdapter(AuthModelAdapter());
 
     // Open boxes
     _alarmsBox = await Hive.openBox<AlarmModel>(alarmsBoxName);

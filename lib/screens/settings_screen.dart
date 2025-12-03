@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/settings_provider.dart';
+import '../providers/theme_provider.dart';
+import '../providers/auth_provider.dart';
 
 // Chuyển sang StatefulWidget để quản lý trạng thái các nút bật/tắt
 class SettingsScreen extends StatefulWidget {
@@ -22,9 +24,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<SettingsProvider>(
-      builder: (context, settingsProvider, child) {
-        final isDarkMode = settingsProvider.settings.isDarkMode;
+    return Consumer2<SettingsProvider, ThemeProvider>(
+      builder: (context, settingsProvider, themeProvider, child) {
+        final isDarkMode = themeProvider.isDarkMode;
         final bgColor = isDarkMode
             ? const Color(0xFF0D1B2A)
             : const Color(0xFFF0F2F5);
@@ -111,7 +113,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     value: isDarkMode,
                     textColor: textColor,
                     onChanged: (value) {
-                      settingsProvider.updateTheme(value ? 'dark' : 'light');
+                      themeProvider.toggleTheme();
                     },
                   ),
                   _buildDivider(),
@@ -181,11 +183,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   void _showLanguagePicker(BuildContext context, SettingsProvider provider) {
+    final themeProvider = context.read<ThemeProvider>();
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) {
-        final isDarkMode = provider.settings.isDarkMode;
+        final isDarkMode = themeProvider.isDarkMode;
         final bgColor = isDarkMode ? const Color(0xFF1B263B) : Colors.white;
         final textColor = isDarkMode ? Colors.white : Colors.black87;
 
@@ -425,8 +428,38 @@ class _SettingsScreenState extends State<SettingsScreen> {
             fontWeight: FontWeight.w600,
           ),
         ),
-        onTap: () {
-          // Xử lý đăng xuất
+        onTap: () async {
+          // Show confirmation dialog
+          final confirmed = await showDialog<bool>(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('Đăng xuất'),
+              content: const Text('Bạn có chắc chắn muốn đăng xuất?'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: const Text('Hủy'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  child: const Text(
+                    'Đăng xuất',
+                    style: TextStyle(color: Colors.red),
+                  ),
+                ),
+              ],
+            ),
+          );
+
+          if (confirmed == true && context.mounted) {
+            await context.read<AuthProvider>().logout();
+            if (context.mounted) {
+              Navigator.of(context).pushNamedAndRemoveUntil(
+                '/',
+                (route) => false,
+              );
+            }
+          }
         },
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),

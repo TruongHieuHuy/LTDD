@@ -24,7 +24,7 @@ class _CowsBullsGameScreenState extends State<CowsBullsGameScreen>
   final _random = Random();
 
   // Game state
-  String _level = '6digit'; // '6digit' or '12digit'
+  String _level = '6digit'; // '6digit' or '10digit'
   late String _targetCode;
   late int _maxAttempts;
   int _currentAttempt = 0;
@@ -56,8 +56,8 @@ class _CowsBullsGameScreenState extends State<CowsBullsGameScreen>
 
   void _initGame() {
     setState(() {
-      final digitCount = _level == '6digit' ? 6 : 12;
-      _maxAttempts = _level == '6digit' ? 8 : 15;
+      final digitCount = _level == '6digit' ? 6 : 10;
+      _maxAttempts = _level == '6digit' ? 8 : 12;
 
       // Generate unique random digits
       _targetCode = _generateUniqueCode(digitCount);
@@ -89,7 +89,7 @@ class _CowsBullsGameScreenState extends State<CowsBullsGameScreen>
         _thinkingTime++;
       });
 
-      if (_thinkingTime == 10 && _level == '12digit') {
+      if (_thinkingTime == 10 && _level == '10digit') {
         _showQuickFeedback(MemeTexts.random(MemeTexts.thinking));
       } else if (_thinkingTime == 30) {
         _showQuickFeedback(MemeTexts.tooLongThinking);
@@ -104,7 +104,7 @@ class _CowsBullsGameScreenState extends State<CowsBullsGameScreen>
 
   void _makeGuess() {
     final guessText = _guessController.text;
-    final digitCount = _level == '6digit' ? 6 : 12;
+    final digitCount = _level == '6digit' ? 6 : 10;
 
     if (guessText.length != digitCount) {
       _showQuickFeedback('Nhập đủ $digitCount số chứ bro! 🤨');
@@ -134,8 +134,8 @@ class _CowsBullsGameScreenState extends State<CowsBullsGameScreen>
     } else {
       _provideFeedback(result);
 
-      // Troll: Show fake ad after 5 wrong attempts on 12 digit level
-      if (_level == '12digit' && result.bulls < digitCount) {
+      // Troll: Show fake ad after 5 wrong attempts on 10 digit level
+      if (_level == '10digit' && result.bulls < digitCount) {
         _wrongAttempts++;
         if (_wrongAttempts == 5) {
           _showFakeAdPopup();
@@ -236,13 +236,13 @@ class _CowsBullsGameScreenState extends State<CowsBullsGameScreen>
     int baseScore = 1200;
     int attemptMultiplier = _maxAttempts - _currentAttempt + 1;
     double timeBonus = 1.0;
-    
+
     if (_thinkingTime < 60) {
       timeBonus = 1.5;
     } else if (_thinkingTime < 120) {
       timeBonus = 1.2;
     }
-    
+
     return (baseScore * attemptMultiplier * timeBonus).toInt();
   }
 
@@ -253,7 +253,7 @@ class _CowsBullsGameScreenState extends State<CowsBullsGameScreen>
           '${MemeTexts.random(MemeTexts.gameOver)}\nĐáp án: $_targetCode';
     });
     _thinkingTimer?.cancel();
-    
+
     // Play sad sound
     GameAudioService.playSadTrombone();
   }
@@ -277,7 +277,7 @@ class _CowsBullsGameScreenState extends State<CowsBullsGameScreen>
           '${MemeTexts.random(MemeTexts.surrender)}\nĐáp án: $_targetCode';
     });
     _thinkingTimer?.cancel();
-    
+
     // Play bruh sound for giving up
     GameAudioService.playBruh();
   }
@@ -428,7 +428,7 @@ class _CowsBullsGameScreenState extends State<CowsBullsGameScreen>
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
         _buildLevelChip('Tấm Chiếu Mới', '6digit', '6 số (8 lượt)'),
-        _buildLevelChip('Thách Thức Tuyệt Vọng', '12digit', '12 số (15 lượt)'),
+        _buildLevelChip('Thách Thức Tuyệt Vọng', '10digit', '10 số (12 lượt)'),
       ],
     );
   }
@@ -470,7 +470,7 @@ class _CowsBullsGameScreenState extends State<CowsBullsGameScreen>
   }
 
   Widget _buildInputArea() {
-    final digitCount = _level == '6digit' ? 6 : 12;
+    final digitCount = _level == '6digit' ? 6 : 10;
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -490,8 +490,8 @@ class _CowsBullsGameScreenState extends State<CowsBullsGameScreen>
             ),
           ),
           const SizedBox(height: 15),
-          // LED Ticker style cho 12 số
-          if (_level == '12digit') _buildLEDTicker() else _buildNormalInput(),
+          // LED Ticker style cho 10 số
+          if (_level == '10digit') _buildLEDTicker() else _buildNormalInput(),
         ],
       ),
     );
@@ -547,7 +547,7 @@ class _CowsBullsGameScreenState extends State<CowsBullsGameScreen>
                   keyboardType: TextInputType.number,
                   inputFormatters: [
                     FilteringTextInputFormatter.digitsOnly,
-                    LengthLimitingTextInputFormatter(12),
+                    LengthLimitingTextInputFormatter(10),
                   ],
                   textAlign: TextAlign.center,
                   style: TextStyle(
@@ -564,7 +564,7 @@ class _CowsBullsGameScreenState extends State<CowsBullsGameScreen>
                   ),
                   decoration: const InputDecoration(
                     border: InputBorder.none,
-                    hintText: '? ? ? ? ? ? ? ? ? ? ? ?',
+                    hintText: '? ? ? ? ? ? ? ? ? ?',
                     hintStyle: TextStyle(color: GameColors.textGray),
                   ),
                   onSubmitted: (_) => _makeGuess(),
@@ -610,7 +610,7 @@ class _CowsBullsGameScreenState extends State<CowsBullsGameScreen>
             ),
           ),
         ),
-        if (_level == '12digit' && _currentAttempt > 5) ...[
+        if (_level == '10digit' && _currentAttempt > 5) ...[
           const SizedBox(height: 15),
           SizedBox(
             width: double.infinity,
@@ -809,40 +809,42 @@ class _CowsBullsGameScreenState extends State<CowsBullsGameScreen>
                 ),
               ),
               const SizedBox(height: 20),
-              ...newAchievements.map((achievement) => Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: Row(
-                      children: [
-                        Text(
-                          achievement.iconEmoji,
-                          style: const TextStyle(fontSize: 40),
-                        ),
-                        const SizedBox(width: 15),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                achievement.name,
-                                style: const TextStyle(
-                                  color: GameColors.textWhite,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
+              ...newAchievements.map(
+                (achievement) => Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Row(
+                    children: [
+                      Text(
+                        achievement.iconEmoji,
+                        style: const TextStyle(fontSize: 40),
+                      ),
+                      const SizedBox(width: 15),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              achievement.name,
+                              style: const TextStyle(
+                                color: GameColors.textWhite,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
                               ),
-                              Text(
-                                achievement.description,
-                                style: const TextStyle(
-                                  color: GameColors.textGray,
-                                  fontSize: 14,
-                                ),
+                            ),
+                            Text(
+                              achievement.description,
+                              style: const TextStyle(
+                                color: GameColors.textGray,
+                                fontSize: 14,
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                  )),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () => Navigator.pop(context),

@@ -151,7 +151,7 @@ class _GuessNumberGameScreenState extends State<GuessNumberGameScreen>
 
     // Play bonk sound for wrong guess
     GameAudioService.playBonk();
-    
+
     // Increment meme counter
     final gameProvider = Provider.of<GameProvider>(context, listen: false);
     gameProvider.incrementMemeEncounters();
@@ -207,13 +207,13 @@ class _GuessNumberGameScreenState extends State<GuessNumberGameScreen>
     int baseScore = 1000;
     int attemptMultiplier = _maxAttempts - _currentAttempt + 1;
     double timeBonus = 1.0;
-    
+
     if (_thinkingTime < 30) {
       timeBonus = 1.5;
     } else if (_thinkingTime < 60) {
       timeBonus = 1.2;
     }
-    
+
     return (baseScore * attemptMultiplier * timeBonus).toInt();
   }
 
@@ -224,7 +224,7 @@ class _GuessNumberGameScreenState extends State<GuessNumberGameScreen>
           '${MemeTexts.random(MemeTexts.gameOver)}\nĐáp án: $_targetNumber';
     });
     _thinkingTimer?.cancel();
-    
+
     // Play sad sound
     GameAudioService.playSadTrombone();
   }
@@ -573,40 +573,42 @@ class _GuessNumberGameScreenState extends State<GuessNumberGameScreen>
                 ),
               ),
               const SizedBox(height: 20),
-              ...newAchievements.map((achievement) => Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: Row(
-                      children: [
-                        Text(
-                          achievement.iconEmoji,
-                          style: const TextStyle(fontSize: 40),
-                        ),
-                        const SizedBox(width: 15),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                achievement.name,
-                                style: const TextStyle(
-                                  color: GameColors.textWhite,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
+              ...newAchievements.map(
+                (achievement) => Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Row(
+                    children: [
+                      Text(
+                        achievement.iconEmoji,
+                        style: const TextStyle(fontSize: 40),
+                      ),
+                      const SizedBox(width: 15),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              achievement.name,
+                              style: const TextStyle(
+                                color: GameColors.textWhite,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
                               ),
-                              Text(
-                                achievement.description,
-                                style: const TextStyle(
-                                  color: GameColors.textGray,
-                                  fontSize: 14,
-                                ),
+                            ),
+                            Text(
+                              achievement.description,
+                              style: const TextStyle(
+                                color: GameColors.textGray,
+                                fontSize: 14,
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                  )),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () => Navigator.pop(context),
