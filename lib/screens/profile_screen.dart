@@ -1,48 +1,93 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import '../utils/user_data_service.dart';
+import '../providers/auth_provider.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
-  // Data mẫu
-  final String name = 'Trương Hiếu Huy';
-  final String mssv = '2280601273';
-  final String phone = '0948677191';
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  static const MethodChannel _channel = MethodChannel('smart_student_tools');
+  final UserDataService _userService = UserDataService();
+
+  // Data sẽ được load từ service
+  late String name;
+  late String mssv;
+  late String phone;
+  late String email;
+  late String className;
   final String youtubeUrl = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
 
-  static const MethodChannel _channel = MethodChannel('smart_student_tools');
-
-  Future<void> _callPhone(BuildContext context) async {
-    try {
-      await _channel.invokeMethod('callPhone', {'phone': phone});
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi gọi điện: ${e.toString()}')),
-        );
-      }
-    }
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
   }
 
-  Future<void> _openYouTube(BuildContext context) async {
-    try {
-      await _channel.invokeMethod('openYouTube', {'url': youtubeUrl});
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi mở YouTube: ${e.toString()}')),
-        );
-      }
+  void _loadUserData() {
+    // Load user profile from backend
+    final authProvider = context.read<AuthProvider>();
+    final userEmail = authProvider.userEmail;
+    final username = authProvider.username;
+
+    if (userEmail != null && username != null) {
+      setState(() {
+        name = username;
+        email = userEmail;
+        mssv = authProvider.userProfile?.id?.toString() ?? 'N/A';
+        // Default values for fields not yet in backend
+        phone = 'N/A';
+        className = 'N/A';
+      });
+      return;
     }
+
+    // Fallback to default
+    setState(() {
+      name = 'Unknown User';
+      mssv = 'N/A';
+      phone = 'N/A';
+      email = userEmail ?? 'N/A';
+      className = 'N/A';
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     // Lấy kích thước màn hình
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA), // Màu nền xám sáng hiện đại
+      backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(
+            Icons.arrow_back_ios_new,
+            color: theme.brightness == Brightness.dark
+                ? Colors.white
+                : Colors.black87,
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          'Thông tin cá nhân',
+          style: TextStyle(
+            color: theme.brightness == Brightness.dark
+                ? Colors.white
+                : Colors.black87,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        centerTitle: true,
+      ),
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -53,7 +98,9 @@ class ProfileScreen extends StatelessWidget {
               children: [
                 // Background Gradient cong
                 Container(
-                  height: size.height * 0.22, // Chiếm 22% màn hình
+                  height:
+                      size.height *
+                      0.18, // Chiếm 18% màn hình (giảm vì có AppBar)
                   width: double.infinity,
                   decoration: const BoxDecoration(
                     gradient: LinearGradient(
@@ -67,28 +114,20 @@ class ProfileScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-                // Nút Back hoặc Settings trên Header (Optional)
-                Positioned(
-                  top: 50,
-                  left: 20,
-                  child: IconButton(
-                    icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ),
                 Positioned(
                   top: 50,
                   right: 20,
                   child: IconButton(
-                    icon: const Icon(Icons.settings, color: Colors.white),
-                    onPressed: () {
-                      // Mở cài đặt
-                    },
+                    icon: const Icon(Icons.edit, color: Colors.white),
+                    tooltip: 'Chỉnh sửa profile',
+                    onPressed: () => _showEditProfileDialog(context),
                   ),
                 ),
                 // Avatar nằm đè lên ranh giới
                 Positioned(
-                  top: size.height * 0.22 - 60, // Tính toán để căn giữa biên
+                  top:
+                      size.height * 0.18 -
+                      60, // Căn vào đáy background (0.18 - radius)
                   child: Container(
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
@@ -114,16 +153,14 @@ class ProfileScreen extends StatelessWidget {
               ],
             ),
 
-            // Khoảng trống bù cho Avatar
-            const SizedBox(height: 70),
+            // Khoảng trống bù cho Avatar (radius 60 + padding)
+            const SizedBox(height: 72),
 
             // --- Phần 2: Tên & MSSV ---
             Text(
               name,
-              style: const TextStyle(
-                fontSize: 24,
+              style: theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
-                color: Colors.black87,
               ),
             ),
             const SizedBox(height: 8),
@@ -151,18 +188,17 @@ class ProfileScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Thông tin liên hệ',
-                    style: TextStyle(
-                      fontSize: 16,
+                    style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: Colors.grey,
+                      color: theme.textTheme.bodySmall?.color,
                     ),
                   ),
                   const SizedBox(height: 10),
                   Container(
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: theme.cardColor,
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
@@ -180,17 +216,9 @@ class ProfileScreen extends StatelessWidget {
                           phone,
                         ),
                         const Divider(height: 1, indent: 60),
-                        _buildInfoTile(
-                          Icons.email_outlined,
-                          'Email',
-                          'truonghieuhuy1401@gmail.com',
-                        ), // Ví dụ thêm
+                        _buildInfoTile(Icons.email_outlined, 'Email', email),
                         const Divider(height: 1, indent: 60),
-                        _buildInfoTile(
-                          Icons.school_outlined,
-                          'Lớp',
-                          '22DTHA2',
-                        ), // Ví dụ thêm
+                        _buildInfoTile(Icons.school_outlined, 'Lớp', className),
                       ],
                     ),
                   ),
@@ -200,138 +228,42 @@ class ProfileScreen extends StatelessWidget {
 
             const SizedBox(height: 25),
 
-            // --- Phần 4: Mini Games ---
+            // --- Phần 4: Tiện ích / Action Buttons ---
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    '🎮 Mini Games',
-                    style: TextStyle(
-                      fontSize: 16,
+                  Text(
+                    'Tiện ích nhanh',
+                    style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: Colors.grey,
+                      color: theme.textTheme.bodySmall?.color,
                     ),
                   ),
                   const SizedBox(height: 15),
+                  // Row 2 nút nằm ngang
                   Row(
                     children: [
-                      Expanded(
-                        child: _buildGameCard(
-                          context: context,
-                          emoji: '🎲',
-                          title: 'Đoán Số',
-                          subtitle: 'Thần Kinh Game',
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFFFF10F0), Color(0xFFFFFF00)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          onTap: () => Navigator.pushNamed(
-                            context,
-                            '/guess_number_game',
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 15),
-                      Expanded(
-                        child: _buildGameCard(
-                          context: context,
-                          emoji: '🐮',
-                          title: 'Bò & Bê',
-                          subtitle: 'Trại Bò Bất Ổn',
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFF00FFFF), Color(0xFF00FF00)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          onTap: () =>
-                              Navigator.pushNamed(context, '/cows_bulls_game'),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 15),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildGameCard(
-                          context: context,
-                          emoji: '🏆',
-                          title: 'Leaderboard',
-                          subtitle: 'Bảng Xếp Hạng',
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          onTap: () =>
-                              Navigator.pushNamed(context, '/leaderboard'),
-                        ),
-                      ),
-                      const SizedBox(width: 15),
-                      Expanded(
-                        child: _buildGameCard(
-                          context: context,
-                          emoji: '🏅',
-                          title: 'Achievements',
-                          subtitle: 'Huy Hiệu',
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFF9C27B0), Color(0xFFE91E63)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          onTap: () =>
-                              Navigator.pushNamed(context, '/achievements'),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 25),
-
-            // --- Phần 5: Tiện ích / Action Buttons ---
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Tiện ích khẩn cấp',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey,
-                    ),
-                  ),
-                  const SizedBox(height: 15),
-                  Row(
-                    children: [
-                      // Nút Gọi khẩn cấp (Ưu tiên cao - Màu đỏ)
+                      // Nút Gọi khẩn cấp
                       Expanded(
                         child: _buildActionButton(
                           context: context,
-                          icon: Icons.sos,
+                          icon: Icons.phone_in_talk,
                           label: 'Gọi khẩn cấp',
                           color: const Color(0xFFFF4757),
                           onTap: () => _callPhone(context),
                         ),
                       ),
-                      const SizedBox(width: 15),
-                      // Nút YouTube (Ưu tiên thấp hơn - Màu Brand hoặc Xám)
+                      const SizedBox(width: 12),
+                      // Nút Chatbot AI
                       Expanded(
                         child: _buildActionButton(
                           context: context,
-                          icon: Icons.play_circle_fill,
-                          label: 'YouTube',
-                          color: const Color(
-                            0xFF2F3542,
-                          ), // Màu đen/xám đậm sang trọng
-                          onTap: () => _openYouTube(context),
+                          icon: Icons.smart_toy,
+                          label: 'Kajima AI',
+                          color: const Color(0xFF5F27CD),
+                          onTap: () => Navigator.pushNamed(context, '/chatbot'),
                         ),
                       ),
                     ],
@@ -349,27 +281,29 @@ class ProfileScreen extends StatelessWidget {
 
   // Widget con: Dòng thông tin
   Widget _buildInfoTile(IconData icon, String title, String value) {
-    return ListTile(
-      leading: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: Colors.blue.shade50,
-          shape: BoxShape.circle,
-        ),
-        child: Icon(icon, color: Colors.blue, size: 20),
-      ),
-      title: Text(
-        title,
-        style: const TextStyle(fontSize: 12, color: Colors.grey),
-      ),
-      subtitle: Text(
-        value,
-        style: const TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w500,
-          color: Colors.black87,
-        ),
-      ),
+    return Builder(
+      builder: (context) {
+        final theme = Theme.of(context);
+        final colorScheme = theme.colorScheme;
+
+        return ListTile(
+          leading: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: colorScheme.primary.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: colorScheme.primary, size: 20),
+          ),
+          title: Text(title, style: theme.textTheme.bodySmall),
+          subtitle: Text(
+            value,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -412,56 +346,134 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  // Widget con: Game card
-  Widget _buildGameCard({
-    required BuildContext context,
-    required String emoji,
-    required String title,
-    required String subtitle,
-    required Gradient gradient,
-    required VoidCallback onTap,
-  }) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          height: 120,
-          decoration: BoxDecoration(
-            gradient: gradient,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 8,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
+  // Hàm gọi điện thoại
+  Future<void> _callPhone(BuildContext context) async {
+    try {
+      await _channel.invokeMethod('callPhone', {'phone': phone});
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lỗi gọi điện: ${e.toString()}')),
+        );
+      }
+    }
+  }
+
+  // Hàm hiển thị dialog chỉnh sửa profile
+  void _showEditProfileDialog(BuildContext context) {
+    final theme = Theme.of(context);
+    final nameController = TextEditingController(text: name);
+    final mssvController = TextEditingController(text: mssv);
+    final phoneController = TextEditingController(text: phone);
+    final emailController = TextEditingController(text: email);
+    final classController = TextEditingController(text: className);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.edit, color: theme.colorScheme.primary),
+            const SizedBox(width: 8),
+            const Text('Chỉnh sửa Profile'),
+          ],
+        ),
+        content: SingleChildScrollView(
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Text(emoji, style: const TextStyle(fontSize: 40)),
-              const SizedBox(height: 8),
-              Text(
-                title,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
+              _buildEditField(
+                controller: nameController,
+                label: 'Họ và tên',
+                icon: Icons.person,
               ),
-              Text(
-                subtitle,
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.8),
-                  fontSize: 11,
-                ),
+              const SizedBox(height: 12),
+              _buildEditField(
+                controller: mssvController,
+                label: 'MSSV',
+                icon: Icons.badge,
+              ),
+              const SizedBox(height: 12),
+              _buildEditField(
+                controller: phoneController,
+                label: 'Số điện thoại',
+                icon: Icons.phone,
+                keyboardType: TextInputType.phone,
+              ),
+              const SizedBox(height: 12),
+              _buildEditField(
+                controller: emailController,
+                label: 'Email',
+                icon: Icons.email,
+                keyboardType: TextInputType.emailAddress,
+              ),
+              const SizedBox(height: 12),
+              _buildEditField(
+                controller: classController,
+                label: 'Lớp',
+                icon: Icons.school,
               ),
             ],
           ),
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Hủy'),
+          ),
+          ElevatedButton.icon(
+            onPressed: () {
+              // Cập nhật state local
+              setState(() {
+                name = nameController.text;
+                mssv = mssvController.text;
+                phone = phoneController.text;
+                email = emailController.text;
+                className = classController.text;
+              });
+
+              // Đồng bộ với service (sẽ tự động update group screen)
+              _userService.updateCurrentUser({
+                'name': name,
+                'mssv': mssv,
+                'phone': phone,
+                'email': email,
+                'class': className,
+              });
+
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('✅ Đã cập nhật profile và đồng bộ với nhóm!'),
+                  backgroundColor: Colors.green,
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            },
+            icon: const Icon(Icons.save),
+            label: const Text('Lưu'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Widget con: TextField cho dialog chỉnh sửa
+  Widget _buildEditField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    TextInputType? keyboardType,
+  }) {
+    return TextField(
+      controller: controller,
+      keyboardType: keyboardType,
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: Icon(icon),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        filled: true,
+        fillColor: Colors.grey.withOpacity(0.1),
       ),
     );
   }

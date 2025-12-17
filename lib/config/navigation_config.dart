@@ -1,14 +1,22 @@
 import 'package:flutter/material.dart';
 import '../models/navigation_models.dart';
+import '../screens/home_screen.dart';
 import '../screens/translate_screen.dart';
 import '../screens/alarm_screen.dart';
+import '../screens/youtube_screen.dart';
 import '../screens/group_screen.dart';
 import '../screens/profile_screen.dart';
 import '../screens/settings_screen.dart';
 import '../screens/games/guess_number_game_screen.dart';
 import '../screens/games/cows_bulls_game_screen.dart';
+import '../screens/games/memory_match_game_screen.dart';
+import '../screens/games/quick_math_game_screen.dart';
 import '../screens/games/leaderboard_screen.dart';
 import '../screens/games/achievement_screen.dart';
+import '../screens/chatbot_screen.dart';
+import '../screens/peer_chat_list_screen.dart';
+import '../screens/social_test_screen.dart';
+import '../screens/posts_screen.dart';
 
 /// Configuration for modular navigation system
 class NavigationConfig {
@@ -21,6 +29,13 @@ class NavigationConfig {
         icon: Icons.build_outlined,
         items: [
           NavigationItem(
+            id: 'home',
+            name: 'Trang chủ',
+            icon: Icons.home,
+            screen: const HomeScreen(),
+            route: '/home',
+          ),
+          NavigationItem(
             id: 'translate',
             name: 'Dịch thuật',
             icon: Icons.translate,
@@ -32,6 +47,20 @@ class NavigationConfig {
             name: 'Báo thức',
             icon: Icons.alarm,
             screen: const AlarmScreen(),
+          ),
+          NavigationItem(
+            id: 'youtube',
+            name: 'Xem video',
+            icon: Icons.play_circle_filled,
+            screen: const YouTubeScreen(),
+            route: '/youtube',
+          ),
+          NavigationItem(
+            id: 'chatbot',
+            name: 'Kajima AI',
+            icon: Icons.smart_toy,
+            screen: const ChatbotScreen(),
+            route: '/chatbot',
           ),
         ],
       ),
@@ -49,12 +78,26 @@ class NavigationConfig {
             screen: const GamesHub(),
           ),
           NavigationItem(
-            id: 'chat_server',
-            name: 'Chat Server',
+            id: 'posts',
+            name: '📝 Bài đăng',
+            icon: Icons.article,
+            screen: const PostsScreen(),
+            route: '/posts',
+            enabled: true,
+          ),
+          NavigationItem(
+            id: 'peer_chat',
+            name: 'Chat với bạn bè',
             icon: Icons.chat_bubble_outline,
-            screen: const ComingSoonScreen(feature: 'Chat Server'),
-            enabled: false,
-            comingSoonMessage: 'Tính năng Chat Server đang được phát triển',
+            screen: const PeerChatListScreen(),
+            enabled: true,
+          ),
+          NavigationItem(
+            id: 'social_test',
+            name: '🌐 Social Features',
+            icon: Icons.people,
+            screen: const SocialTestScreen(),
+            enabled: true,
           ),
         ],
       ),
@@ -110,10 +153,7 @@ class GamesHub extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Trò chơi'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('Trò chơi'), centerTitle: true),
       body: GridView.count(
         padding: const EdgeInsets.all(16),
         crossAxisCount: 2,
@@ -141,6 +181,30 @@ class GamesHub extends StatelessWidget {
               context,
               MaterialPageRoute(
                 builder: (context) => const CowsBullsGameScreen(),
+              ),
+            ),
+          ),
+          _buildGameCard(
+            context: context,
+            title: 'Lật Thẻ',
+            icon: Icons.extension,
+            color: Colors.indigo,
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const MemoryMatchGameScreen(),
+              ),
+            ),
+          ),
+          _buildGameCard(
+            context: context,
+            title: 'Quick Math',
+            icon: Icons.calculate,
+            color: Colors.deepPurple,
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const QuickMathGameScreen(),
               ),
             ),
           ),
@@ -182,9 +246,7 @@ class GamesHub extends StatelessWidget {
   }) {
     return Card(
       elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
@@ -228,10 +290,7 @@ class ComingSoonScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(feature),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: Text(feature), centerTitle: true),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -244,18 +303,12 @@ class ComingSoonScreen extends StatelessWidget {
             const SizedBox(height: 24),
             const Text(
               'Sắp ra mắt',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
             Text(
               'Tính năng "$feature" đang được phát triển',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey[600],
-              ),
+              style: TextStyle(fontSize: 16, color: Colors.grey[600]),
               textAlign: TextAlign.center,
             ),
           ],

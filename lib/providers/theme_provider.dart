@@ -8,7 +8,8 @@ class ThemeProvider with ChangeNotifier {
 
   late Box _box;
   ThemeMode _themeMode = ThemeMode.system;
-  Color _primaryColor = Colors.blue;
+  // 🎨 Brand Color - Teal/Blue modern palette
+  Color _primaryColor = const Color(0xFF0891B2); // Cyan-600
 
   ThemeMode get themeMode => _themeMode;
   Color get primaryColor => _primaryColor;
@@ -17,7 +18,8 @@ class ThemeProvider with ChangeNotifier {
     if (_themeMode == ThemeMode.dark) return true;
     if (_themeMode == ThemeMode.light) return false;
     // System mode - check platform brightness
-    final brightness = WidgetsBinding.instance.platformDispatcher.platformBrightness;
+    final brightness =
+        WidgetsBinding.instance.platformDispatcher.platformBrightness;
     return brightness == Brightness.dark;
   }
 
@@ -35,7 +37,10 @@ class ThemeProvider with ChangeNotifier {
       _themeMode = _parseThemeMode(savedMode);
 
       // Load primary color
-      final savedColor = _box.get(_primaryColorKey, defaultValue: Colors.blue.value);
+      final savedColor = _box.get(
+        _primaryColorKey,
+        defaultValue: Colors.blue.value,
+      );
       _primaryColor = Color(savedColor);
 
       notifyListeners();
@@ -89,78 +94,222 @@ class ThemeProvider with ChangeNotifier {
     }
   }
 
-  /// Get light theme data
+  /// Get light theme data - Unified Design System
   ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
+
+      // 🎨 Unified Color Scheme
       colorScheme: ColorScheme.fromSeed(
         seedColor: _primaryColor,
         brightness: Brightness.light,
+        primary: _primaryColor,
+        secondary: const Color(0xFF06B6D4), // Cyan-500 accent
+        surface: Colors.white,
+        background: const Color(0xFFF8FAFC), // Slate-50
       ),
+
+      // Scaffold consistent background
+      scaffoldBackgroundColor: const Color(0xFFF8FAFC),
+
+      // 📱 AppBar - Consistent across all screens
       appBarTheme: AppBarTheme(
         centerTitle: true,
         elevation: 0,
         backgroundColor: _primaryColor,
         foregroundColor: Colors.white,
-      ),
-      cardTheme: CardThemeData(
-        elevation: 2,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+        titleTextStyle: const TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.w600,
+          color: Colors.white,
+          letterSpacing: 0.5,
         ),
       ),
+
+      // 🃏 Card - Unified style
+      cardTheme: CardThemeData(
+        elevation: 2,
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        color: Colors.white,
+      ),
+
+      // 🔘 Buttons - Consistent design
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          elevation: 2,
+          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          textStyle: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.5,
           ),
         ),
       ),
+
+      // 📝 Input Fields - Consistent style
       inputDecorationTheme: InputDecorationTheme(
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
         filled: true,
+        fillColor: Colors.white,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: _primaryColor, width: 2),
+        ),
+      ),
+
+      // 📄 Typography - Consistent text styles
+      textTheme: const TextTheme(
+        headlineLarge: TextStyle(
+          fontSize: 32,
+          fontWeight: FontWeight.bold,
+          color: Color(0xFF1E293B), // Slate-800
+        ),
+        headlineMedium: TextStyle(
+          fontSize: 24,
+          fontWeight: FontWeight.w600,
+          color: Color(0xFF334155), // Slate-700
+        ),
+        titleLarge: TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.w600,
+          color: Color(0xFF475569), // Slate-600
+        ),
+        bodyLarge: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.normal,
+          color: Color(0xFF64748B), // Slate-500
+        ),
+        bodyMedium: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.normal,
+          color: Color(0xFF64748B),
+        ),
       ),
     );
   }
 
-  /// Get dark theme data
+  /// Get dark theme data - Unified Design System
   ThemeData get darkTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
+
+      // 🎨 Unified Color Scheme (Dark)
       colorScheme: ColorScheme.fromSeed(
         seedColor: _primaryColor,
         brightness: Brightness.dark,
+        primary: const Color(0xFF06B6D4), // Brighter cyan for dark mode
+        secondary: const Color(0xFF22D3EE), // Cyan-400
+        surface: const Color(0xFF1E293B), // Slate-800
+        background: const Color(0xFF0F172A), // Slate-900
       ),
-      appBarTheme: AppBarTheme(
+
+      // Scaffold dark background
+      scaffoldBackgroundColor: const Color(0xFF0F172A),
+
+      // 📱 AppBar (Dark)
+      appBarTheme: const AppBarTheme(
         centerTitle: true,
         elevation: 0,
-        backgroundColor: Colors.grey[900],
+        backgroundColor: Color(0xFF1E293B),
         foregroundColor: Colors.white,
-      ),
-      cardTheme: CardThemeData(
-        elevation: 2,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+        titleTextStyle: TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.w600,
+          color: Colors.white,
+          letterSpacing: 0.5,
         ),
       ),
+
+      // 🃏 Card (Dark)
+      cardTheme: CardThemeData(
+        elevation: 2,
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        color: const Color(0xFF1E293B),
+      ),
+
+      // 🔘 Buttons (Dark)
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          elevation: 2,
+          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          textStyle: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.5,
           ),
         ),
       ),
+
+      // 📝 Input Fields (Dark)
       inputDecorationTheme: InputDecorationTheme(
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
         filled: true,
+        fillColor: const Color(0xFF1E293B),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFF475569)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFF475569)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFF06B6D4), width: 2),
+        ),
+      ),
+
+      // 📄 Typography (Dark)
+      textTheme: const TextTheme(
+        headlineLarge: TextStyle(
+          fontSize: 32,
+          fontWeight: FontWeight.bold,
+          color: Color(0xFFF1F5F9), // Slate-100
+        ),
+        headlineMedium: TextStyle(
+          fontSize: 24,
+          fontWeight: FontWeight.w600,
+          color: Color(0xFFE2E8F0), // Slate-200
+        ),
+        titleLarge: TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.w600,
+          color: Color(0xFFCBD5E1), // Slate-300
+        ),
+        bodyLarge: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.normal,
+          color: Color(0xFF94A3B8), // Slate-400
+        ),
+        bodyMedium: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.normal,
+          color: Color(0xFF94A3B8),
+        ),
       ),
     );
   }

@@ -517,18 +517,31 @@ class _TranslateScreenState extends State<TranslateScreen>
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: const Color(0xFF0D1B2A),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
+        backgroundColor:
+            theme.appBarTheme.backgroundColor ?? theme.scaffoldBackgroundColor,
         elevation: 0,
-        backgroundColor: const Color(0xFF1B263B),
-        title: const Text(
-          'Dịch thuật',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+        leading: IconButton(
+          icon: Icon(
+            Icons.arrow_back_ios_new,
+            color: theme.brightness == Brightness.dark
+                ? Colors.white
+                : Colors.black87,
+          ),
+          onPressed: () => Navigator.pop(context),
         ),
+        title: const Text(
+          'Dịch đa ngôn ngữ',
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
+        centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.history, color: Color(0xFF778DA9)),
+            icon: Icon(Icons.history, color: theme.colorScheme.secondary),
             onPressed: _showHistoryDialog,
           ),
         ],
@@ -557,12 +570,19 @@ class _TranslateScreenState extends State<TranslateScreen>
   }
 
   Widget _buildLanguageSelector() {
+    final theme = Theme.of(context);
+
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: const BoxDecoration(
-        color: Color(0xFF1B263B),
+      decoration: BoxDecoration(
+        color: theme.brightness == Brightness.dark
+            ? const Color(0xFF1E293B)
+            : Colors.white,
         border: Border(
-          bottom: BorderSide(color: Color(0xFF415A77), width: 0.5),
+          bottom: BorderSide(
+            color: theme.dividerColor.withOpacity(0.5),
+            width: 0.5,
+          ),
         ),
       ),
       child: Row(
@@ -579,19 +599,22 @@ class _TranslateScreenState extends State<TranslateScreen>
   }
 
   Widget _buildLanguageDropdown(String currentLang, bool isSource) {
+    final theme = Theme.of(context);
+    final isDarkMode = theme.brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFF0D1B2A),
+        color: isDarkMode ? const Color(0xFF334155) : const Color(0xFFF1F5F9),
         borderRadius: BorderRadius.circular(12),
       ),
       child: DropdownButton<String>(
         value: currentLang,
         isExpanded: true,
-        dropdownColor: const Color(0xFF1B263B),
+        dropdownColor: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
         underline: const SizedBox(),
-        style: const TextStyle(color: Colors.white),
-        icon: const Icon(Icons.arrow_drop_down, color: Color(0xFF778DA9)),
+        style: TextStyle(color: isDarkMode ? Colors.white : Colors.black87),
+        icon: Icon(Icons.arrow_drop_down, color: theme.colorScheme.secondary),
         items: _languages.entries.map((entry) {
           return DropdownMenuItem<String>(
             value: entry.key,
@@ -617,14 +640,15 @@ class _TranslateScreenState extends State<TranslateScreen>
   }
 
   Widget _buildSourceTextBox() {
+    final theme = Theme.of(context);
+    final isDarkMode = theme.brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1B263B),
+        color: isDarkMode ? const Color(0xFF1B263B) : Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFF415A77).withValues(alpha: 0.3),
-        ),
+        border: Border.all(color: theme.dividerColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -634,8 +658,8 @@ class _TranslateScreenState extends State<TranslateScreen>
             children: [
               Text(
                 _languages[_sourceLang]!,
-                style: const TextStyle(
-                  color: Color(0xFF778DA9),
+                style: TextStyle(
+                  color: theme.textTheme.bodySmall?.color,
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
                 ),
@@ -655,7 +679,7 @@ class _TranslateScreenState extends State<TranslateScreen>
                       ),
                     IconButton(
                       icon: const Icon(Icons.clear, size: 20),
-                      color: const Color(0xFF778DA9),
+                      color: theme.textTheme.bodySmall?.color,
                       onPressed: _clearAllImages,
                     ),
                   ],
@@ -665,10 +689,17 @@ class _TranslateScreenState extends State<TranslateScreen>
           TextField(
             controller: _sourceController,
             maxLines: 6,
-            style: const TextStyle(color: Colors.white, fontSize: 16),
-            decoration: const InputDecoration(
+            style: TextStyle(
+              color: isDarkMode ? Colors.white : Colors.black87,
+              fontSize: 16,
+            ),
+            decoration: InputDecoration(
               hintText: 'Nhập văn bản cần dịch...',
-              hintStyle: TextStyle(color: Color(0xFF415A77)),
+              hintStyle: TextStyle(
+                color: isDarkMode
+                    ? const Color(0xFF415A77)
+                    : Colors.grey.shade500,
+              ),
               border: InputBorder.none,
             ),
           ),
@@ -727,14 +758,15 @@ class _TranslateScreenState extends State<TranslateScreen>
   }
 
   Widget _buildTranslatedTextBox() {
+    final theme = Theme.of(context);
+    final isDarkMode = theme.brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1B263B),
+        color: isDarkMode ? const Color(0xFF1B263B) : Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFF4A9FFF).withValues(alpha: 0.3),
-        ),
+        border: Border.all(color: theme.colorScheme.primary.withOpacity(0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -744,8 +776,8 @@ class _TranslateScreenState extends State<TranslateScreen>
             children: [
               Text(
                 _languages[_targetLang]!,
-                style: const TextStyle(
-                  color: Color(0xFF4A9FFF),
+                style: TextStyle(
+                  color: theme.colorScheme.primary,
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
                 ),
@@ -755,14 +787,14 @@ class _TranslateScreenState extends State<TranslateScreen>
                   children: [
                     IconButton(
                       icon: const Icon(Icons.content_copy, size: 20),
-                      color: const Color(0xFF778DA9),
+                      color: theme.textTheme.bodySmall?.color,
                       onPressed: () {
                         // TODO: Copy to clipboard
                       },
                     ),
                     IconButton(
                       icon: const Icon(Icons.volume_up, size: 20),
-                      color: const Color(0xFF778DA9),
+                      color: theme.textTheme.bodySmall?.color,
                       onPressed: () {
                         // TODO: Text to speech
                       },
@@ -786,8 +818,10 @@ class _TranslateScreenState extends State<TranslateScreen>
                 _translatedText.isEmpty ? 'Bản dịch...' : _translatedText,
                 style: TextStyle(
                   color: _translatedText.isEmpty
-                      ? const Color(0xFF415A77)
-                      : Colors.white,
+                      ? (isDarkMode
+                            ? const Color(0xFF415A77)
+                            : Colors.grey.shade500)
+                      : (isDarkMode ? Colors.white : Colors.black87),
                   fontSize: 16,
                   height: 1.5,
                 ),
@@ -799,10 +833,13 @@ class _TranslateScreenState extends State<TranslateScreen>
   }
 
   Widget _buildBottomBar() {
+    final theme = Theme.of(context);
+    final isDarkMode = theme.brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1B263B),
+        color: isDarkMode ? const Color(0xFF1B263B) : Colors.white,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.2),
@@ -879,8 +916,13 @@ class _TranslateScreenState extends State<TranslateScreen>
     required String label,
     required VoidCallback onTap,
   }) {
+    final theme = Theme.of(context);
+    final isDarkMode = theme.brightness == Brightness.dark;
+
     return Material(
-      color: const Color(0xFF415A77),
+      color: isDarkMode
+          ? const Color(0xFF415A77)
+          : theme.colorScheme.secondary.withOpacity(0.1),
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
         onTap: onTap,
@@ -890,12 +932,18 @@ class _TranslateScreenState extends State<TranslateScreen>
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, color: Colors.white, size: 20),
+              Icon(
+                icon,
+                color: isDarkMode ? Colors.white : theme.colorScheme.secondary,
+                size: 20,
+              ),
               const SizedBox(width: 8),
               Text(
                 label,
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: isDarkMode
+                      ? Colors.white
+                      : theme.colorScheme.secondary,
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                 ),

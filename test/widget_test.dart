@@ -16,15 +16,14 @@ void main() {
     // Initialize providers for testing
     final themeProvider = ThemeProvider();
     await themeProvider.initialize();
-    
+
     final authProvider = AuthProvider();
     await authProvider.initialize();
 
     // Build our app and trigger a frame.
-    await tester.pumpWidget(SmartStudentApp(
-      themeProvider: themeProvider,
-      authProvider: authProvider,
-    ));
+    await tester.pumpWidget(
+      SmartStudentApp(themeProvider: themeProvider, authProvider: authProvider),
+    );
 
     // Verify that the app initializes correctly
     expect(find.byType(MaterialApp), findsOneWidget);
