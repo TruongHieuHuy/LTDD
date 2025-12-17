@@ -3,10 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'dart:math';
 import 'dart:async';
-import '../../utils/game_utils/game_colors.dart';
 import '../../utils/game_utils/meme_texts.dart';
-import '../../widgets/game_widgets/patience_bar.dart';
-import '../../widgets/game_widgets/meme_feedback.dart';
 import '../../widgets/game_widgets/firework_effect.dart';
 import '../../providers/game_provider.dart';
 import '../../utils/game_audio_service.dart';
@@ -24,7 +21,7 @@ class _CowsBullsGameScreenState extends State<CowsBullsGameScreen>
   final _random = Random();
 
   // Game state
-  String _level = '6digit'; // '6digit' or '10digit'
+  String _level = '6digit'; // '6digit' or '8digit'
   late String _targetCode;
   late int _maxAttempts;
   int _currentAttempt = 0;
@@ -56,8 +53,8 @@ class _CowsBullsGameScreenState extends State<CowsBullsGameScreen>
 
   void _initGame() {
     setState(() {
-      final digitCount = _level == '6digit' ? 6 : 10;
-      _maxAttempts = _level == '6digit' ? 8 : 12;
+      final digitCount = _level == '6digit' ? 6 : 8; // Changed from 10
+      _maxAttempts = _level == '6digit' ? 8 : 10; // Changed from 12
 
       // Generate unique random digits
       _targetCode = _generateUniqueCode(digitCount);
@@ -89,7 +86,8 @@ class _CowsBullsGameScreenState extends State<CowsBullsGameScreen>
         _thinkingTime++;
       });
 
-      if (_thinkingTime == 10 && _level == '10digit') {
+      if (_thinkingTime == 10 && _level == '8digit') {
+        // Changed from 10digit
         _showQuickFeedback(MemeTexts.random(MemeTexts.thinking));
       } else if (_thinkingTime == 30) {
         _showQuickFeedback(MemeTexts.tooLongThinking);
@@ -104,7 +102,7 @@ class _CowsBullsGameScreenState extends State<CowsBullsGameScreen>
 
   void _makeGuess() {
     final guessText = _guessController.text;
-    final digitCount = _level == '6digit' ? 6 : 10;
+    final digitCount = _level == '6digit' ? 6 : 8; // Changed from 10
 
     if (guessText.length != digitCount) {
       _showQuickFeedback('Nhập đủ $digitCount số chứ bro! 🤨');
@@ -134,10 +132,11 @@ class _CowsBullsGameScreenState extends State<CowsBullsGameScreen>
     } else {
       _provideFeedback(result);
 
-      // Troll: Show fake ad after 5 wrong attempts on 10 digit level
-      if (_level == '10digit' && result.bulls < digitCount) {
+      // Troll: Show fake ad after 6 wrong attempts on 8 digit level
+      if (_level == '8digit' && result.bulls < digitCount) {
         _wrongAttempts++;
-        if (_wrongAttempts == 5) {
+        if (_wrongAttempts == 6) {
+          // Changed from 5
           _showFakeAdPopup();
         }
       }
@@ -306,198 +305,286 @@ class _CowsBullsGameScreenState extends State<CowsBullsGameScreen>
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(gradient: GameColors.darkGradient),
-        child: SafeArea(
-          child: AnimatedBuilder(
-            animation: _shakeController,
-            builder: (context, child) {
-              final shake = sin(_shakeController.value * pi * 8) * 10;
-              return Transform.translate(
-                offset: Offset(shake, 0),
-                child: child,
-              );
-            },
-            child: Stack(
-              children: [
-                Column(
-                  children: [
-                    _buildHeader(),
-                    Expanded(
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.all(20),
-                        child: Column(
-                          children: [
-                            if (!_isGameOver) ...[
-                              PatienceBar(
-                                currentAttempts: _currentAttempt,
-                                maxAttempts: _maxAttempts,
-                              ),
-                              const SizedBox(height: 20),
-                              _buildInputArea(),
-                              const SizedBox(height: 20),
-                              _buildActionButtons(),
-                            ],
-                            if (_feedbackMessage != null) ...[
-                              const SizedBox(height: 20),
-                              MemeFeedback(
-                                message: _feedbackMessage!,
-                                isSuccess: _isWon,
-                                onDismiss: () {
-                                  setState(() => _feedbackMessage = null);
-                                },
-                              ),
-                            ],
-                            if (_guessHistory.isNotEmpty) ...[
-                              const SizedBox(height: 20),
-                              _buildHistory(),
-                            ],
-                            if (_isGameOver) ...[
-                              const SizedBox(height: 20),
-                              _buildGameOverActions(),
-                            ],
-                          ],
+      backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: AppBar(
+        title: const Text(
+          '🐮 Bò & Bê',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        centerTitle: true,
+        backgroundColor:
+            theme.appBarTheme.backgroundColor ?? theme.scaffoldBackgroundColor,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(
+            Icons.arrow_back_ios_new,
+            color: theme.brightness == Brightness.dark
+                ? Colors.white
+                : Colors.black87,
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      body: SafeArea(
+        child: AnimatedBuilder(
+          animation: _shakeController,
+          builder: (context, child) {
+            final shake = sin(_shakeController.value * pi * 8) * 10;
+            return Transform.translate(offset: Offset(shake, 0), child: child);
+          },
+          child: Stack(
+            children: [
+              Column(
+                children: [
+                  // Game info banner
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: colorScheme.primary.withOpacity(0.1),
+                      border: Border(
+                        bottom: BorderSide(
+                          color: colorScheme.primary.withOpacity(0.3),
                         ),
                       ),
                     ),
-                  ],
-                ),
-                if (_showFireworks)
-                  const Positioned.fill(child: FireworkEffect()),
-                if (_showFakeAd) _buildFakeAdOverlay(),
-              ],
-            ),
+                    child: Column(
+                      children: [
+                        _buildLevelSelector(theme),
+                        const SizedBox(height: 12),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _buildLegendItem(
+                              theme,
+                              '🐂',
+                              'Đúng vị trí',
+                              Colors.green,
+                            ),
+                            const SizedBox(width: 16),
+                            _buildLegendItem(
+                              theme,
+                              '🤡',
+                              'Sai vị trí',
+                              Colors.orange,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        children: [
+                          if (!_isGameOver) ...[
+                            _buildPatienceBar(theme),
+                            const SizedBox(height: 24),
+                            _buildInputArea(theme),
+                            const SizedBox(height: 20),
+                            _buildActionButtons(theme),
+                          ],
+
+                          if (_feedbackMessage != null) ...[
+                            const SizedBox(height: 24),
+                            _buildFeedbackCard(theme),
+                          ],
+
+                          if (_guessHistory.isNotEmpty) ...[
+                            const SizedBox(height: 24),
+                            _buildHistory(theme),
+                          ],
+
+                          if (_isGameOver) ...[
+                            const SizedBox(height: 24),
+                            _buildGameOverActions(theme),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+              if (_showFireworks)
+                const Positioned.fill(child: FireworkEffect()),
+
+              // TROLL: Fake ad overlay (keep this!)
+              if (_showFakeAd) _buildFakeAdOverlay(theme),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: GameColors.darkGray.withOpacity(0.5),
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(30),
-          bottomRight: Radius.circular(30),
-        ),
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.arrow_back, color: GameColors.neonCyan),
-                onPressed: () => Navigator.pop(context),
-              ),
-              const Text(
-                '🐮 BÒ & BÊ',
-                style: TextStyle(
-                  color: GameColors.neonYellow,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          _buildLevelSelector(),
-          const SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text(
-                '🐂 = đúng vị trí  ',
-                style: TextStyle(color: GameColors.successGreen),
-              ),
-              const Text(
-                '🤡 = sai vị trí',
-                style: TextStyle(color: GameColors.warningOrange),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLevelSelector() {
+  Widget _buildLegendItem(
+    ThemeData theme,
+    String emoji,
+    String label,
+    Color color,
+  ) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        _buildLevelChip('Tấm Chiếu Mới', '6digit', '6 số (8 lượt)'),
-        _buildLevelChip('Thách Thức Tuyệt Vọng', '10digit', '10 số (12 lượt)'),
+        Text(emoji, style: const TextStyle(fontSize: 20)),
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: color,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ],
     );
   }
 
-  Widget _buildLevelChip(String label, String value, String hint) {
+  Widget _buildPatienceBar(ThemeData theme) {
+    final progress = _currentAttempt / _maxAttempts;
+    final remaining = _maxAttempts - _currentAttempt;
+
+    Color barColor;
+    if (progress < 0.5) {
+      barColor = Colors.green;
+    } else if (progress < 0.8) {
+      barColor = Colors.orange;
+    } else {
+      barColor = Colors.red;
+    }
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Lượt còn lại',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Text(
+                  '$remaining/$_maxAttempts',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    color: barColor,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: LinearProgressIndicator(
+                value: 1 - progress,
+                minHeight: 12,
+                backgroundColor: theme.brightness == Brightness.dark
+                    ? Colors.grey.shade800
+                    : Colors.grey.shade200,
+                color: barColor,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLevelSelector(ThemeData theme) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      alignment: WrapAlignment.center,
+      children: [
+        _buildLevelChip(theme, 'Tấm Chiếu Mới', '6digit', '6 số (8 lượt)'),
+        _buildLevelChip(theme, 'Thách Thức Khó', '8digit', '8 số (10 lượt)'),
+      ],
+    );
+  }
+
+  Widget _buildLevelChip(
+    ThemeData theme,
+    String label,
+    String value,
+    String hint,
+  ) {
     final isSelected = _level == value;
+    final colorScheme = theme.colorScheme;
+
     return Tooltip(
       message: hint,
-      child: GestureDetector(
-        onTap: _isGameOver
+      child: FilterChip(
+        selected: isSelected,
+        label: Text(label),
+        onSelected: _isGameOver
             ? null
-            : () {
+            : (_) {
                 if (_level != value) {
                   setState(() => _level = value);
                   _initGame();
                 }
               },
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          decoration: BoxDecoration(
-            color: isSelected ? GameColors.neonPink : GameColors.darkCharcoal,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: isSelected ? GameColors.neonPink : GameColors.textGray,
-              width: 2,
-            ),
-          ),
-          child: Text(
-            label,
-            style: TextStyle(
-              color: isSelected ? GameColors.textWhite : GameColors.textGray,
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+        backgroundColor: theme.cardColor,
+        selectedColor: colorScheme.primary,
+        checkmarkColor: Colors.white,
+        labelStyle: TextStyle(
+          color: isSelected ? Colors.white : theme.textTheme.bodyLarge?.color,
+          fontWeight: FontWeight.w600,
+          fontSize: 13,
         ),
       ),
     );
   }
 
-  Widget _buildInputArea() {
+  Widget _buildInputArea(ThemeData theme) {
     final digitCount = _level == '6digit' ? 6 : 10;
 
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: GameColors.darkGray,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: GameColors.neonCyan, width: 2),
-      ),
-      child: Column(
-        children: [
-          Text(
-            'Nhập $digitCount số khác nhau (0-9):',
-            style: const TextStyle(
-              color: GameColors.neonCyan,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
+    return Card(
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.casino_outlined,
+                  color: theme.colorScheme.secondary,
+                  size: 24,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Nhập $digitCount số khác nhau (0-9):',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
             ),
-          ),
-          const SizedBox(height: 15),
-          // LED Ticker style cho 10 số
-          if (_level == '10digit') _buildLEDTicker() else _buildNormalInput(),
-        ],
+            const SizedBox(height: 16),
+
+            // LED Ticker style for 8 digits (modern look with theme colors)
+            if (_level == '8digit')
+              _buildLEDTicker(theme)
+            else
+              _buildNormalInput(theme),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildNormalInput() {
+  Widget _buildNormalInput(ThemeData theme) {
     return TextField(
       controller: _guessController,
       keyboardType: TextInputType.number,
@@ -506,130 +593,140 @@ class _CowsBullsGameScreenState extends State<CowsBullsGameScreen>
         LengthLimitingTextInputFormatter(6),
       ],
       textAlign: TextAlign.center,
-      style: const TextStyle(
-        color: GameColors.textWhite,
-        fontSize: 32,
+      style: theme.textTheme.headlineLarge?.copyWith(
+        fontSize: 40,
         fontWeight: FontWeight.bold,
-        letterSpacing: 8,
+        letterSpacing: 6,
+        fontFamily: 'monospace',
       ),
-      decoration: InputDecoration(
-        hintText: '? ? ? ? ? ?',
-        hintStyle: const TextStyle(color: GameColors.textGray),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15),
-          borderSide: const BorderSide(color: GameColors.neonYellow),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15),
-          borderSide: const BorderSide(color: GameColors.neonYellow, width: 2),
-        ),
-      ),
+      decoration: const InputDecoration(hintText: '? ? ? ? ? ?'),
       onSubmitted: (_) => _makeGuess(),
     );
   }
 
-  Widget _buildLEDTicker() {
+  Widget _buildLEDTicker(ThemeData theme) {
+    final colorScheme = theme.colorScheme;
+
     return Column(
       children: [
-        AnimatedBuilder(
-          animation: _tickerController,
-          builder: (context, child) {
-            return Container(
-              height: 60,
-              decoration: BoxDecoration(
-                color: Colors.black,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: GameColors.neonYellow, width: 2),
+        // Digital display look with theme colors
+        Container(
+          height: 70,
+          decoration: BoxDecoration(
+            color: theme.brightness == Brightness.dark
+                ? Colors.black
+                : Colors.grey.shade900,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: colorScheme.secondary, width: 2),
+            boxShadow: [
+              BoxShadow(
+                color: colorScheme.secondary.withOpacity(0.3),
+                blurRadius: 12,
+                spreadRadius: 2,
               ),
-              child: Center(
-                child: TextField(
-                  controller: _guessController,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly,
-                    LengthLimitingTextInputFormatter(10),
-                  ],
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: GameColors.neonYellow,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 4,
-                    shadows: [
-                      Shadow(
-                        color: GameColors.neonYellow.withOpacity(0.8),
-                        blurRadius: 10,
-                      ),
-                    ],
-                  ),
-                  decoration: const InputDecoration(
-                    border: InputBorder.none,
-                    hintText: '? ? ? ? ? ? ? ? ? ?',
-                    hintStyle: TextStyle(color: GameColors.textGray),
-                  ),
-                  onSubmitted: (_) => _makeGuess(),
-                ),
-              ),
-            );
-          },
-        ),
-        const SizedBox(height: 10),
-        const Text(
-          '⚠️ Level khó nhất - Hãy cố gắng!',
-          style: TextStyle(
-            color: GameColors.trollRed,
-            fontSize: 12,
-            fontStyle: FontStyle.italic,
+            ],
           ),
+          child: Center(
+            child: TextField(
+              controller: _guessController,
+              keyboardType: TextInputType.number,
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+                LengthLimitingTextInputFormatter(8), // Changed from 10
+              ],
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: colorScheme.secondary,
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 4,
+                fontFamily: 'monospace',
+                shadows: [
+                  Shadow(
+                    color: colorScheme.secondary.withOpacity(0.8),
+                    blurRadius: 8,
+                  ),
+                ],
+              ),
+              decoration: InputDecoration(
+                border: InputBorder.none,
+                hintText: '? ? ? ? ? ? ? ?', // Changed to 8 digits
+                hintStyle: TextStyle(
+                  color: Colors.grey.shade700,
+                  letterSpacing: 4,
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+              ),
+              onSubmitted: (_) => _makeGuess(),
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.warning_amber, color: Colors.red.shade400, size: 20),
+            const SizedBox(width: 8),
+            Text(
+              'Level khó nhất - Hãy cố gắng!',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: Colors.red.shade400,
+                fontStyle: FontStyle.italic,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
         ),
       ],
     );
   }
 
-  Widget _buildActionButtons() {
+  Widget _buildActionButtons(ThemeData theme) {
     return Column(
       children: [
-        ElevatedButton(
-          onPressed: _makeGuess,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: GameColors.neonPink,
-            padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 18),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(30),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: _makeGuess,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: theme.colorScheme.primary,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 18),
+              elevation: 4,
             ),
-            elevation: 10,
-            shadowColor: GameColors.neonPink.withOpacity(0.5),
-          ),
-          child: const Text(
-            'GỬI ĐÁP ÁN 🎯',
-            style: TextStyle(
-              color: GameColors.textWhite,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1.5,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text(
+                  'GỬI ĐÁP ÁN',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.5,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                const Text('🎯', style: TextStyle(fontSize: 24)),
+              ],
             ),
           ),
         ),
-        if (_level == '10digit' && _currentAttempt > 5) ...[
-          const SizedBox(height: 15),
+
+        // TROLL: Surrender button (keep this!)
+        if (_level == '8digit' && _currentAttempt > 5) ...[
+          const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
               onPressed: _surrender,
               style: ElevatedButton.styleFrom(
-                backgroundColor: GameColors.trollRed,
-                padding: const EdgeInsets.symmetric(vertical: 20),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15),
-                ),
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 18),
               ),
               child: const Text(
                 '🏳️ BẤM ĐÂY ĐỂ GIẢI THOÁT 🏳️',
-                style: TextStyle(
-                  color: GameColors.textWhite,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
             ),
           ),
@@ -638,113 +735,220 @@ class _CowsBullsGameScreenState extends State<CowsBullsGameScreen>
     );
   }
 
-  Widget _buildHistory() {
+  Widget _buildFeedbackCard(ThemeData theme) {
+    final isError = !_isWon && _isGameOver;
+    final isSuccess = _isWon;
+
+    Color bgColor;
+    Color textColor;
+    IconData icon;
+
+    if (isSuccess) {
+      bgColor = Colors.green.shade50;
+      textColor = Colors.green.shade900;
+      icon = Icons.celebration;
+    } else if (isError) {
+      bgColor = Colors.red.shade50;
+      textColor = Colors.red.shade900;
+      icon = Icons.sentiment_dissatisfied;
+    } else {
+      bgColor = Colors.orange.shade50;
+      textColor = Colors.orange.shade900;
+      icon = Icons.info_outline;
+    }
+
+    if (theme.brightness == Brightness.dark) {
+      bgColor = isSuccess
+          ? Colors.green.shade900.withOpacity(0.3)
+          : isError
+          ? Colors.red.shade900.withOpacity(0.3)
+          : Colors.orange.shade900.withOpacity(0.3);
+      textColor = isSuccess
+          ? Colors.green.shade200
+          : isError
+          ? Colors.red.shade200
+          : Colors.orange.shade200;
+    }
+
     return Container(
-      padding: const EdgeInsets.all(15),
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: GameColors.darkGray.withOpacity(0.7),
-        borderRadius: BorderRadius.circular(15),
+        color: bgColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: textColor.withOpacity(0.3), width: 2),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Lịch sử đoán:',
+          Icon(icon, color: textColor, size: 48),
+          const SizedBox(height: 12),
+          Text(
+            _feedbackMessage!,
             style: TextStyle(
-              color: GameColors.neonYellow,
-              fontSize: 16,
+              color: textColor,
+              fontSize: 18,
               fontWeight: FontWeight.bold,
+              height: 1.4,
             ),
+            textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 10),
-          ..._guessHistory.reversed.take(5).map((result) {
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      result.guess,
-                      style: const TextStyle(
-                        color: GameColors.textWhite,
-                        fontSize: 18,
-                        letterSpacing: 2,
-                      ),
-                    ),
-                  ),
-                  Text(
-                    '🐂 ${result.bulls}',
-                    style: const TextStyle(
-                      color: GameColors.successGreen,
-                      fontSize: 16,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Text(
-                    '🤡 ${result.cows}',
-                    style: const TextStyle(
-                      color: GameColors.warningOrange,
-                      fontSize: 16,
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }).toList(),
+          if (!_isGameOver) ...[
+            const SizedBox(height: 12),
+            TextButton(
+              onPressed: () {
+                setState(() => _feedbackMessage = null);
+              },
+              child: Text('Đóng', style: TextStyle(color: textColor)),
+            ),
+          ],
         ],
       ),
     );
   }
 
-  Widget _buildFakeAdOverlay() {
+  Widget _buildHistory(ThemeData theme) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.history,
+                  color: theme.colorScheme.secondary,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Lịch sử đoán:',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            ..._guessHistory.reversed.take(5).map((result) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        result.guess,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontFamily: 'monospace',
+                          letterSpacing: 3,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.green.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.green),
+                      ),
+                      child: Text(
+                        '🐂 ${result.bulls}',
+                        style: const TextStyle(
+                          color: Colors.green,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.orange),
+                      ),
+                      child: Text(
+                        '🤡 ${result.cows}',
+                        style: const TextStyle(
+                          color: Colors.orange,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // TROLL: Keep fake ad overlay!
+  Widget _buildFakeAdOverlay(ThemeData theme) {
     return Positioned.fill(
       child: GestureDetector(
         onTap: _closeFakeAd,
         child: Container(
-          color: Colors.black.withOpacity(0.8),
+          color: Colors.black.withOpacity(0.85),
           child: Center(
             child: Container(
-              margin: const EdgeInsets.all(40),
+              margin: const EdgeInsets.all(30),
               padding: const EdgeInsets.all(30),
               decoration: BoxDecoration(
-                color: GameColors.darkGray,
+                color: theme.cardColor,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: GameColors.neonYellow, width: 3),
+                border: Border.all(color: Colors.yellow.shade700, width: 3),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text(
-                    '🛒 QUẢNG CÁO',
-                    style: TextStyle(
-                      color: GameColors.neonYellow,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text('🛒', style: TextStyle(fontSize: 32)),
+                      const SizedBox(width: 8),
+                      Text(
+                        'QUẢNG CÁO',
+                        style: theme.textTheme.headlineMedium?.copyWith(
+                          color: Colors.yellow.shade700,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 20),
-                  const Text(
-                    'Thuốc Bổ Não Giá Rẻ\n💊 Giảm 99% hôm nay!\n🧠 Tăng IQ lên gấp đôi!\n\n(Đùa thôi, bấm X để đóng)',
-                    style: TextStyle(
-                      color: GameColors.textWhite,
-                      fontSize: 16,
-                      height: 1.5,
-                    ),
+                  const SizedBox(height: 24),
+                  Text(
+                    'Thuốc Bổ Não Giá Rẻ\n💊 Giảm 99% hôm nay!\n🧠 Tăng IQ lên gấp đôi!',
+                    style: theme.textTheme.titleLarge?.copyWith(height: 1.6),
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 16),
+                  Text(
+                    '(Đùa thôi, bấm X để đóng)',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontStyle: FontStyle.italic,
+                      color: theme.textTheme.bodySmall?.color,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
                   ElevatedButton(
                     onPressed: _closeFakeAd,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: GameColors.trollRed,
+                      backgroundColor: Colors.red,
+                      foregroundColor: Colors.white,
                       shape: const CircleBorder(),
-                      padding: const EdgeInsets.all(15),
+                      padding: const EdgeInsets.all(16),
                     ),
-                    child: const Icon(
-                      Icons.close,
-                      color: GameColors.textWhite,
-                      size: 30,
-                    ),
+                    child: const Icon(Icons.close, size: 32),
                   ),
                 ],
               ),
@@ -755,47 +959,46 @@ class _CowsBullsGameScreenState extends State<CowsBullsGameScreen>
     );
   }
 
-  Widget _buildGameOverActions() {
+  Widget _buildGameOverActions(ThemeData theme) {
     return Column(
       children: [
-        ElevatedButton.icon(
-          onPressed: _initGame,
-          icon: const Icon(Icons.refresh),
-          label: const Text('CHƠI LẠI'),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: GameColors.successGreen,
-            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(25),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            onPressed: _initGame,
+            icon: const Icon(Icons.refresh),
+            label: const Text('CHƠI LẠI'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 16),
             ),
           ),
         ),
-        const SizedBox(height: 15),
+        const SizedBox(height: 12),
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text(
-            'Về trang chủ',
-            style: TextStyle(color: GameColors.textGray),
-          ),
+          child: const Text('Về trang chủ'),
         ),
       ],
     );
   }
 
   void _showAchievementDialog(List newAchievements) {
+    final theme = Theme.of(context);
     showDialog(
       context: context,
       builder: (context) => Dialog(
-        backgroundColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         child: Container(
-          padding: const EdgeInsets.all(25),
+          padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [GameColors.neonCyan, GameColors.neonGreen],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
+            gradient: LinearGradient(
+              colors: [theme.colorScheme.primary, theme.colorScheme.secondary],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
-            borderRadius: BorderRadius.circular(30),
+            borderRadius: BorderRadius.circular(24),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -803,7 +1006,7 @@ class _CowsBullsGameScreenState extends State<CowsBullsGameScreen>
               const Text(
                 '🎉 HUY HIỆU MỚI!',
                 style: TextStyle(
-                  color: GameColors.textWhite,
+                  color: Colors.white,
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
                 ),
@@ -826,15 +1029,15 @@ class _CowsBullsGameScreenState extends State<CowsBullsGameScreen>
                             Text(
                               achievement.name,
                               style: const TextStyle(
-                                color: GameColors.textWhite,
+                                color: Colors.white,
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
                             Text(
                               achievement.description,
-                              style: const TextStyle(
-                                color: GameColors.textGray,
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.8),
                                 fontSize: 14,
                               ),
                             ),
@@ -849,14 +1052,12 @@ class _CowsBullsGameScreenState extends State<CowsBullsGameScreen>
               ElevatedButton(
                 onPressed: () => Navigator.pop(context),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: GameColors.textWhite,
+                  backgroundColor: Colors.white,
+                  foregroundColor: theme.colorScheme.primary,
                 ),
                 child: const Text(
                   'TUYỆT VỜI!',
-                  style: TextStyle(
-                    color: GameColors.darkGray,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.bold),
                 ),
               ),
             ],

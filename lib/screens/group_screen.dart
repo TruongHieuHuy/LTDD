@@ -1,81 +1,68 @@
 import 'package:flutter/material.dart';
+import '../utils/user_data_service.dart';
 
-class GroupScreen extends StatelessWidget {
+class GroupScreen extends StatefulWidget {
   const GroupScreen({super.key});
 
   @override
+  State<GroupScreen> createState() => _GroupScreenState();
+}
+
+class _GroupScreenState extends State<GroupScreen> {
+  final UserDataService _userService = UserDataService();
+
+  @override
+  void initState() {
+    super.initState();
+    // Lắng nghe thay đổi từ service
+    _userService.addListener(_onDataChanged);
+  }
+
+  @override
+  void dispose() {
+    _userService.removeListener(_onDataChanged);
+    super.dispose();
+  }
+
+  void _onDataChanged() {
+    setState(() {}); // Rebuild khi có thay đổi
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // Data thành viên với thông tin đầy đủ
-    final List<Map<String, dynamic>> members = [
-      {
-        'name': 'Trương Hiếu Huy',
-        'role': 'Team Leader',
-        'initial': 'H',
-        'mssv': '2280601273',
-        'phone': '0948677191',
-        'email': 'truonghieuhuy14101@gmail.com',
-        'class': '22DTHA2',
-        'isLeader': true,
-      },
-      {
-        'name': 'Nguyễn Hoàng Chung',
-        'role': 'Mobile Developer',
-        'initial': 'C',
-        'mssv': '2254810012',
-        'phone': '0987654321',
-        'email': 'chung.nguyen@example.com',
-        'class': 'DHKTPM18ATT',
-        'isLeader': false,
-      },
-      {
-        'name': 'Ngô Nguyễn Việt Thắng',
-        'role': 'UI/UX Designer',
-        'initial': 'T',
-        'mssv': '2254810078',
-        'phone': '0369852147',
-        'email': 'thang.ngo@example.com',
-        'class': 'DHKTPM18ATT',
-        'isLeader': false,
-      },
-      {
-        'name': 'Lê Nhật Tân',
-        'role': 'Backend Developer',
-        'initial': 'T',
-        'mssv': '2254810045',
-        'phone': '0741852963',
-        'email': 'tan.le@example.com',
-        'class': 'DHKTPM18ATT',
-        'isLeader': false,
-      },
-      {
-        'name': 'Đoàn Thành Phát',
-        'role': 'QA/Tester',
-        'initial': 'P',
-        'mssv': '2254810056',
-        'phone': '0258963147',
-        'email': 'phat.doan@example.com',
-        'class': 'DHKTPM18ATT',
-        'isLeader': false,
-      },
-    ];
+    // Lấy data từ service thay vì hardcode
+    final members = _userService.members;
+
+    final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA), // Màu nền xám nhẹ hiện đại
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: Colors.transparent,
+        backgroundColor:
+            theme.appBarTheme.backgroundColor ?? theme.scaffoldBackgroundColor,
         centerTitle: true,
-        title: const Text(
+        leading: IconButton(
+          icon: Icon(
+            Icons.arrow_back_ios_new,
+            color: theme.brightness == Brightness.dark
+                ? Colors.white
+                : Colors.black87,
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
           'Team Members',
-          style: TextStyle(
-            color: Colors.black87,
-            fontWeight: FontWeight.bold,
-            fontSize: 22,
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w600,
+            color: theme.brightness == Brightness.dark
+                ? Colors.white
+                : Colors.black87,
           ),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.more_horiz, color: Colors.black87),
+            icon: Icon(Icons.more_horiz, color: theme.iconTheme.color),
             onPressed: () {},
           ),
         ],
@@ -114,7 +101,7 @@ class GroupScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        'Dự án Flutter',
+                        'Gaming Squad',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 18,
@@ -123,7 +110,7 @@ class GroupScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '${members.length} Thành viên • Active',
+                        '${members.length} Warriors • Online',
                         style: TextStyle(
                           color: Colors.white.withOpacity(0.9),
                           fontSize: 14,
@@ -142,12 +129,10 @@ class GroupScreen extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   'Danh sách thành viên',
-                  style: TextStyle(
-                    fontSize: 18,
+                  style: theme.textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: Colors.black87,
                   ),
                 ),
                 TextButton(onPressed: () {}, child: const Text('Xem tất cả')),
@@ -190,10 +175,12 @@ class GroupScreen extends StatelessWidget {
       Colors.purpleAccent,
     ];
 
+    final theme = Theme.of(context);
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -245,19 +232,16 @@ class GroupScreen extends StatelessWidget {
                     children: [
                       Text(
                         member['name']!,
-                        style: const TextStyle(
+                        style: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                          color: Colors.black87,
                         ),
                       ),
                       Padding(
                         padding: const EdgeInsets.only(top: 4.0),
                         child: Text(
                           member['role']!,
-                          style: TextStyle(
-                            color: Colors.grey[600],
-                            fontSize: 13,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.textTheme.bodySmall?.color,
                           ),
                         ),
                       ),
@@ -267,21 +251,64 @@ class GroupScreen extends StatelessWidget {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    // Nút xem chi tiết
                     IconButton(
                       icon: Icon(
-                        Icons.message_outlined,
+                        Icons.info_outline,
                         color: Colors.grey[400],
                         size: 20,
                       ),
                       onPressed: () {
-                        // TODO: Open chat
+                        _showMemberDetailDialog(
+                          context,
+                          member,
+                          avatarColors[index % avatarColors.length],
+                        );
                       },
                     ),
-                    // Icon để xem chi tiết hoặc star cho leader
+                    // Icon leader hoặc menu actions
                     if (member['isLeader'] == true)
                       const Icon(Icons.star, color: Colors.amber, size: 20)
                     else
-                      Icon(Icons.menu, color: Colors.grey[400], size: 20),
+                      PopupMenuButton<String>(
+                        icon: Icon(
+                          Icons.more_vert,
+                          color: Colors.grey[400],
+                          size: 20,
+                        ),
+                        onSelected: (value) {
+                          if (value == 'edit') {
+                            _showEditMemberDialog(context, member, index);
+                          } else if (value == 'delete') {
+                            _confirmDeleteMember(context, member, index);
+                          }
+                        },
+                        itemBuilder: (context) => [
+                          const PopupMenuItem(
+                            value: 'edit',
+                            child: Row(
+                              children: [
+                                Icon(Icons.edit, size: 18),
+                                SizedBox(width: 8),
+                                Text('Chỉnh sửa'),
+                              ],
+                            ),
+                          ),
+                          const PopupMenuItem(
+                            value: 'delete',
+                            child: Row(
+                              children: [
+                                Icon(Icons.delete, size: 18, color: Colors.red),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Xóa',
+                                  style: TextStyle(color: Colors.red),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                   ],
                 ),
               ],
@@ -297,6 +324,8 @@ class GroupScreen extends StatelessWidget {
     Map<String, dynamic> member,
     Color themeColor,
   ) {
+    final theme = Theme.of(context);
+
     showDialog(
       context: context,
       builder: (context) => Dialog(
@@ -304,11 +333,7 @@ class GroupScreen extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [themeColor.withOpacity(0.1), Colors.white],
-            ),
+            color: theme.cardColor,
             borderRadius: BorderRadius.circular(24),
           ),
           child: Column(
@@ -331,10 +356,8 @@ class GroupScreen extends StatelessWidget {
               // Tên
               Text(
                 member['name']!,
-                style: const TextStyle(
-                  fontSize: 22,
+                style: theme.textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: Colors.black87,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -423,40 +446,232 @@ class GroupScreen extends StatelessWidget {
   }
 
   Widget _buildInfoRow(IconData icon, String label, String value, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.grey[50],
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
+    return Builder(
+      builder: (context) {
+        final theme = Theme.of(context);
+        final isDark = theme.brightness == Brightness.dark;
+
+        return Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: isDark
+                ? theme.colorScheme.surface
+                : theme.colorScheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: theme.dividerColor),
+          ),
+          child: Row(
+            children: [
+              Icon(icon, color: color, size: 20),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      value,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  // Hàm hiển thị dialog chỉnh sửa thành viên
+  void _showEditMemberDialog(
+    BuildContext context,
+    Map<String, dynamic> member,
+    int index,
+  ) {
+    final theme = Theme.of(context);
+    final nameController = TextEditingController(text: member['name']);
+    final roleController = TextEditingController(text: member['role']);
+    final mssvController = TextEditingController(text: member['mssv']);
+    final phoneController = TextEditingController(text: member['phone']);
+    final emailController = TextEditingController(text: member['email']);
+    final classController = TextEditingController(text: member['class']);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.edit, color: theme.colorScheme.primary),
+            const SizedBox(width: 8),
+            const Text('Chỉnh sửa thành viên'),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: InputDecoration(
+                  labelText: 'Họ và tên',
+                  prefixIcon: const Icon(Icons.person),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: roleController,
+                decoration: InputDecoration(
+                  labelText: 'Vai trò',
+                  prefixIcon: const Icon(Icons.work),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: mssvController,
+                decoration: InputDecoration(
+                  labelText: 'MSSV',
+                  prefixIcon: const Icon(Icons.badge),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: phoneController,
+                keyboardType: TextInputType.phone,
+                decoration: InputDecoration(
+                  labelText: 'Số điện thoại',
+                  prefixIcon: const Icon(Icons.phone),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: emailController,
+                keyboardType: TextInputType.emailAddress,
+                decoration: InputDecoration(
+                  labelText: 'Email',
+                  prefixIcon: const Icon(Icons.email),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: classController,
+                decoration: InputDecoration(
+                  labelText: 'Lớp',
+                  prefixIcon: const Icon(Icons.school),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Hủy'),
+          ),
+          ElevatedButton.icon(
+            onPressed: () {
+              _userService.updateMember(index, {
+                'name': nameController.text,
+                'role': roleController.text,
+                'mssv': mssvController.text,
+                'phone': phoneController.text,
+                'email': emailController.text,
+                'class': classController.text,
+                'initial': nameController.text.isNotEmpty
+                    ? nameController.text.substring(0, 1)
+                    : 'N',
+              });
+
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('✅ Đã cập nhật thành viên thành công!'),
+                  backgroundColor: Colors.green,
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            },
+            icon: const Icon(Icons.save),
+            label: const Text('Lưu'),
+          ),
+        ],
       ),
-      child: Row(
-        children: [
-          Icon(icon, color: color, size: 20),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  value,
-                  style: const TextStyle(
-                    color: Colors.black87,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
+    );
+  }
+
+  // Hàm xác nhận xóa thành viên
+  void _confirmDeleteMember(
+    BuildContext context,
+    Map<String, dynamic> member,
+    int index,
+  ) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.warning, color: Colors.orange),
+            SizedBox(width: 8),
+            Text('Xác nhận xóa'),
+          ],
+        ),
+        content: Text('Bạn có chắc chắn muốn xóa ${member['name']} khỏi nhóm?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Hủy'),
+          ),
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
             ),
+            onPressed: () {
+              try {
+                _userService.removeMember(index);
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('✅ Đã xóa ${member['name']} khỏi nhóm'),
+                    backgroundColor: Colors.red,
+                    duration: const Duration(seconds: 2),
+                  ),
+                );
+              } catch (e) {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('❌ $e'), backgroundColor: Colors.red),
+                );
+              }
+            },
+            icon: const Icon(Icons.delete),
+            label: const Text('Xóa'),
           ),
         ],
       ),

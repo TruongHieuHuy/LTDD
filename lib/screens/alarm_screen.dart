@@ -146,21 +146,44 @@ class _AlarmScreenState extends State<AlarmScreen>
     final alarms = alarmProvider.alarms;
     final now = DateTime.now();
     final greeting = _getGreeting(now.hour);
+    final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0D1B2A),
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(greeting, now, alarms),
-            Expanded(
-              child: alarms.isEmpty
-                  ? _buildEmptyState()
-                  : _buildAlarmList(alarms),
-            ),
-            _buildBottomActionBar(),
-          ],
+      backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: AppBar(
+        backgroundColor:
+            theme.appBarTheme.backgroundColor ?? theme.scaffoldBackgroundColor,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(
+            Icons.arrow_back_ios_new,
+            color: theme.brightness == Brightness.dark
+                ? Colors.white
+                : Colors.black87,
+          ),
+          onPressed: () => Navigator.pop(context),
         ),
+        title: Text(
+          'Báo thức',
+          style: TextStyle(
+            color: theme.brightness == Brightness.dark
+                ? Colors.white
+                : Colors.black87,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        centerTitle: true,
+      ),
+      body: Column(
+        children: [
+          _buildHeader(greeting, now, alarms),
+          Expanded(
+            child: alarms.isEmpty
+                ? _buildEmptyState()
+                : _buildAlarmList(alarms),
+          ),
+          _buildBottomActionBar(),
+        ],
       ),
     );
   }
@@ -179,23 +202,22 @@ class _AlarmScreenState extends State<AlarmScreen>
 
   Widget _buildHeader(String greeting, DateTime now, List<AlarmModel> alarms) {
     final enabledAlarms = alarms.where((a) => a.isEnabled).toList();
+    final theme = Theme.of(context);
 
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [const Color(0xFF1B263B), const Color(0xFF0D1B2A)],
-        ),
+        color: theme.brightness == Brightness.dark
+            ? const Color(0xFF1E293B)
+            : Colors.white,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             greeting,
-            style: const TextStyle(
-              color: Color(0xFF778DA9),
+            style: TextStyle(
+              color: theme.colorScheme.secondary,
               fontSize: 16,
               fontWeight: FontWeight.w500,
             ),
@@ -203,8 +225,7 @@ class _AlarmScreenState extends State<AlarmScreen>
           const SizedBox(height: 8),
           Text(
             '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}',
-            style: const TextStyle(
-              color: Colors.white,
+            style: theme.textTheme.headlineLarge?.copyWith(
               fontSize: 56,
               fontWeight: FontWeight.w300,
               letterSpacing: -2,

@@ -3,10 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'dart:math';
 import 'dart:async';
-import '../../utils/game_utils/game_colors.dart';
 import '../../utils/game_utils/meme_texts.dart';
-import '../../widgets/game_widgets/patience_bar.dart';
-import '../../widgets/game_widgets/meme_feedback.dart';
 import '../../widgets/game_widgets/firework_effect.dart';
 import '../../providers/game_provider.dart';
 import '../../utils/game_audio_service.dart';
@@ -59,8 +56,8 @@ class _GuessNumberGameScreenState extends State<GuessNumberGameScreen>
           break;
         case 'hard':
           _minRange = 1;
-          _maxRange = 200;
-          _maxAttempts = 3;
+          _maxRange = 150; // Reduced from 200
+          _maxAttempts = 5; // Increased from 3
           break;
         default: // normal
           _minRange = 1;
@@ -252,314 +249,463 @@ class _GuessNumberGameScreenState extends State<GuessNumberGameScreen>
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(gradient: GameColors.darkGradient),
-        child: SafeArea(
-          child: AnimatedBuilder(
-            animation: _shakeController,
-            builder: (context, child) {
-              final shake = sin(_shakeController.value * pi * 8) * 10;
-              return Transform.translate(
-                offset: Offset(shake, 0),
-                child: child,
-              );
-            },
-            child: Stack(
-              children: [
-                Column(
-                  children: [
-                    _buildHeader(),
-                    Expanded(
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.all(20),
-                        child: Column(
-                          children: [
-                            if (!_isGameOver) ...[
-                              PatienceBar(
-                                currentAttempts: _currentAttempt,
-                                maxAttempts: _maxAttempts,
-                              ),
-                              const SizedBox(height: 20),
-                              _buildInputArea(),
-                              const SizedBox(height: 20),
-                              _buildGuessButton(),
-                            ],
-                            if (_feedbackMessage != null) ...[
-                              const SizedBox(height: 20),
-                              MemeFeedback(
-                                message: _feedbackMessage!,
-                                isSuccess: _isWon,
-                                onDismiss: () {
-                                  setState(() => _feedbackMessage = null);
-                                },
-                              ),
-                            ],
-                            if (_guessHistory.isNotEmpty) ...[
-                              const SizedBox(height: 20),
-                              _buildHistory(),
-                            ],
-                            if (_isGameOver) ...[
-                              const SizedBox(height: 20),
-                              _buildGameOverActions(),
-                            ],
-                          ],
+      backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: AppBar(
+        title: const Text(
+          '🎲 Đoán Số',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        centerTitle: true,
+        backgroundColor:
+            theme.appBarTheme.backgroundColor ?? theme.scaffoldBackgroundColor,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(
+            Icons.arrow_back_ios_new,
+            color: theme.brightness == Brightness.dark
+                ? Colors.white
+                : Colors.black87,
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      body: SafeArea(
+        child: AnimatedBuilder(
+          animation: _shakeController,
+          builder: (context, child) {
+            final shake = sin(_shakeController.value * pi * 8) * 10;
+            return Transform.translate(offset: Offset(shake, 0), child: child);
+          },
+          child: Stack(
+            children: [
+              Column(
+                children: [
+                  // Game info banner
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: colorScheme.primary.withOpacity(0.1),
+                      border: Border(
+                        bottom: BorderSide(
+                          color: colorScheme.primary.withOpacity(0.3),
                         ),
                       ),
                     ),
-                  ],
-                ),
-                if (_showFireworks)
-                  const Positioned.fill(child: FireworkEffect()),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+                    child: Column(
+                      children: [
+                        _buildDifficultySelector(theme),
+                        const SizedBox(height: 12),
+                        Text(
+                          'Số từ $_minRange đến $_maxRange',
+                          style: theme.textTheme.bodyLarge?.copyWith(
+                            color: colorScheme.secondary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
 
-  Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: GameColors.darkGray.withOpacity(0.5),
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(30),
-          bottomRight: Radius.circular(30),
-        ),
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.arrow_back, color: GameColors.neonCyan),
-                onPressed: () => Navigator.pop(context),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        children: [
+                          // Patience bar (custom design)
+                          if (!_isGameOver) ...[
+                            _buildPatienceBar(theme),
+                            const SizedBox(height: 24),
+                            _buildInputArea(theme),
+                            const SizedBox(height: 20),
+                            _buildGuessButton(theme),
+                          ],
+
+                          // Feedback message
+                          if (_feedbackMessage != null) ...[
+                            const SizedBox(height: 24),
+                            _buildFeedbackCard(theme),
+                          ],
+
+                          // Guess history
+                          if (_guessHistory.isNotEmpty) ...[
+                            const SizedBox(height: 24),
+                            _buildHistory(theme),
+                          ],
+
+                          // Game over actions
+                          if (_isGameOver) ...[
+                            const SizedBox(height: 24),
+                            _buildGameOverActions(theme),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              const Text(
-                '🎲 ĐOÁN SỐ',
-                style: TextStyle(
-                  color: GameColors.neonYellow,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+
+              // Fireworks overlay
+              if (_showFireworks)
+                const Positioned.fill(child: FireworkEffect()),
             ],
           ),
-          const SizedBox(height: 10),
-          _buildDifficultySelector(),
-          const SizedBox(height: 10),
-          Text(
-            'Số từ $_minRange đến $_maxRange',
-            style: const TextStyle(color: GameColors.textGray, fontSize: 16),
-          ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildDifficultySelector() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+  // Patience bar with theme colors
+  Widget _buildPatienceBar(ThemeData theme) {
+    final progress = _currentAttempt / _maxAttempts;
+    final remaining = _maxAttempts - _currentAttempt;
+
+    Color barColor;
+    if (progress < 0.5) {
+      barColor = Colors.green;
+    } else if (progress < 0.8) {
+      barColor = Colors.orange;
+    } else {
+      barColor = Colors.red;
+    }
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Lượt còn lại',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Text(
+                  '$remaining/$_maxAttempts',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    color: barColor,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: LinearProgressIndicator(
+                value: 1 - progress,
+                minHeight: 12,
+                backgroundColor: theme.brightness == Brightness.dark
+                    ? Colors.grey.shade800
+                    : Colors.grey.shade200,
+                color: barColor,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDifficultySelector(ThemeData theme) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      alignment: WrapAlignment.center,
       children: [
-        _buildDifficultyChip('Tấm Chiếu Mới', 'easy', '1-50 (7 lượt)'),
-        _buildDifficultyChip('Dân Chơi Hệ', 'normal', '1-100 (5 lượt)'),
-        _buildDifficultyChip('Điên Không?', 'hard', '1-200 (3 lượt)'),
+        _buildDifficultyChip(theme, 'Tấm Chiếu Mới', 'easy', '1-50 (7 lượt)'),
+        _buildDifficultyChip(theme, 'Dân Chơi Hệ', 'normal', '1-100 (5 lượt)'),
+        _buildDifficultyChip(theme, 'Điên Không?', 'hard', '1-200 (3 lượt)'),
       ],
     );
   }
 
-  Widget _buildDifficultyChip(String label, String value, String hint) {
+  Widget _buildDifficultyChip(
+    ThemeData theme,
+    String label,
+    String value,
+    String hint,
+  ) {
     final isSelected = _difficulty == value;
+    final colorScheme = theme.colorScheme;
+
     return Tooltip(
       message: hint,
-      child: GestureDetector(
-        onTap: _isGameOver
+      child: FilterChip(
+        selected: isSelected,
+        label: Text(label),
+        onSelected: _isGameOver
             ? null
-            : () {
+            : (_) {
                 if (_difficulty != value) {
                   setState(() => _difficulty = value);
                   _initGame();
                 }
               },
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: isSelected ? GameColors.neonPink : GameColors.darkCharcoal,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: isSelected ? GameColors.neonPink : GameColors.textGray,
-              width: 2,
-            ),
-          ),
-          child: Text(
-            label,
-            style: TextStyle(
-              color: isSelected ? GameColors.textWhite : GameColors.textGray,
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+        backgroundColor: theme.cardColor,
+        selectedColor: colorScheme.primary,
+        checkmarkColor: Colors.white,
+        labelStyle: TextStyle(
+          color: isSelected ? Colors.white : theme.textTheme.bodyLarge?.color,
+          fontWeight: FontWeight.w600,
+          fontSize: 12,
         ),
       ),
     );
   }
 
-  Widget _buildInputArea() {
+  Widget _buildInputArea(ThemeData theme) {
+    return Card(
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.lightbulb_outline,
+                  color: theme.colorScheme.secondary,
+                  size: 24,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Nhập số của bạn:',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _guessController,
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              textAlign: TextAlign.center,
+              style: theme.textTheme.headlineLarge?.copyWith(
+                fontSize: 48,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 4,
+              ),
+              decoration: InputDecoration(
+                hintText: '???',
+                hintStyle: TextStyle(
+                  color: theme.textTheme.bodyLarge?.color?.withOpacity(0.3),
+                ),
+              ),
+              onSubmitted: (_) => _makeGuess(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGuessButton(ThemeData theme) {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: _makeGuess,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: theme.colorScheme.primary,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 18),
+          elevation: 4,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text(
+              'CHỐT ĐƠN',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.5,
+              ),
+            ),
+            const SizedBox(width: 8),
+            const Text('🎯', style: TextStyle(fontSize: 24)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFeedbackCard(ThemeData theme) {
+    final isError = !_isWon && _isGameOver;
+    final isSuccess = _isWon;
+
+    Color bgColor;
+    Color textColor;
+    IconData icon;
+
+    if (isSuccess) {
+      bgColor = Colors.green.shade50;
+      textColor = Colors.green.shade900;
+      icon = Icons.celebration;
+    } else if (isError) {
+      bgColor = Colors.red.shade50;
+      textColor = Colors.red.shade900;
+      icon = Icons.sentiment_dissatisfied;
+    } else {
+      bgColor = Colors.orange.shade50;
+      textColor = Colors.orange.shade900;
+      icon = Icons.info_outline;
+    }
+
+    if (theme.brightness == Brightness.dark) {
+      bgColor = isSuccess
+          ? Colors.green.shade900.withOpacity(0.3)
+          : isError
+          ? Colors.red.shade900.withOpacity(0.3)
+          : Colors.orange.shade900.withOpacity(0.3);
+      textColor = isSuccess
+          ? Colors.green.shade200
+          : isError
+          ? Colors.red.shade200
+          : Colors.orange.shade200;
+    }
+
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: GameColors.darkGray,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: GameColors.neonCyan, width: 2),
+        color: bgColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: textColor.withOpacity(0.3), width: 2),
       ),
       child: Column(
         children: [
-          const Text(
-            'Nhập số của bạn:',
+          Icon(icon, color: textColor, size: 48),
+          const SizedBox(height: 12),
+          Text(
+            _feedbackMessage!,
             style: TextStyle(
-              color: GameColors.neonCyan,
+              color: textColor,
               fontSize: 18,
               fontWeight: FontWeight.bold,
+              height: 1.4,
             ),
-          ),
-          const SizedBox(height: 15),
-          TextField(
-            controller: _guessController,
-            keyboardType: TextInputType.number,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: GameColors.textWhite,
-              fontSize: 36,
-              fontWeight: FontWeight.bold,
-            ),
-            decoration: InputDecoration(
-              hintText: '???',
-              hintStyle: const TextStyle(color: GameColors.textGray),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(15),
-                borderSide: const BorderSide(color: GameColors.neonYellow),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(15),
-                borderSide: const BorderSide(
-                  color: GameColors.neonYellow,
-                  width: 2,
-                ),
-              ),
-            ),
-            onSubmitted: (_) => _makeGuess(),
           ),
+          if (!_isGameOver) ...[
+            const SizedBox(height: 12),
+            TextButton(
+              onPressed: () {
+                setState(() => _feedbackMessage = null);
+              },
+              child: Text('Đóng', style: TextStyle(color: textColor)),
+            ),
+          ],
         ],
       ),
     );
   }
 
-  Widget _buildGuessButton() {
-    return ElevatedButton(
-      onPressed: _makeGuess,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: GameColors.neonPink,
-        padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 18),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-        elevation: 10,
-        shadowColor: GameColors.neonPink.withOpacity(0.5),
-      ),
-      child: const Text(
-        'CHỐT ĐƠN 🎯',
-        style: TextStyle(
-          color: GameColors.textWhite,
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
-          letterSpacing: 1.5,
+  Widget _buildHistory(ThemeData theme) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.history,
+                  color: theme.colorScheme.secondary,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Lịch sử đoán:',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _guessHistory.map((guess) {
+                final isClose = (guess - _targetNumber).abs() <= 10;
+                return Chip(
+                  label: Text(
+                    guess.toString(),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                  backgroundColor: isClose
+                      ? Colors.orange.shade100
+                      : theme.brightness == Brightness.dark
+                      ? Colors.grey.shade800
+                      : Colors.grey.shade200,
+                  side: BorderSide(
+                    color: isClose ? Colors.orange : Colors.transparent,
+                    width: 2,
+                  ),
+                );
+              }).toList(),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildHistory() {
-    return Container(
-      padding: const EdgeInsets.all(15),
-      decoration: BoxDecoration(
-        color: GameColors.darkGray.withOpacity(0.7),
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Lịch sử đoán:',
-            style: TextStyle(
-              color: GameColors.neonYellow,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: _guessHistory.map((guess) {
-              final isClose = (guess - _targetNumber).abs() <= 10;
-              return Chip(
-                label: Text(
-                  guess.toString(),
-                  style: const TextStyle(color: GameColors.textWhite),
-                ),
-                backgroundColor: isClose
-                    ? GameColors.warningOrange
-                    : GameColors.trollRed,
-              );
-            }).toList(),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildGameOverActions() {
+  Widget _buildGameOverActions(ThemeData theme) {
     return Column(
       children: [
-        ElevatedButton.icon(
-          onPressed: _initGame,
-          icon: const Icon(Icons.refresh),
-          label: const Text('CHƠI LẠI'),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: GameColors.successGreen,
-            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(25),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            onPressed: _initGame,
+            icon: const Icon(Icons.refresh),
+            label: const Text('CHƠI LẠI'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 16),
             ),
           ),
         ),
-        const SizedBox(height: 15),
+        const SizedBox(height: 12),
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text(
-            'Về trang chủ',
-            style: TextStyle(color: GameColors.textGray),
-          ),
+          child: const Text('Về trang chủ'),
         ),
       ],
     );
   }
 
   void _showAchievementDialog(List newAchievements) {
+    final theme = Theme.of(context);
     showDialog(
       context: context,
       builder: (context) => Dialog(
-        backgroundColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         child: Container(
-          padding: const EdgeInsets.all(25),
+          padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [GameColors.neonYellow, GameColors.neonOrange],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
+            gradient: LinearGradient(
+              colors: [theme.colorScheme.primary, theme.colorScheme.secondary],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
-            borderRadius: BorderRadius.circular(30),
+            borderRadius: BorderRadius.circular(24),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -567,7 +713,7 @@ class _GuessNumberGameScreenState extends State<GuessNumberGameScreen>
               const Text(
                 '🎉 HUY HIỆU MỚI!',
                 style: TextStyle(
-                  color: GameColors.textWhite,
+                  color: Colors.white,
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
                 ),
@@ -590,15 +736,15 @@ class _GuessNumberGameScreenState extends State<GuessNumberGameScreen>
                             Text(
                               achievement.name,
                               style: const TextStyle(
-                                color: GameColors.textWhite,
+                                color: Colors.white,
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
                             Text(
                               achievement.description,
-                              style: const TextStyle(
-                                color: GameColors.textGray,
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.8),
                                 fontSize: 14,
                               ),
                             ),
@@ -613,14 +759,12 @@ class _GuessNumberGameScreenState extends State<GuessNumberGameScreen>
               ElevatedButton(
                 onPressed: () => Navigator.pop(context),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: GameColors.textWhite,
+                  backgroundColor: Colors.white,
+                  foregroundColor: theme.colorScheme.primary,
                 ),
                 child: const Text(
                   'TUYỆT VỜI!',
-                  style: TextStyle(
-                    color: GameColors.darkGray,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.bold),
                 ),
               ),
             ],

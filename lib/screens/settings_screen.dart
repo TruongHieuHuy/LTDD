@@ -48,7 +48,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
             elevation: 0,
             leading: IconButton(
               icon: Icon(Icons.arrow_back_ios_new, color: textColor),
-              onPressed: () => Navigator.pop(context),
+              onPressed: () {
+                // Quay về màn hình trước đó hoặc về ModularNavigation nếu không có
+                if (Navigator.canPop(context)) {
+                  Navigator.pop(context);
+                } else {
+                  Navigator.pushReplacementNamed(context, '/modular');
+                }
+              },
             ),
           ),
           body: ListView(
@@ -454,10 +461,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
           if (confirmed == true && context.mounted) {
             await context.read<AuthProvider>().logout();
             if (context.mounted) {
-              Navigator.of(context).pushNamedAndRemoveUntil(
-                '/',
-                (route) => false,
-              );
+              // Đăng xuất - về trang login và xóa hết navigation stack
+              Navigator.of(
+                context,
+              ).pushNamedAndRemoveUntil('/login', (route) => false);
             }
           }
         },

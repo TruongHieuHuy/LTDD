@@ -5,6 +5,8 @@ import '../models/app_settings_model.dart';
 import '../models/game_score_model.dart';
 import '../models/achievement_model.dart';
 import '../models/auth_model.dart';
+import '../models/chatbot_message_model.dart';
+import '../models/post_model.dart';
 
 class DatabaseService {
   static const String alarmsBoxName = 'alarms';
@@ -12,6 +14,8 @@ class DatabaseService {
   static const String settingsBoxName = 'settings';
   static const String gameScoresBoxName = 'game_scores';
   static const String achievementsBoxName = 'achievements';
+  static const String chatbotMessagesBoxName = 'chatbot_messages';
+  static const String postsBoxName = 'posts';
   static const String settingsKey = 'app_settings';
 
   // Boxes
@@ -20,6 +24,8 @@ class DatabaseService {
   static Box<AppSettingsModel>? _settingsBox;
   static Box<GameScoreModel>? _gameScoresBox;
   static Box<AchievementModel>? _achievementsBox;
+  static Box<ChatbotMessage>? _chatbotMessagesBox;
+  static Box<Post>? _postsBox;
 
   // Getters
   static Box<AlarmModel> get alarmsBox => _alarmsBox!;
@@ -27,6 +33,8 @@ class DatabaseService {
   static Box<AppSettingsModel> get settingsBox => _settingsBox!;
   static Box<GameScoreModel> get gameScoresBox => _gameScoresBox!;
   static Box<AchievementModel> get achievementsBox => _achievementsBox!;
+  static Box<ChatbotMessage> get chatbotMessagesBox => _chatbotMessagesBox!;
+  static Box<Post> get postsBox => _postsBox!;
 
   /// Initialize Hive and open all boxes
   static Future<void> init() async {
@@ -39,6 +47,8 @@ class DatabaseService {
     Hive.registerAdapter(GameScoreModelAdapter());
     Hive.registerAdapter(AchievementModelAdapter());
     Hive.registerAdapter(AuthModelAdapter());
+    Hive.registerAdapter(ChatbotMessageAdapter());
+    Hive.registerAdapter(PostAdapter());
 
     // Open boxes
     _alarmsBox = await Hive.openBox<AlarmModel>(alarmsBoxName);
@@ -50,6 +60,10 @@ class DatabaseService {
     _achievementsBox = await Hive.openBox<AchievementModel>(
       achievementsBoxName,
     );
+    _chatbotMessagesBox = await Hive.openBox<ChatbotMessage>(
+      chatbotMessagesBoxName,
+    );
+    _postsBox = await Hive.openBox<Post>(postsBoxName);
 
     // Initialize settings if not exists
     if (_settingsBox!.isEmpty) {
@@ -389,5 +403,49 @@ class DatabaseService {
     // Persistent Player (play 100 games - tracked separately)
 
     return unlockedAchievements;
+  }
+
+  // ==================== CHATBOT MESSAGE METHODS ====================
+
+  /// Save a chatbot message
+  static Future<void> saveChatbotMessage(ChatbotMessage message) async {
+    await _chatbotMessagesBox!.add(message);
+  }
+
+  /// Get all chatbot messages sorted by timestamp
+  static List<ChatbotMessage> getAllChatbotMessages() {
+    final messages = _chatbotMessagesBox!.values.toList();
+    messages.sort((a, b) => a.timestamp.compareTo(b.timestamp));
+    return messages;
+  }
+
+  /// Get recent chatbot messages (last n messages)
+  static List<ChatbotMessage> getRecentChatbotMessages({int limit = 50}) {
+    final messages = getAllChatbotMessages();
+    if (messages.length <= limit) return messages;
+    return messages.sublist(messages.length - limit);
+  }
+
+  /// Clear all chatbot messages
+  static Future<void> clearChatbotMessages() async {
+    await _chatbotMessagesBox!.clear();
+  }
+
+  /// Delete specific chatbot message by key
+  static Future<void> deleteChatbotMessage(dynamic key) async {
+    await _chatbotMessagesBox!.delete(key);
+  }
+
+  /// Get chatbot messages count
+  static int getChatbotMessagesCount() {
+    return _chatbotMessagesBox!.length;
+  }
+
+  /// Mark all messages as seen
+  static Future<void> markAllChatbotMessagesAsSeen() async {
+    for (var message in _chatbotMessagesBox!.values) {
+      message.isSeen = true;
+      await message.save();
+    }
   }
 }
