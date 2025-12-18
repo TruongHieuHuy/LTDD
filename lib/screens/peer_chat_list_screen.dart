@@ -368,14 +368,16 @@ class _PeerChatListScreenState extends State<PeerChatListScreen> {
 
     // Load friends from API
     final response = await ApiService().getFriends();
-    
+
     if (!context.mounted) return;
     Navigator.pop(context); // Close loading
 
     if (!response.success || response.data == null || response.data!.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(response.message ?? 'Bạn chưa có bạn bè nào. Hãy kết bạn trước!'),
+          content: Text(
+            response.message ?? 'Bạn chưa có bạn bè nào. Hãy kết bạn trước!',
+          ),
           action: SnackBarAction(
             label: 'Tìm bạn',
             onPressed: () => Navigator.pushNamed(context, '/search-friends'),
@@ -445,7 +447,9 @@ class _PeerChatListScreenState extends State<PeerChatListScreen> {
                                     errorBuilder: (_, __, ___) => Text(
                                       friend.username[0].toUpperCase(),
                                       style: TextStyle(
-                                        color: Theme.of(context).colorScheme.primary,
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.primary,
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
@@ -454,7 +458,9 @@ class _PeerChatListScreenState extends State<PeerChatListScreen> {
                               : Text(
                                   friend.username[0].toUpperCase(),
                                   style: TextStyle(
-                                    color: Theme.of(context).colorScheme.primary,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -477,7 +483,8 @@ class _PeerChatListScreenState extends State<PeerChatListScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => PeerChatScreen(member: memberData),
+                              builder: (context) =>
+                                  PeerChatScreen(member: memberData),
                             ),
                           );
                         },
