@@ -379,8 +379,12 @@ class UserProfile {
   });
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
+    // Safe parsing: handle both int and string from backend
+    final rawId = json['id'];
+    final id = rawId is int ? rawId : int.tryParse(rawId.toString()) ?? 0;
+    
     return UserProfile(
-      id: json['id'],
+      id: id,
       username: json['username'],
       email: json['email'],
       avatarUrl: json['avatarUrl'],
