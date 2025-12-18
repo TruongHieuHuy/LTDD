@@ -200,7 +200,6 @@ class _PostsScreenState extends State<PostsScreen>
 
   Future<void> _handleLike(PostData post) async {
     try {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final apiService = ApiService();
 
       // Optimistic update
@@ -274,7 +273,6 @@ class _PostsScreenState extends State<PostsScreen>
 
   Future<void> _handleSave(PostData post) async {
     try {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final apiService = ApiService();
 
       final result = await apiService.toggleSavePost(post.id);
@@ -346,7 +344,6 @@ class _PostsScreenState extends State<PostsScreen>
     if (confirm != true) return;
 
     try {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final apiService = ApiService();
 
       await apiService.deletePost(post.id);
@@ -372,7 +369,6 @@ class _PostsScreenState extends State<PostsScreen>
 
   Future<void> _handleFollow(PostData post) async {
     try {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final apiService = ApiService();
 
       final result = await apiService.toggleFollow(post.userId);
@@ -755,7 +751,7 @@ class _PostCard extends StatelessWidget {
                             size: 14,
                             color: Colors.grey[600],
                           ),
-                          if (post.category != null) ..[
+                          if (post.category != null) ...[
                             const SizedBox(width: 8),
                             Container(
                               padding: const EdgeInsets.symmetric(
@@ -772,7 +768,7 @@ class _PostCard extends StatelessWidget {
                                       size: 12, color: Colors.blue),
                                   const SizedBox(width: 3),
                                   Text(
-                                    _getCategoryLabel(post.category),
+                                    _getCategoryLabel(post.category!),
                                     style: const TextStyle(
                                       fontSize: 11,
                                       color: Colors.blue,
@@ -782,7 +778,7 @@ class _PostCard extends StatelessWidget {
                                 ],
                               ),
                             ),
-                          ],
+                          ]
                         ],
                       ),
                     ],
@@ -1103,7 +1099,7 @@ class _CreatePostDialogState extends State<_CreatePostDialog> {
 
             // Game category dropdown
             DropdownButtonFormField<String>(
-              value: _category,
+              initialValue: _category,
               decoration: const InputDecoration(
                 labelText: 'Thể loại game (tuỳ chọn)',
                 border: OutlineInputBorder(),
@@ -1127,7 +1123,7 @@ class _CreatePostDialogState extends State<_CreatePostDialog> {
 
             // Visibility dropdown
             DropdownButtonFormField<String>(
-              value: _visibility,
+              initialValue: _visibility,
               decoration: const InputDecoration(
                 labelText: 'Quyền riêng tư',
                 border: OutlineInputBorder(),
@@ -1235,7 +1231,6 @@ class _EditPostDialogState extends State<_EditPostDialog> {
     setState(() => _isLoading = true);
 
     try {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final apiService = ApiService();
 
       await apiService.updatePost(
@@ -1279,7 +1274,7 @@ class _EditPostDialogState extends State<_EditPostDialog> {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
-              value: _visibility,
+              initialValue: _visibility,
               decoration: const InputDecoration(
                 labelText: 'Quyền riêng tư',
                 border: OutlineInputBorder(),
@@ -1370,7 +1365,6 @@ class _CommentBottomSheetState extends State<_CommentBottomSheet> {
     setState(() => _isSending = true);
 
     try {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final apiService = ApiService();
 
       final comment = await apiService.addComment(

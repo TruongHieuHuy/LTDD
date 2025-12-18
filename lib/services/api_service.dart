@@ -1080,18 +1080,18 @@ extension PostsAPI on ApiService {
   Future<String> uploadImage(String filePath) async {
     final url = Uri.parse('${ApiService.baseUrl}/api/upload');
     final request = http.MultipartRequest('POST', url);
-    
+
     // Add auth header
     if (_authToken != null) {
       request.headers['Authorization'] = 'Bearer $_authToken';
     }
-    
+
     // Add file
     request.files.add(await http.MultipartFile.fromPath('image', filePath));
-    
+
     final response = await request.send();
     final responseBody = await response.stream.bytesToString();
-    
+
     if (response.statusCode == 200) {
       final data = jsonDecode(responseBody);
       return data['imageUrl'];
