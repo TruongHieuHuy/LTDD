@@ -420,7 +420,17 @@ class _PostsScreenState extends State<PostsScreen>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      builder: (context) => _CommentBottomSheet(post: post),
+      builder: (context) => _CommentBottomSheet(
+        post: post,
+        onPostUpdated: () {
+          // Refresh posts to update comment count
+          if (_tabController.index == 0) {
+            _loadPosts();
+          } else {
+            _loadMyPosts();
+          }
+        },
+      ),
     );
   }
 
@@ -1615,8 +1625,9 @@ class _EditPostDialogState extends State<_EditPostDialog> {
 
 class _CommentBottomSheet extends StatefulWidget {
   final PostData post;
+  final VoidCallback onPostUpdated;
 
-  const _CommentBottomSheet({required this.post});
+  const _CommentBottomSheet({required this.post, required this.onPostUpdated});
 
   @override
   State<_CommentBottomSheet> createState() => _CommentBottomSheetState();
@@ -1631,6 +1642,7 @@ class _CommentBottomSheetState extends State<_CommentBottomSheet> {
   @override
   void initState() {
     super.initState();
+    print('DEBUG: _CommentBottomSheet initState for postId: ${widget.post.id}');
     _loadComments();
   }
 
@@ -1641,17 +1653,22 @@ class _CommentBottomSheetState extends State<_CommentBottomSheet> {
   }
 
   Future<void> _loadComments() async {
+    print('DEBUG: _loadComments called for postId: ${widget.post.id}');
     setState(() => _isLoading = true);
 
     try {
       final apiService = ApiService();
 
       final post = await apiService.getPost(widget.post.id);
+      print(
+        'DEBUG: Post loaded, comments count: ${post.comments?.length ?? 0}',
+      );
       setState(() {
         _comments = post.comments ?? [];
         _isLoading = false;
       });
     } catch (e) {
+      print('DEBUG: Error loading comments: $e');
       setState(() => _isLoading = false);
     }
   }
@@ -1686,6 +1703,9 @@ class _CommentBottomSheetState extends State<_CommentBottomSheet> {
       });
 
       print('DEBUG: UI updated, comments count: ${_comments.length}');
+
+      // Refresh post data to update comment count
+      widget.onPostUpdated();
     } catch (e) {
       print('DEBUG: Error adding comment: $e');
       setState(() => _isSending = false);
@@ -1699,6 +1719,9 @@ class _CommentBottomSheetState extends State<_CommentBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
+    print(
+      'DEBUG: Building comment sheet, _isLoading: $_isLoading, comments count: ${_comments.length}',
+    );
     return DraggableScrollableSheet(
       initialChildSize: 0.7,
       minChildSize: 0.5,
@@ -1716,9 +1739,12 @@ class _CommentBottomSheetState extends State<_CommentBottomSheet> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'Bình luận',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  Text(
+                    'Bình luận (${_comments.length})',
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   IconButton(
                     icon: const Icon(Icons.close),

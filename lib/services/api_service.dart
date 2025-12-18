@@ -1163,7 +1163,9 @@ extension PostsAPI on ApiService {
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
-      return PostData.fromJson(data['post']);
+      print('DEBUG: getPost response: ${data.toString().substring(0, 200)}...');
+      print('DEBUG: comments in response: ${data['comments']?.length ?? 0}');
+      return PostData.fromJson(data);
     } else {
       throw Exception(
         'Failed to get post: ${jsonDecode(response.body)['error'] ?? response.statusCode}',
