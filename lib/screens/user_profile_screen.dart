@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 
 /// Màn hình hiển thị thông tin profile người dùng
 class UserProfileScreen extends StatefulWidget {
-  final int userId;
+  final String userId;
 
   const UserProfileScreen({super.key, required this.userId});
 

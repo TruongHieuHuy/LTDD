@@ -34,14 +34,10 @@ class _PostsScreenState extends State<PostsScreen>
   String _searchQuery = '';
 
   final List<Map<String, String>> _categories = [
-    {'value': 'SUDOKU', 'label': 'Sudoku'},
-    {'value': 'CARO', 'label': 'Cờ Caro'},
-    {'value': 'RUBIK', 'label': 'Rubik'},
-    {'value': 'PUZZLE', 'label': 'Xếp hình'},
-    {'value': 'CHESS', 'label': 'Cờ vua'},
-    {'value': 'GAME_2048', 'label': '2048'},
-    {'value': 'MEMORY', 'label': 'Trí nhớ'},
-    {'value': 'QUIZ', 'label': 'Đố vui'},
+    {'value': 'rubik', 'label': 'Rubik'},
+    {'value': 'sudoku', 'label': 'Sudoku'},
+    {'value': 'puzzle', 'label': 'Xếp hình'},
+    {'value': 'caro', 'label': 'Cờ Caro'},
   ];
 
   @override
@@ -488,7 +484,9 @@ class _PostsScreenState extends State<PostsScreen>
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(24),
                         ),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                        ),
                       ),
                       onChanged: (value) {
                         setState(() => _searchQuery = value);
@@ -511,20 +509,23 @@ class _PostsScreenState extends State<PostsScreen>
                             },
                           ),
                           const SizedBox(width: 8),
-                          ..._categories.map((cat) => Padding(
-                                padding: const EdgeInsets.only(right: 8),
-                                child: FilterChip(
-                                  label: Text(cat['label']!),
-                                  selected: _selectedCategory == cat['value'],
-                                  onSelected: (selected) {
-                                    setState(() {
-                                      _selectedCategory =
-                                          selected ? cat['value'] : null;
-                                    });
-                                    _applyFilters();
-                                  },
-                                ),
-                              )),
+                          ..._categories.map(
+                            (cat) => Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: FilterChip(
+                                label: Text(cat['label']!),
+                                selected: _selectedCategory == cat['value'],
+                                onSelected: (selected) {
+                                  setState(() {
+                                    _selectedCategory = selected
+                                        ? cat['value']
+                                        : null;
+                                  });
+                                  _applyFilters();
+                                },
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -539,59 +540,60 @@ class _PostsScreenState extends State<PostsScreen>
                   child: _isLoading && _allPosts.isEmpty
                       ? const Center(child: CircularProgressIndicator())
                       : _allPosts.isEmpty
-                          ? Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Icon(Icons.post_add,
-                                      size: 64, color: Colors.grey),
-                                  const SizedBox(height: 16),
-                                  const Text('Chưa có bài đăng nào'),
-                                  if (_selectedCategory != null ||
-                                      _searchQuery.isNotEmpty)
-                                    TextButton(
-                                      onPressed: _clearFilters,
-                                      child: const Text('Xoá bộ lọc'),
-                                    ),
-                                ],
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(
+                                Icons.post_add,
+                                size: 64,
+                                color: Colors.grey,
                               ),
-                            )
-                          : ListView.builder(
-                              controller: _scrollController,
-                              itemCount:
-                                  _allPosts.length + (_isLoadingMore ? 1 : 0),
-                              itemBuilder: (context, index) {
-                                if (index == _allPosts.length) {
-                                  return const Center(
-                                    child: Padding(
-                                      padding: EdgeInsets.all(16.0),
-                                      child: CircularProgressIndicator(),
-                                    ),
-                                  );
-                                }
-                                return _PostCard(
-                                  post: _allPosts[index],
-                                  currentUserId: authProvider.userId ?? 0,
-                                  onLike: () => _handleLike(_allPosts[index]),
-                                  onComment: () =>
-                                      _showCommentSheet(_allPosts[index]),
-                                  onSave: () => _handleSave(_allPosts[index]),
-                                  onDelete: () =>
-                                      _handleDelete(_allPosts[index]),
-                                  onEdit: () =>
-                                      _showEditPostDialog(_allPosts[index]),
-                                  onFollow: () =>
-                                      _handleFollow(_allPosts[index]),
-                                  onAvatarTap: () {
-                                    Navigator.pushNamed(
-                                      context,
-                                      '/user-profile',
-                                      arguments: _allPosts[index].userId,
-                                    );
-                                  },
+                              const SizedBox(height: 16),
+                              const Text('Chưa có bài đăng nào'),
+                              if (_selectedCategory != null ||
+                                  _searchQuery.isNotEmpty)
+                                TextButton(
+                                  onPressed: _clearFilters,
+                                  child: const Text('Xoá bộ lọc'),
+                                ),
+                            ],
+                          ),
+                        )
+                      : ListView.builder(
+                          controller: _scrollController,
+                          itemCount:
+                              _allPosts.length + (_isLoadingMore ? 1 : 0),
+                          itemBuilder: (context, index) {
+                            if (index == _allPosts.length) {
+                              return const Center(
+                                child: Padding(
+                                  padding: EdgeInsets.all(16.0),
+                                  child: CircularProgressIndicator(),
+                                ),
+                              );
+                            }
+                            return _PostCard(
+                              post: _allPosts[index],
+                              currentUserId: authProvider.userId ?? '',
+                              onLike: () => _handleLike(_allPosts[index]),
+                              onComment: () =>
+                                  _showCommentSheet(_allPosts[index]),
+                              onSave: () => _handleSave(_allPosts[index]),
+                              onDelete: () => _handleDelete(_allPosts[index]),
+                              onEdit: () =>
+                                  _showEditPostDialog(_allPosts[index]),
+                              onFollow: () => _handleFollow(_allPosts[index]),
+                              onAvatarTap: () {
+                                Navigator.pushNamed(
+                                  context,
+                                  '/user-profile',
+                                  arguments: _allPosts[index].userId,
                                 );
                               },
-                            ),
+                            );
+                          },
+                        ),
                 ),
               ),
             ],
@@ -618,7 +620,7 @@ class _PostsScreenState extends State<PostsScreen>
                       }
                       return _PostCard(
                         post: _myPosts[index],
-                        currentUserId: authProvider.userId ?? 0,
+                        currentUserId: authProvider.userId ?? '',
                         onLike: () => _handleLike(_myPosts[index]),
                         onComment: () => _showCommentSheet(_myPosts[index]),
                         onSave: () => _handleSave(_myPosts[index]),
@@ -650,7 +652,7 @@ class _PostsScreenState extends State<PostsScreen>
 
 class _PostCard extends StatelessWidget {
   final PostData post;
-  final int currentUserId;
+  final String currentUserId;
   final VoidCallback onLike;
   final VoidCallback onComment;
   final VoidCallback onSave;
@@ -674,14 +676,10 @@ class _PostCard extends StatelessWidget {
   String _getCategoryLabel(String? category) {
     if (category == null) return '';
     const categories = {
-      'SUDOKU': 'Sudoku',
-      'CARO': 'Cờ Caro',
-      'RUBIK': 'Rubik',
-      'PUZZLE': 'Xếp hình',
-      'CHESS': 'Cờ vua',
-      'GAME_2048': '2048',
-      'MEMORY': 'Trí nhớ',
-      'QUIZ': 'Đố vui',
+      'rubik': 'Rubik',
+      'sudoku': 'Sudoku',
+      'puzzle': 'Xếp hình',
+      'caro': 'Cờ Caro',
     };
     return categories[category] ?? category;
   }
@@ -746,8 +744,8 @@ class _PostCard extends StatelessWidget {
                             post.visibility == 'public'
                                 ? Icons.public
                                 : post.visibility == 'friends'
-                                    ? Icons.group
-                                    : Icons.lock,
+                                ? Icons.group
+                                : Icons.lock,
                             size: 14,
                             color: Colors.grey[600],
                           ),
@@ -755,17 +753,25 @@ class _PostCard extends StatelessWidget {
                             const SizedBox(width: 8),
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 6, vertical: 2),
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
                               decoration: BoxDecoration(
                                 color: Colors.blue.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: Colors.blue, width: 1),
+                                border: Border.all(
+                                  color: Colors.blue,
+                                  width: 1,
+                                ),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  const Icon(Icons.gamepad,
-                                      size: 12, color: Colors.blue),
+                                  const Icon(
+                                    Icons.gamepad,
+                                    size: 12,
+                                    color: Colors.blue,
+                                  ),
                                   const SizedBox(width: 3),
                                   Text(
                                     _getCategoryLabel(post.category!),
@@ -778,7 +784,7 @@ class _PostCard extends StatelessWidget {
                                 ],
                               ),
                             ),
-                          ]
+                          ],
                         ],
                       ),
                     ],
@@ -946,14 +952,10 @@ class _CreatePostDialogState extends State<_CreatePostDialog> {
   File? _selectedImage;
 
   final List<Map<String, String>> _categories = [
-    {'value': 'SUDOKU', 'label': 'Sudoku'},
-    {'value': 'CARO', 'label': 'Cờ Caro'},
-    {'value': 'RUBIK', 'label': 'Rubik'},
-    {'value': 'PUZZLE', 'label': 'Xếp hình'},
-    {'value': 'CHESS', 'label': 'Cờ vua'},
-    {'value': 'GAME_2048', 'label': '2048'},
-    {'value': 'MEMORY', 'label': 'Trí nhớ'},
-    {'value': 'QUIZ', 'label': 'Đố vui'},
+    {'value': 'rubik', 'label': 'Rubik'},
+    {'value': 'sudoku', 'label': 'Sudoku'},
+    {'value': 'puzzle', 'label': 'Xếp hình'},
+    {'value': 'caro', 'label': 'Cờ Caro'},
   ];
 
   @override
@@ -963,35 +965,66 @@ class _CreatePostDialogState extends State<_CreatePostDialog> {
   }
 
   Future<void> _pickImage() async {
-    final picker = ImagePicker();
-    final result = await showDialog<ImageSource>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Chọn nguồn ảnh'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.camera_alt),
-              title: const Text('Chụp ảnh'),
-              onTap: () => Navigator.pop(context, ImageSource.camera),
-            ),
-            ListTile(
-              leading: const Icon(Icons.photo_library),
-              title: const Text('Thư viện ảnh'),
-              onTap: () => Navigator.pop(context, ImageSource.gallery),
-            ),
-          ],
+    try {
+      final picker = ImagePicker();
+      final result = await showDialog<ImageSource>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Chọn nguồn ảnh'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.camera_alt),
+                title: const Text('Chụp ảnh'),
+                onTap: () => Navigator.pop(context, ImageSource.camera),
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library),
+                title: const Text('Thư viện ảnh'),
+                onTap: () => Navigator.pop(context, ImageSource.gallery),
+              ),
+            ],
+          ),
         ),
-      ),
-    );
+      );
 
-    if (result != null) {
-      final pickedFile = await picker.pickImage(source: result);
-      if (pickedFile != null) {
-        setState(() {
-          _selectedImage = File(pickedFile.path);
-        });
+      if (result != null) {
+        final pickedFile = await picker.pickImage(
+          source: result,
+          maxWidth: 1920,
+          maxHeight: 1920,
+          imageQuality: 85,
+        );
+
+        if (pickedFile != null) {
+          final file = File(pickedFile.path);
+
+          // Check if file exists and is valid
+          if (await file.exists()) {
+            final fileSize = await file.length();
+            print('Image picked: ${pickedFile.path}, size: $fileSize bytes');
+
+            if (mounted) {
+              setState(() {
+                _selectedImage = file;
+              });
+            }
+          } else {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Lỗi: Không tìm thấy file ảnh')),
+              );
+            }
+          }
+        }
+      }
+    } catch (e) {
+      print('Error picking image: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Lỗi chọn ảnh: $e')));
       }
     }
   }
@@ -1044,130 +1077,158 @@ class _CreatePostDialogState extends State<_CreatePostDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: const Text('Tạo bài đăng mới'),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Content input
-            TextField(
-              controller: _contentController,
-              maxLines: 5,
-              decoration: const InputDecoration(
-                hintText: 'Bạn đang nghĩ gì?',
-                border: OutlineInputBorder(),
+      content: SizedBox(
+        width: double.maxFinite,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Content input
+              TextField(
+                controller: _contentController,
+                maxLines: 5,
+                decoration: const InputDecoration(
+                  hintText: 'Bạn đang nghĩ gì?',
+                  border: OutlineInputBorder(),
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
+              const SizedBox(height: 16),
 
-            // Image preview
-            if (_selectedImage != null) ...[
-              Stack(
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.file(
-                      _selectedImage!,
-                      height: 200,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                  Positioned(
-                    top: 8,
-                    right: 8,
-                    child: IconButton(
-                      icon: const Icon(Icons.close, color: Colors.white),
-                      style: IconButton.styleFrom(
-                        backgroundColor: Colors.black54,
+              // Image preview
+              if (_selectedImage != null) ...[
+                Stack(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.file(
+                        _selectedImage!,
+                        height: 200,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          print('Error loading image: $error');
+                          return Container(
+                            height: 200,
+                            color: Colors.grey[300],
+                            child: const Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.error,
+                                    color: Colors.red,
+                                    size: 48,
+                                  ),
+                                  SizedBox(height: 8),
+                                  Text('Lỗi tải ảnh'),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
                       ),
-                      onPressed: () => setState(() => _selectedImage = null),
+                    ),
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: IconButton(
+                        icon: const Icon(Icons.close, color: Colors.white),
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.black54,
+                        ),
+                        onPressed: () => setState(() => _selectedImage = null),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+              ],
+
+              // Image picker button
+              OutlinedButton.icon(
+                onPressed: _pickImage,
+                icon: const Icon(Icons.image),
+                label: Text(
+                  _selectedImage == null ? 'Thêm ảnh' : 'Thay đổi ảnh',
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Game category dropdown
+              DropdownButtonFormField<String>(
+                initialValue: _category,
+                decoration: const InputDecoration(
+                  labelText: 'Thể loại game (tuỳ chọn)',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.gamepad),
+                ),
+                items: [
+                  const DropdownMenuItem<String>(
+                    value: null,
+                    child: Text('-- Không chọn --'),
+                  ),
+                  ..._categories.map(
+                    (cat) => DropdownMenuItem<String>(
+                      value: cat['value'],
+                      child: Text(cat['label']!),
                     ),
                   ),
                 ],
+                onChanged: (value) {
+                  setState(() => _category = value);
+                },
               ),
               const SizedBox(height: 16),
+
+              // Visibility dropdown
+              DropdownButtonFormField<String>(
+                initialValue: _visibility,
+                decoration: const InputDecoration(
+                  labelText: 'Quyền riêng tư',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.lock_outline),
+                ),
+                items: const [
+                  DropdownMenuItem(
+                    value: 'public',
+                    child: Row(
+                      children: [
+                        Icon(Icons.public, size: 20),
+                        SizedBox(width: 8),
+                        Text('Công khai'),
+                      ],
+                    ),
+                  ),
+                  DropdownMenuItem(
+                    value: 'friends',
+                    child: Row(
+                      children: [
+                        Icon(Icons.group, size: 20),
+                        SizedBox(width: 8),
+                        Text('Bạn bè'),
+                      ],
+                    ),
+                  ),
+                  DropdownMenuItem(
+                    value: 'private',
+                    child: Row(
+                      children: [
+                        Icon(Icons.lock, size: 20),
+                        SizedBox(width: 8),
+                        Text('Riêng tư'),
+                      ],
+                    ),
+                  ),
+                ],
+                onChanged: (value) {
+                  if (value != null) {
+                    setState(() => _visibility = value);
+                  }
+                },
+              ),
             ],
-
-            // Image picker button
-            OutlinedButton.icon(
-              onPressed: _pickImage,
-              icon: const Icon(Icons.image),
-              label: Text(_selectedImage == null ? 'Thêm ảnh' : 'Thay đổi ảnh'),
-            ),
-            const SizedBox(height: 16),
-
-            // Game category dropdown
-            DropdownButtonFormField<String>(
-              initialValue: _category,
-              decoration: const InputDecoration(
-                labelText: 'Thể loại game (tuỳ chọn)',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.gamepad),
-              ),
-              items: [
-                const DropdownMenuItem<String>(
-                  value: null,
-                  child: Text('-- Không chọn --'),
-                ),
-                ..._categories.map((cat) => DropdownMenuItem<String>(
-                      value: cat['value'],
-                      child: Text(cat['label']!),
-                    )),
-              ],
-              onChanged: (value) {
-                setState(() => _category = value);
-              },
-            ),
-            const SizedBox(height: 16),
-
-            // Visibility dropdown
-            DropdownButtonFormField<String>(
-              initialValue: _visibility,
-              decoration: const InputDecoration(
-                labelText: 'Quyền riêng tư',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.lock_outline),
-              ),
-              items: const [
-                DropdownMenuItem(
-                  value: 'public',
-                  child: Row(
-                    children: [
-                      Icon(Icons.public, size: 20),
-                      SizedBox(width: 8),
-                      Text('Công khai'),
-                    ],
-                  ),
-                ),
-                DropdownMenuItem(
-                  value: 'friends',
-                  child: Row(
-                    children: [
-                      Icon(Icons.group, size: 20),
-                      SizedBox(width: 8),
-                      Text('Bạn bè'),
-                    ],
-                  ),
-                ),
-                DropdownMenuItem(
-                  value: 'private',
-                  child: Row(
-                    children: [
-                      Icon(Icons.lock, size: 20),
-                      SizedBox(width: 8),
-                      Text('Riêng tư'),
-                    ],
-                  ),
-                ),
-              ],
-              onChanged: (value) {
-                if (value != null) {
-                  setState(() => _visibility = value);
-                }
-              },
-            ),
-          ],
+          ),
         ),
       ),
       actions: [
@@ -1206,18 +1267,85 @@ class _EditPostDialogState extends State<_EditPostDialog> {
   late TextEditingController _contentController;
   bool _isLoading = false;
   late String _visibility;
+  String? _category;
+  File? _selectedImage;
+  String? _currentImageUrl;
+
+  final List<Map<String, String>> _categories = [
+    {'value': 'rubik', 'label': 'Rubik'},
+    {'value': 'sudoku', 'label': 'Sudoku'},
+    {'value': 'puzzle', 'label': 'Xếp hình'},
+    {'value': 'caro', 'label': 'Cờ Caro'},
+  ];
 
   @override
   void initState() {
     super.initState();
     _contentController = TextEditingController(text: widget.post.content);
     _visibility = widget.post.visibility;
+    _category = widget.post.category;
+    _currentImageUrl = widget.post.imageUrl;
   }
 
   @override
   void dispose() {
     _contentController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickImage() async {
+    try {
+      final picker = ImagePicker();
+      final result = await showDialog<ImageSource>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Chọn ảnh'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.camera_alt),
+                title: const Text('Chụp ảnh'),
+                onTap: () => Navigator.pop(context, ImageSource.camera),
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library),
+                title: const Text('Chọn từ thư viện'),
+                onTap: () => Navigator.pop(context, ImageSource.gallery),
+              ),
+            ],
+          ),
+        ),
+      );
+
+      if (result != null) {
+        final pickedFile = await picker.pickImage(
+          source: result,
+          maxWidth: 1920,
+          maxHeight: 1920,
+          imageQuality: 85,
+        );
+
+        if (pickedFile != null) {
+          final file = File(pickedFile.path);
+          if (await file.exists()) {
+            final fileSize = await file.length();
+            print('Image picked: ${pickedFile.path}, size: $fileSize bytes');
+            setState(() {
+              _selectedImage = file;
+              _currentImageUrl = null; // Clear old URL when new image selected
+            });
+          }
+        }
+      }
+    } catch (e) {
+      print('Error picking image: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Lỗi chọn ảnh: $e')));
+      }
+    }
   }
 
   Future<void> _updatePost() async {
@@ -1233,10 +1361,18 @@ class _EditPostDialogState extends State<_EditPostDialog> {
     try {
       final apiService = ApiService();
 
+      String? imageUrl = _currentImageUrl;
+      if (_selectedImage != null) {
+        imageUrl = await apiService.uploadImage(_selectedImage!.path);
+        imageUrl = '${ApiService.baseUrl}$imageUrl';
+      }
+
       await apiService.updatePost(
         postId: widget.post.id,
         content: _contentController.text.trim(),
         visibility: _visibility,
+        imageUrl: imageUrl,
+        category: _category,
       );
 
       if (mounted) {
@@ -1260,37 +1396,199 @@ class _EditPostDialogState extends State<_EditPostDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: const Text('Chỉnh sửa bài đăng'),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: _contentController,
-              maxLines: 5,
-              decoration: const InputDecoration(
-                hintText: 'Nội dung bài đăng',
-                border: OutlineInputBorder(),
+      content: SizedBox(
+        width: double.maxFinite,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextField(
+                controller: _contentController,
+                maxLines: 5,
+                decoration: const InputDecoration(
+                  hintText: 'Nội dung bài đăng',
+                  border: OutlineInputBorder(),
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<String>(
-              initialValue: _visibility,
-              decoration: const InputDecoration(
-                labelText: 'Quyền riêng tư',
-                border: OutlineInputBorder(),
-              ),
-              items: const [
-                DropdownMenuItem(value: 'public', child: Text('Công khai')),
-                DropdownMenuItem(value: 'friends', child: Text('Bạn bè')),
-                DropdownMenuItem(value: 'private', child: Text('Riêng tư')),
+              const SizedBox(height: 16),
+
+              // Image preview
+              if (_selectedImage != null) ...[
+                Stack(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.file(
+                        _selectedImage!,
+                        height: 200,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            height: 200,
+                            color: Colors.grey[300],
+                            child: const Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.error, color: Colors.red),
+                                  SizedBox(height: 8),
+                                  Text('Lỗi tải ảnh'),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: IconButton(
+                        icon: const Icon(Icons.close, color: Colors.white),
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.black54,
+                        ),
+                        onPressed: () => setState(() {
+                          _selectedImage = null;
+                          _currentImageUrl =
+                              widget.post.imageUrl; // Restore original
+                        }),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+              ] else if (_currentImageUrl != null) ...[
+                Stack(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.network(
+                        _currentImageUrl!,
+                        height: 200,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            height: 200,
+                            color: Colors.grey[300],
+                            child: const Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.error, color: Colors.red),
+                                  SizedBox(height: 8),
+                                  Text('Lỗi tải ảnh'),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: IconButton(
+                        icon: const Icon(Icons.close, color: Colors.white),
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.black54,
+                        ),
+                        onPressed: () =>
+                            setState(() => _currentImageUrl = null),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
               ],
-              onChanged: (value) {
-                if (value != null) {
-                  setState(() => _visibility = value);
-                }
-              },
-            ),
-          ],
+
+              // Image picker button
+              OutlinedButton.icon(
+                onPressed: _pickImage,
+                icon: const Icon(Icons.image),
+                label: Text(
+                  (_selectedImage != null || _currentImageUrl != null)
+                      ? 'Thay đổi ảnh'
+                      : 'Thêm ảnh',
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Category dropdown
+              DropdownButtonFormField<String>(
+                value: _category,
+                decoration: const InputDecoration(
+                  labelText: 'Thể loại game (tuỳ chọn)',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.gamepad),
+                ),
+                items: [
+                  const DropdownMenuItem<String>(
+                    value: null,
+                    child: Text('-- Không chọn --'),
+                  ),
+                  ..._categories.map(
+                    (cat) => DropdownMenuItem<String>(
+                      value: cat['value'],
+                      child: Text(cat['label']!),
+                    ),
+                  ),
+                ],
+                onChanged: (value) => setState(() => _category = value),
+              ),
+              const SizedBox(height: 16),
+
+              // Visibility dropdown
+              DropdownButtonFormField<String>(
+                value: _visibility,
+                decoration: const InputDecoration(
+                  labelText: 'Quyền riêng tư',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.lock_outline),
+                ),
+                items: const [
+                  DropdownMenuItem(
+                    value: 'public',
+                    child: Row(
+                      children: [
+                        Icon(Icons.public, size: 20),
+                        SizedBox(width: 8),
+                        Text('Công khai'),
+                      ],
+                    ),
+                  ),
+                  DropdownMenuItem(
+                    value: 'friends',
+                    child: Row(
+                      children: [
+                        Icon(Icons.group, size: 20),
+                        SizedBox(width: 8),
+                        Text('Bạn bè'),
+                      ],
+                    ),
+                  ),
+                  DropdownMenuItem(
+                    value: 'private',
+                    child: Row(
+                      children: [
+                        Icon(Icons.lock, size: 20),
+                        SizedBox(width: 8),
+                        Text('Riêng tư'),
+                      ],
+                    ),
+                  ),
+                ],
+                onChanged: (value) {
+                  if (value != null) {
+                    setState(() => _visibility = value);
+                  }
+                },
+              ),
+            ],
+          ),
         ),
       ),
       actions: [
@@ -1346,7 +1644,6 @@ class _CommentBottomSheetState extends State<_CommentBottomSheet> {
     setState(() => _isLoading = true);
 
     try {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final apiService = ApiService();
 
       final post = await apiService.getPost(widget.post.id);
@@ -1360,24 +1657,37 @@ class _CommentBottomSheetState extends State<_CommentBottomSheet> {
   }
 
   Future<void> _sendComment() async {
-    if (_commentController.text.trim().isEmpty) return;
+    final commentText = _commentController.text.trim();
+    print('DEBUG: _sendComment called, text: "$commentText"');
+
+    if (commentText.isEmpty) {
+      print('DEBUG: Comment text is empty, returning');
+      return;
+    }
 
     setState(() => _isSending = true);
+    print('DEBUG: Set _isSending = true');
 
     try {
       final apiService = ApiService();
+      print('DEBUG: Calling addComment API with postId: ${widget.post.id}');
 
       final comment = await apiService.addComment(
         postId: widget.post.id,
-        content: _commentController.text.trim(),
+        content: commentText,
       );
+
+      print('DEBUG: Comment added successfully: ${comment.id}');
 
       setState(() {
         _comments.add(comment);
         _commentController.clear();
         _isSending = false;
       });
+
+      print('DEBUG: UI updated, comments count: ${_comments.length}');
     } catch (e) {
+      print('DEBUG: Error adding comment: $e');
       setState(() => _isSending = false);
       if (mounted) {
         ScaffoldMessenger.of(

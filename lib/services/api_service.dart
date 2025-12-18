@@ -362,7 +362,7 @@ class AuthResponse {
 
 /// User profile data
 class UserProfile {
-  final int id;
+  final String id;
   final String username;
   final String email;
   final String? avatarUrl;
@@ -379,18 +379,20 @@ class UserProfile {
   });
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
-    // Safe parsing: handle both int and string from backend
-    final rawId = json['id'];
-    final id = rawId is int ? rawId : int.tryParse(rawId.toString()) ?? 0;
-
-    return UserProfile(
-      id: id,
-      username: json['username'],
-      email: json['email'],
-      avatarUrl: json['avatarUrl'],
-      totalGamesPlayed: json['totalGamesPlayed'] ?? 0,
-      totalScore: json['totalScore'] ?? 0,
-    );
+    try {
+      return UserProfile(
+        id: (json['id'] ?? '').toString(),
+        username: json['username']?.toString() ?? '',
+        email: json['email']?.toString() ?? '',
+        avatarUrl: json['avatarUrl']?.toString(),
+        totalGamesPlayed: json['totalGamesPlayed'] ?? 0,
+        totalScore: json['totalScore'] ?? 0,
+      );
+    } catch (e) {
+      print('Error parsing UserProfile: $e');
+      print('JSON: $json');
+      rethrow;
+    }
   }
 
   Map<String, dynamic> toJson() {
@@ -956,8 +958,8 @@ class ConversationData {
 
 /// Post Data Model
 class PostData {
-  final int id;
-  final int userId;
+  final String id;
+  final String userId;
   final String content;
   final String? imageUrl;
   final String visibility;
@@ -991,35 +993,45 @@ class PostData {
   });
 
   factory PostData.fromJson(Map<String, dynamic> json) {
-    return PostData(
-      id: json['id'],
-      userId: json['userId'],
-      content: json['content'] ?? '',
-      imageUrl: json['imageUrl'],
-      visibility: json['visibility'] ?? 'public',
-      category: json['category'],
-      likeCount: json['likeCount'] ?? 0,
-      commentCount: json['commentCount'] ?? 0,
-      shareCount: json['shareCount'] ?? 0,
-      createdAt: DateTime.parse(json['createdAt']),
-      updatedAt: DateTime.parse(json['updatedAt']),
-      user: UserProfile.fromJson(json['user']),
-      isLiked: json['isLiked'] ?? false,
-      isSaved: json['isSaved'] ?? false,
-      comments: json['comments'] != null
-          ? (json['comments'] as List)
-                .map((c) => CommentData.fromJson(c))
-                .toList()
-          : null,
-    );
+    try {
+      return PostData(
+        id: (json['id'] ?? '').toString(),
+        userId: (json['userId'] ?? '').toString(),
+        content: json['content']?.toString() ?? '',
+        imageUrl: json['imageUrl']?.toString(),
+        visibility: json['visibility']?.toString() ?? 'public',
+        category: json['category']?.toString(),
+        likeCount: json['likeCount'] ?? 0,
+        commentCount: json['commentCount'] ?? 0,
+        shareCount: json['shareCount'] ?? 0,
+        createdAt: json['createdAt'] != null
+            ? DateTime.parse(json['createdAt'].toString())
+            : DateTime.now(),
+        updatedAt: json['updatedAt'] != null
+            ? DateTime.parse(json['updatedAt'].toString())
+            : DateTime.now(),
+        user: UserProfile.fromJson(json['user'] ?? {}),
+        isLiked: json['isLiked'] ?? false,
+        isSaved: json['isSaved'] ?? false,
+        comments: json['comments'] != null
+            ? (json['comments'] as List)
+                  .map((c) => CommentData.fromJson(c))
+                  .toList()
+            : null,
+      );
+    } catch (e) {
+      print('Error parsing PostData: $e');
+      print('JSON: $json');
+      rethrow;
+    }
   }
 }
 
 /// Comment Data Model
 class CommentData {
-  final int id;
-  final int postId;
-  final int userId;
+  final String id;
+  final String postId;
+  final String userId;
   final String content;
   final DateTime createdAt;
   final UserProfile user;
@@ -1034,14 +1046,22 @@ class CommentData {
   });
 
   factory CommentData.fromJson(Map<String, dynamic> json) {
-    return CommentData(
-      id: json['id'],
-      postId: json['postId'],
-      userId: json['userId'],
-      content: json['content'] ?? '',
-      createdAt: DateTime.parse(json['createdAt']),
-      user: UserProfile.fromJson(json['user']),
-    );
+    try {
+      return CommentData(
+        id: (json['id'] ?? '').toString(),
+        postId: (json['postId'] ?? '').toString(),
+        userId: (json['userId'] ?? '').toString(),
+        content: json['content']?.toString() ?? '',
+        createdAt: json['createdAt'] != null
+            ? DateTime.parse(json['createdAt'].toString())
+            : DateTime.now(),
+        user: UserProfile.fromJson(json['user'] ?? {}),
+      );
+    } catch (e) {
+      print('Error parsing CommentData: $e');
+      print('JSON: $json');
+      rethrow;
+    }
   }
 }
 
@@ -1106,7 +1126,7 @@ extension PostsAPI on ApiService {
   Future<List<PostData>> getPosts({
     int limit = 20,
     int offset = 0,
-    int? userId,
+    String? userId,
     String? category,
     String? search,
   }) async {
@@ -1137,7 +1157,7 @@ extension PostsAPI on ApiService {
   }
 
   /// Get single post with comments
-  Future<PostData> getPost(int postId) async {
+  Future<PostData> getPost(String postId) async {
     final url = Uri.parse('${ApiService.baseUrl}/api/posts/$postId');
     final response = await http.get(url, headers: _headers);
 
@@ -1153,10 +1173,11 @@ extension PostsAPI on ApiService {
 
   /// Update post (owner only)
   Future<Map<String, dynamic>> updatePost({
-    required int postId,
+    required String postId,
     required String content,
     String? imageUrl,
     String? visibility,
+    String? category,
   }) async {
     final url = Uri.parse('${ApiService.baseUrl}/api/posts/$postId');
     final response = await http.put(
@@ -1166,6 +1187,7 @@ extension PostsAPI on ApiService {
         'content': content,
         'imageUrl': imageUrl,
         'visibility': visibility,
+        'category': category,
       }),
     );
 
@@ -1179,7 +1201,7 @@ extension PostsAPI on ApiService {
   }
 
   /// Delete post (owner only)
-  Future<Map<String, dynamic>> deletePost(int postId) async {
+  Future<Map<String, dynamic>> deletePost(String postId) async {
     final url = Uri.parse('${ApiService.baseUrl}/api/posts/$postId');
     final response = await http.delete(url, headers: _headers);
 
@@ -1193,7 +1215,7 @@ extension PostsAPI on ApiService {
   }
 
   /// Toggle like on post
-  Future<Map<String, dynamic>> toggleLike(int postId) async {
+  Future<Map<String, dynamic>> toggleLike(String postId) async {
     final url = Uri.parse('${ApiService.baseUrl}/api/posts/$postId/like');
     final response = await http.post(url, headers: _headers);
 
@@ -1208,7 +1230,7 @@ extension PostsAPI on ApiService {
 
   /// Add comment to post
   Future<CommentData> addComment({
-    required int postId,
+    required String postId,
     required String content,
   }) async {
     final url = Uri.parse('${ApiService.baseUrl}/api/posts/$postId/comments');
@@ -1220,7 +1242,7 @@ extension PostsAPI on ApiService {
 
     if (response.statusCode == 201) {
       final data = jsonDecode(response.body);
-      return CommentData.fromJson(data['comment']);
+      return CommentData.fromJson(data);
     } else {
       throw Exception(
         'Failed to add comment: ${jsonDecode(response.body)['error'] ?? response.statusCode}',
@@ -1229,7 +1251,7 @@ extension PostsAPI on ApiService {
   }
 
   /// Toggle save post to favorites
-  Future<Map<String, dynamic>> toggleSavePost(int postId) async {
+  Future<Map<String, dynamic>> toggleSavePost(String postId) async {
     final url = Uri.parse('${ApiService.baseUrl}/api/posts/$postId/save');
     final response = await http.post(url, headers: _headers);
 
@@ -1261,7 +1283,7 @@ extension PostsAPI on ApiService {
   }
 
   /// Toggle follow user
-  Future<Map<String, dynamic>> toggleFollow(int targetUserId) async {
+  Future<Map<String, dynamic>> toggleFollow(String targetUserId) async {
     final url = Uri.parse(
       '${ApiService.baseUrl}/api/posts/follow/$targetUserId',
     );

@@ -24,7 +24,7 @@ class AuthProvider with ChangeNotifier {
   int get totalScore => _userProfile?.totalScore ?? 0;
   int get totalGamesPlayed => _userProfile?.totalGamesPlayed ?? 0;
   String? get token => _currentAuth?.sessionToken;
-  int? get userId => _userProfile?.id;
+  String? get userId => _userProfile?.id;
 
   /// Initialize Hive box and load auth state
   Future<void> initialize() async {

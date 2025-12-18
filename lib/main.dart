@@ -105,7 +105,7 @@ class SmartStudentApp extends StatelessWidget {
             onGenerateRoute: (settings) {
               // Handle user profile route with userId parameter
               if (settings.name == '/user-profile') {
-                final userId = settings.arguments as int;
+                final userId = settings.arguments as String;
                 return MaterialPageRoute(
                   builder: (context) => UserProfileScreen(userId: userId),
                 );
