@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/peer_chat_provider.dart';
 import '../providers/auth_provider.dart';
 import '../utils/user_data_service.dart';
+import '../services/api_service.dart';
 import 'peer_chat_screen.dart';
 
 /// Screen showing list of P2P chat conversations
@@ -347,8 +348,7 @@ class _PeerChatListScreenState extends State<PeerChatListScreen> {
     );
   }
 
-  void _showNewChatDialog(BuildContext context) {
-    final userDataService = UserDataService();
+  Future<void> _showNewChatDialog(BuildContext context) async {
     final chatProvider = context.read<PeerChatProvider>();
     final currentMssv = chatProvider.currentUserId;
 
@@ -359,73 +359,130 @@ class _PeerChatListScreenState extends State<PeerChatListScreen> {
       return;
     }
 
-    // Chỉ hiển thị bạn bè
-    final friends = userDataService.getFriends(currentMssv);
+    // Show loading
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
 
-    if (friends.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Bạn chưa có bạn bè nào')));
+    // Load friends from API
+    final response = await ApiService().getFriends();
+    
+    if (!context.mounted) return;
+    Navigator.pop(context); // Close loading
+
+    if (!response.success || response.data == null || response.data!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(response.message ?? 'Bạn chưa có bạn bè nào. Hãy kết bạn trước!'),
+          action: SnackBarAction(
+            label: 'Tìm bạn',
+            onPressed: () => Navigator.pushNamed(context, '/search-friends'),
+          ),
+        ),
+      );
       return;
     }
+
+    final friends = response.data!;
 
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  Icons.person_add,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  'Chọn thành viên để chat',
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Flexible(
-              child: ListView.builder(
-                shrinkWrap: true,
-                itemCount: friends.length,
-                itemBuilder: (context, index) {
-                  final member = friends[index];
-                  return ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: Theme.of(
-                        context,
-                      ).colorScheme.primary.withOpacity(0.2),
-                      child: Text(
-                        member['name'].substring(0, 1).toUpperCase(),
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.primary,
-                          fontWeight: FontWeight.bold,
+      isScrollControlled: true,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.6,
+        minChildSize: 0.4,
+        maxChildSize: 0.9,
+        expand: false,
+        builder: (context, scrollController) => Container(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.people,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Chọn bạn bè để chat',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const Spacer(),
+                  Text(
+                    '${friends.length} bạn bè',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: ListView.builder(
+                  controller: scrollController,
+                  shrinkWrap: true,
+                  itemCount: friends.length,
+                  itemBuilder: (context, index) {
+                    final friend = friends[index];
+                    return Card(
+                      margin: const EdgeInsets.symmetric(vertical: 4),
+                      child: ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: Theme.of(
+                            context,
+                          ).colorScheme.primary.withOpacity(0.2),
+                          child: friend.avatarUrl != null
+                              ? ClipOval(
+                                  child: Image.network(
+                                    friend.avatarUrl!,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) => Text(
+                                      friend.username[0].toUpperCase(),
+                                      style: TextStyle(
+                                        color: Theme.of(context).colorScheme.primary,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                )
+                              : Text(
+                                  friend.username[0].toUpperCase(),
+                                  style: TextStyle(
+                                    color: Theme.of(context).colorScheme.primary,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                         ),
+                        title: Text(
+                          friend.username,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        subtitle: Text(friend.email),
+                        trailing: const Icon(Icons.chat_bubble_outline),
+                        onTap: () {
+                          Navigator.pop(context);
+                          // Convert FriendData to member format for PeerChatScreen
+                          final memberData = {
+                            'mssv': friend.id.toString(),
+                            'name': friend.username,
+                            'email': friend.email,
+                            'avatar': friend.avatarUrl,
+                          };
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => PeerChatScreen(member: memberData),
+                            ),
+                          );
+                        },
                       ),
-                    ),
-                    title: Text(member['name']),
-                    subtitle: Text(member['mssv']),
-                    trailing: const Icon(Icons.send),
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => PeerChatScreen(member: member),
-                        ),
-                      );
-                    },
-                  );
+                    );
                 },
               ),
             ),
