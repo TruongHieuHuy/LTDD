@@ -200,7 +200,7 @@ class _PeerChatListScreenState extends State<PeerChatListScreen> {
           tag: 'avatar_${conversation.chatRoomId}',
           child: CircleAvatar(
             radius: 28,
-            backgroundColor: theme.colorScheme.primary.withOpacity(0.2),
+            backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.2),
             child: Text(
               member?['name'].substring(0, 1).toUpperCase() ?? '?',
               style: TextStyle(
@@ -303,8 +303,8 @@ class _PeerChatListScreenState extends State<PeerChatListScreen> {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    theme.colorScheme.primary.withOpacity(0.2),
-                    theme.colorScheme.secondary.withOpacity(0.2),
+                    theme.colorScheme.primary.withValues(alpha: 0.2),
+                    theme.colorScheme.secondary.withValues(alpha: 0.2),
                   ],
                 ),
                 shape: BoxShape.circle,
@@ -436,7 +436,7 @@ class _PeerChatListScreenState extends State<PeerChatListScreen> {
                         leading: CircleAvatar(
                           backgroundColor: Theme.of(
                             context,
-                          ).colorScheme.primary.withOpacity(0.2),
+                          ).colorScheme.primary.withValues(alpha: 0.2),
                           child: friend.avatarUrl != null
                               ? ClipOval(
                                   child: Image.network(
@@ -483,10 +483,11 @@ class _PeerChatListScreenState extends State<PeerChatListScreen> {
                         },
                       ),
                     );
-                },
+                  },
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
