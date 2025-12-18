@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import '../services/api_service.dart';
 import '../providers/auth_provider.dart';
 import 'package:provider/provider.dart';
@@ -17,6 +19,7 @@ class _PostsScreenState extends State<PostsScreen>
   late TabController _tabController;
   final ScrollController _scrollController = ScrollController();
   final ScrollController _myPostsScrollController = ScrollController();
+  final TextEditingController _searchController = TextEditingController();
 
   List<PostData> _allPosts = [];
   List<PostData> _myPosts = [];
@@ -25,6 +28,21 @@ class _PostsScreenState extends State<PostsScreen>
   int _currentPage = 0;
   int _myPostsPage = 0;
   final int _pageSize = 20;
+
+  // Filter states
+  String? _selectedCategory;
+  String _searchQuery = '';
+
+  final List<Map<String, String>> _categories = [
+    {'value': 'SUDOKU', 'label': 'Sudoku'},
+    {'value': 'CARO', 'label': 'Cờ Caro'},
+    {'value': 'RUBIK', 'label': 'Rubik'},
+    {'value': 'PUZZLE', 'label': 'Xếp hình'},
+    {'value': 'CHESS', 'label': 'Cờ vua'},
+    {'value': 'GAME_2048', 'label': '2048'},
+    {'value': 'MEMORY', 'label': 'Trí nhớ'},
+    {'value': 'QUIZ', 'label': 'Đố vui'},
+  ];
 
   @override
   void initState() {
@@ -65,10 +83,14 @@ class _PostsScreenState extends State<PostsScreen>
     });
 
     try {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final apiService = ApiService();
 
-      final posts = await apiService.getPosts(limit: _pageSize, offset: 0);
+      final posts = await apiService.getPosts(
+        limit: _pageSize,
+        offset: 0,
+        category: _selectedCategory,
+        search: _searchQuery.isEmpty ? null : _searchQuery,
+      );
 
       setState(() {
         _allPosts = posts;
@@ -89,13 +111,14 @@ class _PostsScreenState extends State<PostsScreen>
     setState(() => _isLoadingMore = true);
 
     try {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final apiService = ApiService();
 
       _currentPage++;
       final posts = await apiService.getPosts(
         limit: _pageSize,
         offset: _currentPage * _pageSize,
+        category: _selectedCategory,
+        search: _searchQuery.isEmpty ? null : _searchQuery,
       );
 
       setState(() {
@@ -105,6 +128,19 @@ class _PostsScreenState extends State<PostsScreen>
     } catch (e) {
       setState(() => _isLoadingMore = false);
     }
+  }
+
+  void _applyFilters() {
+    _loadPosts();
+  }
+
+  void _clearFilters() {
+    setState(() {
+      _selectedCategory = null;
+      _searchQuery = '';
+      _searchController.clear();
+    });
+    _loadPosts();
   }
 
   Future<void> _loadMyPosts() async {
@@ -428,44 +464,141 @@ class _PostsScreenState extends State<PostsScreen>
       body: TabBarView(
         controller: _tabController,
         children: [
-          // All Posts Tab
-          RefreshIndicator(
-            onRefresh: _loadPosts,
-            child: _isLoading && _allPosts.isEmpty
-                ? const Center(child: CircularProgressIndicator())
-                : _allPosts.isEmpty
-                ? const Center(child: Text('Chưa có bài đăng nào'))
-                : ListView.builder(
-                    controller: _scrollController,
-                    itemCount: _allPosts.length + (_isLoadingMore ? 1 : 0),
-                    itemBuilder: (context, index) {
-                      if (index == _allPosts.length) {
-                        return const Center(
-                          child: Padding(
-                            padding: EdgeInsets.all(16.0),
-                            child: CircularProgressIndicator(),
+          // All Posts Tab with filters
+          Column(
+            children: [
+              // Search and filter section
+              Container(
+                padding: const EdgeInsets.all(12),
+                color: Theme.of(context).cardColor,
+                child: Column(
+                  children: [
+                    // Search bar
+                    TextField(
+                      controller: _searchController,
+                      decoration: InputDecoration(
+                        hintText: 'Tìm kiếm theo tên hoặc nội dung...',
+                        prefixIcon: const Icon(Icons.search),
+                        suffixIcon: _searchQuery.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.clear),
+                                onPressed: () {
+                                  _searchController.clear();
+                                  setState(() => _searchQuery = '');
+                                  _applyFilters();
+                                },
+                              )
+                            : null,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                      ),
+                      onChanged: (value) {
+                        setState(() => _searchQuery = value);
+                      },
+                      onSubmitted: (_) => _applyFilters(),
+                    ),
+                    const SizedBox(height: 8),
+
+                    // Category filter chips
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          FilterChip(
+                            label: const Text('Tất cả'),
+                            selected: _selectedCategory == null,
+                            onSelected: (selected) {
+                              setState(() => _selectedCategory = null);
+                              _applyFilters();
+                            },
                           ),
-                        );
-                      }
-                      return _PostCard(
-                        post: _allPosts[index],
-                        currentUserId: authProvider.userId ?? 0,
-                        onLike: () => _handleLike(_allPosts[index]),
-                        onComment: () => _showCommentSheet(_allPosts[index]),
-                        onSave: () => _handleSave(_allPosts[index]),
-                        onDelete: () => _handleDelete(_allPosts[index]),
-                        onEdit: () => _showEditPostDialog(_allPosts[index]),
-                        onFollow: () => _handleFollow(_allPosts[index]),
-                        onAvatarTap: () {
-                          Navigator.pushNamed(
-                            context,
-                            '/user-profile',
-                            arguments: _allPosts[index].userId,
-                          );
-                        },
-                      );
-                    },
-                  ),
+                          const SizedBox(width: 8),
+                          ..._categories.map((cat) => Padding(
+                                padding: const EdgeInsets.only(right: 8),
+                                child: FilterChip(
+                                  label: Text(cat['label']!),
+                                  selected: _selectedCategory == cat['value'],
+                                  onSelected: (selected) {
+                                    setState(() {
+                                      _selectedCategory =
+                                          selected ? cat['value'] : null;
+                                    });
+                                    _applyFilters();
+                                  },
+                                ),
+                              )),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Posts list
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: _loadPosts,
+                  child: _isLoading && _allPosts.isEmpty
+                      ? const Center(child: CircularProgressIndicator())
+                      : _allPosts.isEmpty
+                          ? Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(Icons.post_add,
+                                      size: 64, color: Colors.grey),
+                                  const SizedBox(height: 16),
+                                  const Text('Chưa có bài đăng nào'),
+                                  if (_selectedCategory != null ||
+                                      _searchQuery.isNotEmpty)
+                                    TextButton(
+                                      onPressed: _clearFilters,
+                                      child: const Text('Xoá bộ lọc'),
+                                    ),
+                                ],
+                              ),
+                            )
+                          : ListView.builder(
+                              controller: _scrollController,
+                              itemCount:
+                                  _allPosts.length + (_isLoadingMore ? 1 : 0),
+                              itemBuilder: (context, index) {
+                                if (index == _allPosts.length) {
+                                  return const Center(
+                                    child: Padding(
+                                      padding: EdgeInsets.all(16.0),
+                                      child: CircularProgressIndicator(),
+                                    ),
+                                  );
+                                }
+                                return _PostCard(
+                                  post: _allPosts[index],
+                                  currentUserId: authProvider.userId ?? 0,
+                                  onLike: () => _handleLike(_allPosts[index]),
+                                  onComment: () =>
+                                      _showCommentSheet(_allPosts[index]),
+                                  onSave: () => _handleSave(_allPosts[index]),
+                                  onDelete: () =>
+                                      _handleDelete(_allPosts[index]),
+                                  onEdit: () =>
+                                      _showEditPostDialog(_allPosts[index]),
+                                  onFollow: () =>
+                                      _handleFollow(_allPosts[index]),
+                                  onAvatarTap: () {
+                                    Navigator.pushNamed(
+                                      context,
+                                      '/user-profile',
+                                      arguments: _allPosts[index].userId,
+                                    );
+                                  },
+                                );
+                              },
+                            ),
+                ),
+              ),
+            ],
           ),
 
           // My Posts Tab
@@ -542,6 +675,21 @@ class _PostCard extends StatelessWidget {
     required this.onAvatarTap,
   });
 
+  String _getCategoryLabel(String? category) {
+    if (category == null) return '';
+    const categories = {
+      'SUDOKU': 'Sudoku',
+      'CARO': 'Cờ Caro',
+      'RUBIK': 'Rubik',
+      'PUZZLE': 'Xếp hình',
+      'CHESS': 'Cờ vua',
+      'GAME_2048': '2048',
+      'MEMORY': 'Trí nhớ',
+      'QUIZ': 'Đố vui',
+    };
+    return categories[category] ?? category;
+  }
+
   @override
   Widget build(BuildContext context) {
     final isOwnPost = post.userId == currentUserId;
@@ -560,11 +708,18 @@ class _PostCard extends StatelessWidget {
                 GestureDetector(
                   onTap: onAvatarTap,
                   child: CircleAvatar(
+                    radius: 24,
                     backgroundImage: post.user.avatarUrl != null
                         ? NetworkImage(post.user.avatarUrl!)
                         : null,
                     child: post.user.avatarUrl == null
-                        ? Text(post.user.username[0].toUpperCase())
+                        ? Text(
+                            post.user.username[0].toUpperCase(),
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          )
                         : null,
                   ),
                 ),
@@ -577,12 +732,58 @@ class _PostCard extends StatelessWidget {
                         post.user.username,
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
-                          fontSize: 15,
+                          fontSize: 16,
                         ),
                       ),
-                      Text(
-                        formattedDate,
-                        style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                      const SizedBox(height: 2),
+                      Row(
+                        children: [
+                          Text(
+                            formattedDate,
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 12,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Icon(
+                            post.visibility == 'public'
+                                ? Icons.public
+                                : post.visibility == 'friends'
+                                    ? Icons.group
+                                    : Icons.lock,
+                            size: 14,
+                            color: Colors.grey[600],
+                          ),
+                          if (post.category != null) ..[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.blue.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: Colors.blue, width: 1),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.gamepad,
+                                      size: 12, color: Colors.blue),
+                                  const SizedBox(width: 3),
+                                  Text(
+                                    _getCategoryLabel(post.category),
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: Colors.blue,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                     ],
                   ),
@@ -745,11 +946,58 @@ class _CreatePostDialogState extends State<_CreatePostDialog> {
   final _contentController = TextEditingController();
   bool _isLoading = false;
   String _visibility = 'public';
+  String? _category;
+  File? _selectedImage;
+
+  final List<Map<String, String>> _categories = [
+    {'value': 'SUDOKU', 'label': 'Sudoku'},
+    {'value': 'CARO', 'label': 'Cờ Caro'},
+    {'value': 'RUBIK', 'label': 'Rubik'},
+    {'value': 'PUZZLE', 'label': 'Xếp hình'},
+    {'value': 'CHESS', 'label': 'Cờ vua'},
+    {'value': 'GAME_2048', 'label': '2048'},
+    {'value': 'MEMORY', 'label': 'Trí nhớ'},
+    {'value': 'QUIZ', 'label': 'Đố vui'},
+  ];
 
   @override
   void dispose() {
     _contentController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final result = await showDialog<ImageSource>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Chọn nguồn ảnh'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('Chụp ảnh'),
+              onTap: () => Navigator.pop(context, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('Thư viện ảnh'),
+              onTap: () => Navigator.pop(context, ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (result != null) {
+      final pickedFile = await picker.pickImage(source: result);
+      if (pickedFile != null) {
+        setState(() {
+          _selectedImage = File(pickedFile.path);
+        });
+      }
+    }
   }
 
   Future<void> _createPost() async {
@@ -763,12 +1011,20 @@ class _CreatePostDialogState extends State<_CreatePostDialog> {
     setState(() => _isLoading = true);
 
     try {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final apiService = ApiService();
+
+      // Upload image if selected
+      String? imageUrl;
+      if (_selectedImage != null) {
+        imageUrl = await apiService.uploadImage(_selectedImage!.path);
+        imageUrl = '${ApiService.baseUrl}$imageUrl'; // Convert to full URL
+      }
 
       await apiService.createPost(
         content: _contentController.text.trim(),
         visibility: _visibility,
+        category: _category,
+        imageUrl: imageUrl,
       );
 
       if (mounted) {
@@ -795,7 +1051,9 @@ class _CreatePostDialogState extends State<_CreatePostDialog> {
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Content input
             TextField(
               controller: _contentController,
               maxLines: 5,
@@ -805,16 +1063,107 @@ class _CreatePostDialogState extends State<_CreatePostDialog> {
               ),
             ),
             const SizedBox(height: 16),
+
+            // Image preview
+            if (_selectedImage != null) ...[
+              Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.file(
+                      _selectedImage!,
+                      height: 200,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: IconButton(
+                      icon: const Icon(Icons.close, color: Colors.white),
+                      style: IconButton.styleFrom(
+                        backgroundColor: Colors.black54,
+                      ),
+                      onPressed: () => setState(() => _selectedImage = null),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+            ],
+
+            // Image picker button
+            OutlinedButton.icon(
+              onPressed: _pickImage,
+              icon: const Icon(Icons.image),
+              label: Text(_selectedImage == null ? 'Thêm ảnh' : 'Thay đổi ảnh'),
+            ),
+            const SizedBox(height: 16),
+
+            // Game category dropdown
+            DropdownButtonFormField<String>(
+              value: _category,
+              decoration: const InputDecoration(
+                labelText: 'Thể loại game (tuỳ chọn)',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.gamepad),
+              ),
+              items: [
+                const DropdownMenuItem<String>(
+                  value: null,
+                  child: Text('-- Không chọn --'),
+                ),
+                ..._categories.map((cat) => DropdownMenuItem<String>(
+                      value: cat['value'],
+                      child: Text(cat['label']!),
+                    )),
+              ],
+              onChanged: (value) {
+                setState(() => _category = value);
+              },
+            ),
+            const SizedBox(height: 16),
+
+            // Visibility dropdown
             DropdownButtonFormField<String>(
               value: _visibility,
               decoration: const InputDecoration(
                 labelText: 'Quyền riêng tư',
                 border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.lock_outline),
               ),
               items: const [
-                DropdownMenuItem(value: 'public', child: Text('Công khai')),
-                DropdownMenuItem(value: 'friends', child: Text('Bạn bè')),
-                DropdownMenuItem(value: 'private', child: Text('Riêng tư')),
+                DropdownMenuItem(
+                  value: 'public',
+                  child: Row(
+                    children: [
+                      Icon(Icons.public, size: 20),
+                      SizedBox(width: 8),
+                      Text('Công khai'),
+                    ],
+                  ),
+                ),
+                DropdownMenuItem(
+                  value: 'friends',
+                  child: Row(
+                    children: [
+                      Icon(Icons.group, size: 20),
+                      SizedBox(width: 8),
+                      Text('Bạn bè'),
+                    ],
+                  ),
+                ),
+                DropdownMenuItem(
+                  value: 'private',
+                  child: Row(
+                    children: [
+                      Icon(Icons.lock, size: 20),
+                      SizedBox(width: 8),
+                      Text('Riêng tư'),
+                    ],
+                  ),
+                ),
               ],
               onChanged: (value) {
                 if (value != null) {

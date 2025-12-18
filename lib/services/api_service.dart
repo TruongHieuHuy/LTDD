@@ -961,6 +961,7 @@ class PostData {
   final String content;
   final String? imageUrl;
   final String visibility;
+  final String? category;
   final int likeCount;
   final int commentCount;
   final int shareCount;
@@ -977,6 +978,7 @@ class PostData {
     required this.content,
     this.imageUrl,
     required this.visibility,
+    this.category,
     required this.likeCount,
     required this.commentCount,
     required this.shareCount,
@@ -995,6 +997,7 @@ class PostData {
       content: json['content'] ?? '',
       imageUrl: json['imageUrl'],
       visibility: json['visibility'] ?? 'public',
+      category: json['category'],
       likeCount: json['likeCount'] ?? 0,
       commentCount: json['commentCount'] ?? 0,
       shareCount: json['shareCount'] ?? 0,
@@ -1050,6 +1053,7 @@ extension PostsAPI on ApiService {
     required String content,
     String? imageUrl,
     String visibility = 'public',
+    String? category,
   }) async {
     final url = Uri.parse('${ApiService.baseUrl}/api/posts');
     final response = await http.post(
@@ -1059,6 +1063,7 @@ extension PostsAPI on ApiService {
         'content': content,
         'imageUrl': imageUrl,
         'visibility': visibility,
+        'category': category,
       }),
     );
 
@@ -1071,15 +1076,49 @@ extension PostsAPI on ApiService {
     }
   }
 
-  /// Get posts feed (all or filtered by userId)
+  /// Upload image file
+  Future<String> uploadImage(String filePath) async {
+    final url = Uri.parse('${ApiService.baseUrl}/api/upload');
+    final request = http.MultipartRequest('POST', url);
+    
+    // Add auth header
+    if (_authToken != null) {
+      request.headers['Authorization'] = 'Bearer $_authToken';
+    }
+    
+    // Add file
+    request.files.add(await http.MultipartFile.fromPath('image', filePath));
+    
+    final response = await request.send();
+    final responseBody = await response.stream.bytesToString();
+    
+    if (response.statusCode == 200) {
+      final data = jsonDecode(responseBody);
+      return data['imageUrl'];
+    } else {
+      throw Exception(
+        'Failed to upload image: ${jsonDecode(responseBody)['error'] ?? response.statusCode}',
+      );
+    }
+  }
+
+  /// Get posts feed (all or filtered by userId, category, or search)
   Future<List<PostData>> getPosts({
     int limit = 20,
     int offset = 0,
     int? userId,
+    String? category,
+    String? search,
   }) async {
     var url = '${ApiService.baseUrl}/api/posts?limit=$limit&offset=$offset';
     if (userId != null) {
       url += '&userId=$userId';
+    }
+    if (category != null && category.isNotEmpty) {
+      url += '&category=$category';
+    }
+    if (search != null && search.isNotEmpty) {
+      url += '&search=${Uri.encodeComponent(search)}';
     }
 
     final response = await http.get(Uri.parse(url), headers: _headers);
