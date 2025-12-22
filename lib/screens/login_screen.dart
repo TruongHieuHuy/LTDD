@@ -361,22 +361,42 @@ class _LoginScreenState extends State<LoginScreen>
                       // Remember Me (Login only)
                       if (_isLoginMode)
                         Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Checkbox(
-                              value: _rememberMe,
-                              onChanged: (value) {
-                                setState(() {
-                                  _rememberMe = value ?? false;
-                                });
-                              },
-                              activeColor: themeProvider.primaryColor,
+                            Row(
+                              children: [
+                                Checkbox(
+                                  value: _rememberMe,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _rememberMe = value ?? false;
+                                    });
+                                  },
+                                  activeColor: themeProvider.primaryColor,
+                                ),
+                                Text(
+                                  'Ghi nhớ',
+                                  style: TextStyle(
+                                    color: isDarkMode
+                                        ? Colors.grey[400]
+                                        : Colors.grey[700],
+                                  ),
+                                ),
+                              ],
                             ),
-                            Text(
-                              'Ghi nhớ đăng nhập (30 ngày)',
-                              style: TextStyle(
-                                color: isDarkMode
-                                    ? Colors.grey[400]
-                                    : Colors.grey[700],
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.pushNamed(
+                                  context,
+                                  '/forgot-password',
+                                );
+                              },
+                              child: Text(
+                                'Quên mật khẩu?',
+                                style: TextStyle(
+                                  color: themeProvider.primaryColor,
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
                             ),
                           ],

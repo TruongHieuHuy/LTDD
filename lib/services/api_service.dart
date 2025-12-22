@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
+import '../models/achievement_model.dart';
 
 /// API Service để giao tiếp với Backend
 class ApiService {
@@ -156,6 +157,162 @@ class ApiService {
     } catch (e) {
       debugPrint('Get user error: $e');
       return ApiResponse<UserProfile>(
+        success: false,
+        message: 'Network error: ${e.toString()}',
+      );
+    }
+  }
+
+  /// Forgot Password - Send reset token
+  /// POST /api/auth/forgot-password
+  Future<ApiResponse<Map<String, dynamic>>> forgotPassword({
+    required String email,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/auth/forgot-password'),
+        headers: _headers,
+        body: jsonEncode({'email': email}),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        return ApiResponse<Map<String, dynamic>>(
+          success: true,
+          data: data['data'],
+          message: data['message'],
+        );
+      } else {
+        return ApiResponse<Map<String, dynamic>>(
+          success: false,
+          message: data['message'] ?? 'Failed to send reset token',
+        );
+      }
+    } catch (e) {
+      debugPrint('Forgot password error: $e');
+      return ApiResponse<Map<String, dynamic>>(
+        success: false,
+        message: 'Network error: ${e.toString()}',
+      );
+    }
+  }
+
+  /// Reset Password - With token
+  /// POST /api/auth/reset-password
+  Future<ApiResponse<Map<String, dynamic>>> resetPassword({
+    required String email,
+    required String token,
+    required String newPassword,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/auth/reset-password'),
+        headers: _headers,
+        body: jsonEncode({
+          'email': email,
+          'token': token,
+          'newPassword': newPassword,
+        }),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        return ApiResponse<Map<String, dynamic>>(
+          success: true,
+          data: data['data'] ?? {},
+          message: data['message'],
+        );
+      } else {
+        return ApiResponse<Map<String, dynamic>>(
+          success: false,
+          message: data['message'] ?? 'Failed to reset password',
+        );
+      }
+    } catch (e) {
+      debugPrint('Reset password error: $e');
+      return ApiResponse<Map<String, dynamic>>(
+        success: false,
+        message: 'Network error: ${e.toString()}',
+      );
+    }
+  }
+
+  /// Update Profile - Username and Avatar
+  /// PUT /api/auth/profile
+  Future<ApiResponse<UserProfile>> updateProfile({
+    String? username,
+    String? avatarUrl,
+  }) async {
+    try {
+      final body = <String, dynamic>{};
+      if (username != null) body['username'] = username;
+      if (avatarUrl != null) body['avatarUrl'] = avatarUrl;
+
+      final response = await http.put(
+        Uri.parse('$baseUrl/api/auth/profile'),
+        headers: _headers,
+        body: jsonEncode(body),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        final user = UserProfile.fromJson(data['data']['user']);
+        return ApiResponse<UserProfile>(
+          success: true,
+          data: user,
+          message: data['message'],
+        );
+      } else {
+        return ApiResponse<UserProfile>(
+          success: false,
+          message: data['message'] ?? 'Failed to update profile',
+        );
+      }
+    } catch (e) {
+      debugPrint('Update profile error: $e');
+      return ApiResponse<UserProfile>(
+        success: false,
+        message: 'Network error: ${e.toString()}',
+      );
+    }
+  }
+
+  /// Change Password - Requires current password
+  /// POST /api/auth/change-password
+  Future<ApiResponse<Map<String, dynamic>>> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/auth/change-password'),
+        headers: _headers,
+        body: jsonEncode({
+          'currentPassword': currentPassword,
+          'newPassword': newPassword,
+        }),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        return ApiResponse<Map<String, dynamic>>(
+          success: true,
+          data: data['data'] ?? {},
+          message: data['message'],
+        );
+      } else {
+        return ApiResponse<Map<String, dynamic>>(
+          success: false,
+          message: data['message'] ?? 'Failed to change password',
+        );
+      }
+    } catch (e) {
+      debugPrint('Change password error: $e');
+      return ApiResponse<Map<String, dynamic>>(
         success: false,
         message: 'Network error: ${e.toString()}',
       );
@@ -1296,6 +1453,150 @@ extension PostsAPI on ApiService {
     } else {
       throw Exception(
         'Failed to toggle follow: ${jsonDecode(response.body)['error'] ?? response.statusCode}',
+      );
+    }
+  }
+
+  // ==================== ACHIEVEMENT ENDPOINTS ====================
+
+  /// Get all achievements (optionally filtered by category)
+  /// GET /api/achievements?category=general|games|social|milestone
+  Future<ApiResponse<List<AchievementData>>> getAllAchievements({
+    String? category,
+  }) async {
+    try {
+      var url = '${ApiService.baseUrl}/api/achievements';
+      if (category != null && category.isNotEmpty) {
+        url += '?category=$category';
+      }
+
+      final response = await http.get(Uri.parse(url), headers: _headers);
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        final achievements = (data['data']['achievements'] as List)
+            .map((json) => AchievementData.fromJson(json))
+            .toList();
+
+        return ApiResponse<List<AchievementData>>(
+          success: true,
+          data: achievements,
+          message: data['message'],
+        );
+      } else {
+        return ApiResponse<List<AchievementData>>(
+          success: false,
+          message: data['message'] ?? 'Failed to get achievements',
+        );
+      }
+    } catch (e) {
+      debugPrint('Get achievements error: $e');
+      return ApiResponse<List<AchievementData>>(
+        success: false,
+        message: 'Network error: ${e.toString()}',
+      );
+    }
+  }
+
+  /// Get user achievements with progress
+  /// GET /api/achievements/user/:userId
+  Future<ApiResponse<List<UserAchievementData>>> getUserAchievements({
+    required String userId,
+  }) async {
+    try {
+      final response = await http.get(
+        Uri.parse('${ApiService.baseUrl}/api/achievements/user/$userId'),
+        headers: _headers,
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        final achievements = (data['data']['achievements'] as List)
+            .map((json) => UserAchievementData.fromJson(json))
+            .toList();
+
+        return ApiResponse<List<UserAchievementData>>(
+          success: true,
+          data: achievements,
+          message: data['message'],
+        );
+      } else {
+        return ApiResponse<List<UserAchievementData>>(
+          success: false,
+          message: data['message'] ?? 'Failed to get user achievements',
+        );
+      }
+    } catch (e) {
+      debugPrint('Get user achievements error: $e');
+      return ApiResponse<List<UserAchievementData>>(
+        success: false,
+        message: 'Network error: ${e.toString()}',
+      );
+    }
+  }
+
+  /// Check and unlock achievements (authenticated)
+  /// POST /api/achievements/check
+  Future<ApiResponse<Map<String, dynamic>>> checkAchievements() async {
+    try {
+      final response = await http.post(
+        Uri.parse('${ApiService.baseUrl}/api/achievements/check'),
+        headers: _headers,
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        return ApiResponse<Map<String, dynamic>>(
+          success: true,
+          data: data['data'],
+          message: data['message'],
+        );
+      } else {
+        return ApiResponse<Map<String, dynamic>>(
+          success: false,
+          message: data['message'] ?? 'Failed to check achievements',
+        );
+      }
+    } catch (e) {
+      debugPrint('Check achievements error: $e');
+      return ApiResponse<Map<String, dynamic>>(
+        success: false,
+        message: 'Network error: ${e.toString()}',
+      );
+    }
+  }
+
+  /// Get achievement stats (authenticated)
+  /// GET /api/achievements/stats
+  Future<ApiResponse<Map<String, dynamic>>> getAchievementStats() async {
+    try {
+      final response = await http.get(
+        Uri.parse('${ApiService.baseUrl}/api/achievements/stats'),
+        headers: _headers,
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        return ApiResponse<Map<String, dynamic>>(
+          success: true,
+          data: data['data'],
+          message: data['message'],
+        );
+      } else {
+        return ApiResponse<Map<String, dynamic>>(
+          success: false,
+          message: data['message'] ?? 'Failed to get achievement stats',
+        );
+      }
+    } catch (e) {
+      debugPrint('Get achievement stats error: $e');
+      return ApiResponse<Map<String, dynamic>>(
+        success: false,
+        message: 'Network error: ${e.toString()}',
       );
     }
   }

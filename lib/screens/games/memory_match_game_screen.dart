@@ -147,18 +147,9 @@ class _MemoryMatchGameScreenState extends State<MemoryMatchGameScreen> {
       _previewCountdown = MemoryIconProvider.getPreviewDuration(difficulty);
     });
 
-    // Ensure all cards start as NOT flipped
-    for (var card in _cards) {
-      card.isFlipped = false;
-      card.isMatched = false;
-    }
-
-    print('🎮 Starting game - difficulty: $difficulty');
-    print('   _isPreviewPhase: $_isPreviewPhase');
-    print('   _isProcessing: $_isProcessing');
-    print('   Total cards: ${_cards.length}');
-    print('   All cards NOT flipped: ${_cards.every((c) => !c.isFlipped)}');
-
+    print(
+      'Starting game - difficulty: $difficulty, _isPreviewPhase: $_isPreviewPhase',
+    );
     _startPreviewPhase();
   }
 
@@ -184,7 +175,7 @@ class _MemoryMatchGameScreenState extends State<MemoryMatchGameScreen> {
     // Bắt đầu countdown với delay 1s (để user thấy thẻ trước)
     Future.delayed(Duration(milliseconds: 500), () {
       if (!mounted || !_isPreviewPhase) return;
-
+      
       _previewTimer = Timer.periodic(Duration(seconds: 1), (timer) {
         if (!mounted) {
           timer.cancel();
@@ -204,32 +195,20 @@ class _MemoryMatchGameScreenState extends State<MemoryMatchGameScreen> {
   }
 
   void _endPreviewPhase() {
-    if (!_isPreviewPhase) {
-      print(
-        '⚠️ WARNING: _endPreviewPhase called but _isPreviewPhase is already false',
-      );
-      return; // Đã kết thúc rồi, không làm gì nữa
-    }
+    if (!_isPreviewPhase) return; // Đã kết thúc rồi, không làm gì nữa
 
-    print('🔄 Ending preview phase...');
+    print('Ending preview phase...');
     _previewTimer?.cancel(); // Đảm bảo cancel timer
 
-    // Flip all cards back down
-    for (var card in _cards) {
-      card.isFlipped = false;
-    }
-
-    // Set preview phase to false AFTER flipping cards
     setState(() {
       _isPreviewPhase = false;
-      _isProcessing = false; // Also reset processing flag
+      for (var card in _cards) {
+        card.isFlipped = false;
+      }
     });
-
-    print('✅ Preview phase ended successfully!');
-    print('   _isPreviewPhase = $_isPreviewPhase');
-    print('   _isProcessing = $_isProcessing');
-    print('   All cards isFlipped = ${_cards.every((c) => !c.isFlipped)}');
-    print('   🎮 Game is now playable - you can tap cards!');
+    print(
+      'Preview phase ended. _isPreviewPhase = $_isPreviewPhase. Can now play!',
+    );
 
     if (_timeLimit != null) {
       _gameTimer = Timer.periodic(Duration(seconds: 1), (timer) {
@@ -251,21 +230,13 @@ class _MemoryMatchGameScreenState extends State<MemoryMatchGameScreen> {
 
     // Debug: print state
     print(
-      '🎮 Card tap: index=$index, isPreviewPhase=$_isPreviewPhase, isProcessing=$_isProcessing, isFlipped=${card.isFlipped}, isMatched=${card.isMatched}',
-    );
-    print('🎮 Card details: icon=${card.iconData}, id=${card.id}');
-    print(
-      '🎮 Game state: moves=$_moves, pairsFound=$_pairsFound, selectedCards=${_selectedCards.length}',
+      'Card tap: index=$index, isPreviewPhase=$_isPreviewPhase, isProcessing=$_isProcessing, isFlipped=${card.isFlipped}, isMatched=${card.isMatched}',
     );
 
     if (_isProcessing || card.isFlipped || card.isMatched || _isPreviewPhase) {
-      print(
-        '❌ Card tap BLOCKED! Reason: processing=$_isProcessing, flipped=${card.isFlipped}, matched=${card.isMatched}, preview=$_isPreviewPhase',
-      );
+      print('Card tap blocked!');
       return;
     }
-
-    print('✅ Card tap ALLOWED - will flip card');
 
     if (_selectedCards.length == 2) {
       setState(() {
@@ -279,10 +250,6 @@ class _MemoryMatchGameScreenState extends State<MemoryMatchGameScreen> {
       _selectedCards.add(card);
       _moves++;
     });
-
-    print(
-      '🔄 Card flipped! isFlipped=${card.isFlipped}, icon=${card.iconData}',
-    );
 
     if (_selectedCards.length == 2) {
       _isProcessing = true;

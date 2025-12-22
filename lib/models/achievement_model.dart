@@ -65,6 +65,102 @@ class AchievementModel extends HiveObject {
       );
 }
 
+/// Achievement data from Backend API
+class AchievementData {
+  final String id;
+  final String name;
+  final String description;
+  final String icon;
+  final String category; // general, games, social, milestone
+  final int points;
+  final Map<String, dynamic> requirement;
+
+  AchievementData({
+    required this.id,
+    required this.name,
+    required this.description,
+    required this.icon,
+    required this.category,
+    required this.points,
+    required this.requirement,
+  });
+
+  factory AchievementData.fromJson(Map<String, dynamic> json) {
+    return AchievementData(
+      id: json['id'],
+      name: json['name'],
+      description: json['description'],
+      icon: json['icon'],
+      category: json['category'],
+      points: json['points'],
+      requirement: json['requirement'] as Map<String, dynamic>,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'name': name,
+    'description': description,
+    'icon': icon,
+    'category': category,
+    'points': points,
+    'requirement': requirement,
+  };
+}
+
+/// User achievement with progress tracking
+class UserAchievementData {
+  final String achievementId;
+  final String name;
+  final String description;
+  final String icon;
+  final String category;
+  final int points;
+  final bool unlocked;
+  final double progress; // 0-100%
+  final DateTime? unlockedAt;
+
+  UserAchievementData({
+    required this.achievementId,
+    required this.name,
+    required this.description,
+    required this.icon,
+    required this.category,
+    required this.points,
+    required this.unlocked,
+    required this.progress,
+    this.unlockedAt,
+  });
+
+  factory UserAchievementData.fromJson(Map<String, dynamic> json) {
+    return UserAchievementData(
+      achievementId: json['achievementId'],
+      name: json['name'],
+      description: json['description'],
+      icon: json['icon'],
+      category: json['category'],
+      points: json['points'],
+      unlocked: json['unlocked'] ?? false,
+      progress: (json['progress'] ?? 0).toDouble(),
+      unlockedAt: json['unlockedAt'] != null
+          ? DateTime.parse(json['unlockedAt'])
+          : null,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'achievementId': achievementId,
+    'name': name,
+    'description': description,
+    'icon': icon,
+    'category': category,
+    'points': points,
+    'unlocked': unlocked,
+    'progress': progress,
+    'unlockedAt': unlockedAt?.toIso8601String(),
+  };
+}
+
 /// Predefined Achievements
 class Achievements {
   static final List<AchievementModel> all = [

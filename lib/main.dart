@@ -5,6 +5,8 @@ import 'screens/youtube_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/modular_navigation_screen.dart';
 import 'screens/login_screen.dart';
+import 'screens/forgot_password_screen.dart';
+import 'screens/achievements_screen.dart';
 import 'screens/games/guess_number_game_screen.dart';
 import 'screens/games/cows_bulls_game_screen.dart';
 import 'screens/games/memory_match_game_screen.dart';
@@ -86,6 +88,7 @@ class SmartStudentApp extends StatelessWidget {
             initialRoute: authProvider.isLoggedIn ? '/modular' : '/login',
             routes: {
               '/login': (context) => const LoginScreen(),
+              '/forgot-password': (context) => const ForgotPasswordScreen(),
               '/modular': (context) => const ModularNavigation(),
               '/profile': (context) => const ProfileScreen(),
               '/translate': (context) => const TranslateScreen(),
@@ -108,6 +111,13 @@ class SmartStudentApp extends StatelessWidget {
                 final userId = settings.arguments as String;
                 return MaterialPageRoute(
                   builder: (context) => UserProfileScreen(userId: userId),
+                );
+              }
+              // Handle backend achievements screen with userId
+              if (settings.name == '/backend-achievements') {
+                final userId = settings.arguments as String;
+                return MaterialPageRoute(
+                  builder: (context) => AchievementsScreen(userId: userId),
                 );
               }
               return null;
