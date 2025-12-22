@@ -1,4 +1,4 @@
-package com.example.truonghieuhuy
+package com.minigame.center
 
 import android.app.NotificationChannel
 import android.app.NotificationManager

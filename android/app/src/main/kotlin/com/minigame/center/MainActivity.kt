@@ -1,4 +1,4 @@
-package com.example.truonghieuhuy
+package com.minigame.center
 
 import android.Manifest
 import android.app.Activity

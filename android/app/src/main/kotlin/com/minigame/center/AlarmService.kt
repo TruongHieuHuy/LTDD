@@ -1,4 +1,4 @@
-package com.example.truonghieuhuy
+package com.minigame.center
 
 import android.app.AlarmManager
 import android.app.PendingIntent

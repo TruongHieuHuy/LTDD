@@ -55,39 +55,30 @@ class _AchievementsScreenState extends State<AchievementsScreen>
     setState(() => _isLoading = true);
 
     try {
-      final response = await ApiService().getUserAchievements(
-        userId: widget.userId,
+      final achievements = await ApiService().getUserAchievements(
+        widget.userId.hashCode,
       );
 
-      if (response.success && response.data != null) {
-        setState(() {
-          _achievements = response.data!;
-          _isLoading = false;
-        });
-      } else {
-        setState(() => _isLoading = false);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(response.message ?? 'Lỗi tải achievements')),
-          );
-        }
-      }
+      setState(() {
+        _achievements = achievements.cast<UserAchievementData>();
+        _isLoading = false;
+      });
     } catch (e) {
       setState(() => _isLoading = false);
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Lỗi: $e')));
+        ).showSnackBar(SnackBar(content: Text('Lỗi tải achievements: $e')));
       }
     }
   }
 
   Future<void> _loadStats() async {
     try {
-      final response = await ApiService().getAchievementStats();
-      if (response.success && response.data != null) {
-        setState(() => _stats = response.data);
-      }
+      final stats = await ApiService().getAchievementStats(
+        widget.userId.hashCode,
+      );
+      setState(() => _stats = stats);
     } catch (e) {
       debugPrint('Error loading stats: $e');
     }
@@ -95,22 +86,21 @@ class _AchievementsScreenState extends State<AchievementsScreen>
 
   Future<void> _checkNewAchievements() async {
     try {
-      final response = await ApiService().checkAchievements();
-      if (response.success && response.data != null) {
-        final newlyUnlocked = response.data!['newlyUnlocked'] as List;
+      final newlyUnlocked = await ApiService().checkAchievements(
+        widget.userId.hashCode,
+      );
 
-        if (newlyUnlocked.isNotEmpty && mounted) {
-          // Show unlock animation
-          _showUnlockDialog(newlyUnlocked);
+      if (newlyUnlocked.isNotEmpty && mounted) {
+        // Show unlock animation
+        _showUnlockDialog(newlyUnlocked);
 
-          // Reload achievements
-          await _loadAchievements();
-          await _loadStats();
-        } else if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Không có achievement mới')),
-          );
-        }
+        // Reload achievements
+        await _loadAchievements();
+        await _loadStats();
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Không có achievement mới')),
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -223,7 +213,7 @@ class _AchievementsScreenState extends State<AchievementsScreen>
                 // Stats Header
                 Container(
                   padding: const EdgeInsets.all(16),
-                  color: theme.colorScheme.primary.withOpacity(0.1),
+                  color: theme.colorScheme.primary.withValues(alpha: 0.1),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
@@ -300,8 +290,8 @@ class _AchievementsScreenState extends State<AchievementsScreen>
           height: 56,
           decoration: BoxDecoration(
             color: isUnlocked
-                ? Colors.amber.withOpacity(0.2)
-                : Colors.grey.withOpacity(0.1),
+                ? Colors.amber.withValues(alpha: 0.2)
+                : Colors.grey.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Center(

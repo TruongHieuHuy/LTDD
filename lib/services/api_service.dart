@@ -1457,7 +1457,63 @@ extension PostsAPI on ApiService {
     }
   }
 
+  /// Share post (increment share count)
+  Future<Map<String, dynamic>> sharePost(String postId) async {
+    final url = Uri.parse('${ApiService.baseUrl}/api/posts/$postId/share');
+    final response = await http.post(url, headers: _headers);
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception(
+        'Failed to share post: ${jsonDecode(response.body)['error'] ?? response.statusCode}',
+      );
+    }
+  }
+
   // ==================== ACHIEVEMENT ENDPOINTS ====================
+
+  /// Get user achievements
+  Future<List<dynamic>> getUserAchievements(int userId) async {
+    final url = Uri.parse(
+      '${ApiService.baseUrl}/api/users/$userId/achievements',
+    );
+    final response = await http.get(url, headers: _headers);
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body)['achievements'] ?? [];
+    } else {
+      throw Exception('Failed to get user achievements');
+    }
+  }
+
+  /// Get achievement stats
+  Future<Map<String, dynamic>> getAchievementStats(int userId) async {
+    final url = Uri.parse(
+      '${ApiService.baseUrl}/api/users/$userId/achievements/stats',
+    );
+    final response = await http.get(url, headers: _headers);
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to get achievement stats');
+    }
+  }
+
+  /// Check achievements
+  Future<List<dynamic>> checkAchievements(int userId) async {
+    final url = Uri.parse(
+      '${ApiService.baseUrl}/api/users/$userId/achievements/check',
+    );
+    final response = await http.post(url, headers: _headers);
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body)['newAchievements'] ?? [];
+    } else {
+      throw Exception('Failed to check achievements');
+    }
+  }
 
   /// Get all achievements (optionally filtered by category)
   /// GET /api/achievements?category=general|games|social|milestone
@@ -1493,108 +1549,6 @@ extension PostsAPI on ApiService {
     } catch (e) {
       debugPrint('Get achievements error: $e');
       return ApiResponse<List<AchievementData>>(
-        success: false,
-        message: 'Network error: ${e.toString()}',
-      );
-    }
-  }
-
-  /// Get user achievements with progress
-  /// GET /api/achievements/user/:userId
-  Future<ApiResponse<List<UserAchievementData>>> getUserAchievements({
-    required String userId,
-  }) async {
-    try {
-      final response = await http.get(
-        Uri.parse('${ApiService.baseUrl}/api/achievements/user/$userId'),
-        headers: _headers,
-      );
-
-      final data = jsonDecode(response.body);
-
-      if (response.statusCode == 200) {
-        final achievements = (data['data']['achievements'] as List)
-            .map((json) => UserAchievementData.fromJson(json))
-            .toList();
-
-        return ApiResponse<List<UserAchievementData>>(
-          success: true,
-          data: achievements,
-          message: data['message'],
-        );
-      } else {
-        return ApiResponse<List<UserAchievementData>>(
-          success: false,
-          message: data['message'] ?? 'Failed to get user achievements',
-        );
-      }
-    } catch (e) {
-      debugPrint('Get user achievements error: $e');
-      return ApiResponse<List<UserAchievementData>>(
-        success: false,
-        message: 'Network error: ${e.toString()}',
-      );
-    }
-  }
-
-  /// Check and unlock achievements (authenticated)
-  /// POST /api/achievements/check
-  Future<ApiResponse<Map<String, dynamic>>> checkAchievements() async {
-    try {
-      final response = await http.post(
-        Uri.parse('${ApiService.baseUrl}/api/achievements/check'),
-        headers: _headers,
-      );
-
-      final data = jsonDecode(response.body);
-
-      if (response.statusCode == 200) {
-        return ApiResponse<Map<String, dynamic>>(
-          success: true,
-          data: data['data'],
-          message: data['message'],
-        );
-      } else {
-        return ApiResponse<Map<String, dynamic>>(
-          success: false,
-          message: data['message'] ?? 'Failed to check achievements',
-        );
-      }
-    } catch (e) {
-      debugPrint('Check achievements error: $e');
-      return ApiResponse<Map<String, dynamic>>(
-        success: false,
-        message: 'Network error: ${e.toString()}',
-      );
-    }
-  }
-
-  /// Get achievement stats (authenticated)
-  /// GET /api/achievements/stats
-  Future<ApiResponse<Map<String, dynamic>>> getAchievementStats() async {
-    try {
-      final response = await http.get(
-        Uri.parse('${ApiService.baseUrl}/api/achievements/stats'),
-        headers: _headers,
-      );
-
-      final data = jsonDecode(response.body);
-
-      if (response.statusCode == 200) {
-        return ApiResponse<Map<String, dynamic>>(
-          success: true,
-          data: data['data'],
-          message: data['message'],
-        );
-      } else {
-        return ApiResponse<Map<String, dynamic>>(
-          success: false,
-          message: data['message'] ?? 'Failed to get achievement stats',
-        );
-      }
-    } catch (e) {
-      debugPrint('Get achievement stats error: $e');
-      return ApiResponse<Map<String, dynamic>>(
         success: false,
         message: 'Network error: ${e.toString()}',
       );
