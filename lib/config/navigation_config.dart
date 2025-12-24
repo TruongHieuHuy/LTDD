@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/navigation_models.dart';
 import '../screens/home_screen.dart';
+import '../screens/new_home_screen.dart';
 import '../screens/translate_screen.dart';
 import '../screens/alarm_screen.dart';
 import '../screens/youtube_screen.dart';
@@ -32,8 +33,8 @@ class NavigationConfig {
             id: 'home',
             name: 'Trang chủ',
             icon: Icons.home,
-            screen: const HomeScreen(),
-            route: '/home',
+            screen: const NewHomeScreen(), // 🎮 NEW Gaming Hub UI
+            route: '/new-home',
           ),
           NavigationItem(
             id: 'translate',

@@ -7,6 +7,7 @@ import 'screens/modular_navigation_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/forgot_password_screen.dart';
 import 'screens/achievements_screen.dart';
+import 'screens/new_home_screen.dart';
 import 'screens/games/guess_number_game_screen.dart';
 import 'screens/games/cows_bulls_game_screen.dart';
 import 'screens/games/memory_match_game_screen.dart';
@@ -90,6 +91,7 @@ class SmartStudentApp extends StatelessWidget {
               '/login': (context) => const LoginScreen(),
               '/forgot-password': (context) => const ForgotPasswordScreen(),
               '/modular': (context) => const ModularNavigation(),
+              '/new-home': (context) => const NewHomeScreen(), // 🎮 New Gaming Hub
               '/profile': (context) => const ProfileScreen(),
               '/translate': (context) => const TranslateScreen(),
               '/youtube': (context) => const YouTubeScreen(),
