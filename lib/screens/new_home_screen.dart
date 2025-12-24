@@ -68,9 +68,7 @@ class _NewHomeScreenState extends State<NewHomeScreen>
               ),
 
               // 🏆 Quick Stats Bar
-              SliverToBoxAdapter(
-                child: _buildQuickStats(userProfile, isDark),
-              ),
+              SliverToBoxAdapter(child: _buildQuickStats(userProfile, isDark)),
 
               // 🎯 Featured Games Section
               SliverToBoxAdapter(
@@ -97,7 +95,8 @@ class _NewHomeScreenState extends State<NewHomeScreen>
                       ),
                       const Spacer(),
                       TextButton(
-                        onPressed: () => Navigator.pushNamed(context, '/leaderboard'),
+                        onPressed: () =>
+                            Navigator.pushNamed(context, '/leaderboard'),
                         child: const Text('View All →'),
                       ),
                     ],
@@ -185,7 +184,10 @@ class _NewHomeScreenState extends State<NewHomeScreen>
                           color: Colors.orange.withOpacity(0.2),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Icon(Icons.sports_esports, color: Colors.orange),
+                        child: const Icon(
+                          Icons.sports_esports,
+                          color: Colors.orange,
+                        ),
                       ),
                       const SizedBox(width: 12),
                       Text(
@@ -202,9 +204,7 @@ class _NewHomeScreenState extends State<NewHomeScreen>
               ),
 
               // 🎯 Mini Games Horizontal Scroll
-              SliverToBoxAdapter(
-                child: _buildMiniGamesRow(isDark),
-              ),
+              SliverToBoxAdapter(child: _buildMiniGamesRow(isDark)),
 
               const SliverToBoxAdapter(child: SizedBox(height: 40)),
             ],
@@ -228,10 +228,7 @@ class _NewHomeScreenState extends State<NewHomeScreen>
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: LinearGradient(
-                    colors: [
-                      Colors.blue.shade400,
-                      Colors.purple.shade400,
-                    ],
+                    colors: [Colors.blue.shade400, Colors.purple.shade400],
                   ),
                   boxShadow: [
                     BoxShadow(
@@ -256,7 +253,10 @@ class _NewHomeScreenState extends State<NewHomeScreen>
                 right: 0,
                 bottom: 0,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.amber,
                     borderRadius: BorderRadius.circular(10),
@@ -291,7 +291,10 @@ class _NewHomeScreenState extends State<NewHomeScreen>
                     ),
                     const SizedBox(width: 6),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.green.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(10),
@@ -523,10 +526,7 @@ class _NewHomeScreenState extends State<NewHomeScreen>
                     ),
                   const Spacer(),
                   // Emoji Icon
-                  Text(
-                    emoji,
-                    style: const TextStyle(fontSize: 48),
-                  ),
+                  Text(emoji, style: const TextStyle(fontSize: 48)),
                   const SizedBox(height: 12),
                   // Title
                   Text(
@@ -668,26 +668,10 @@ class _NewHomeScreenState extends State<NewHomeScreen>
 
   Widget _buildMiniGamesRow(bool isDark) {
     final miniGames = [
-      {
-        'emoji': '🔢',
-        'title': 'Guess Number',
-        'route': '/guess_number_game',
-      },
-      {
-        'emoji': '🐮',
-        'title': 'Cows & Bulls',
-        'route': '/cows_bulls_game',
-      },
-      {
-        'emoji': '🎴',
-        'title': 'Memory Match',
-        'route': '/memory_match_game',
-      },
-      {
-        'emoji': '⚡',
-        'title': 'Quick Math',
-        'route': '/quick_math_game',
-      },
+      {'emoji': '🔢', 'title': 'Guess Number', 'route': '/guess_number_game'},
+      {'emoji': '🐮', 'title': 'Cows & Bulls', 'route': '/cows_bulls_game'},
+      {'emoji': '🎴', 'title': 'Memory Match', 'route': '/memory_match_game'},
+      {'emoji': '⚡', 'title': 'Quick Math', 'route': '/quick_math_game'},
     ];
 
     return SizedBox(

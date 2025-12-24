@@ -2,16 +2,12 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
 import '../models/achievement_model.dart';
+import '../config/config_url.dart';
 
 /// API Service để giao tiếp với Backend
 class ApiService {
-  // Base URL - Thay đổi theo platform
-  // Android Emulator: 10.0.2.2 (đại diện cho localhost của host machine)
-  // iOS Simulator: localhost
-  // Physical Device: Dùng IP thật của máy (ví dụ: 192.168.1.100)
-  static const String baseUrl = kIsWeb
-      ? 'http://localhost:3000'
-      : 'http://10.0.2.2:3000';
+  // Base URL từ .env file
+  static String get baseUrl => ConfigUrl.baseUrl;
 
   // Singleton pattern
   static final ApiService _instance = ApiService._internal();
@@ -525,6 +521,7 @@ class UserProfile {
   final String? avatarUrl;
   final int totalGamesPlayed;
   final int totalScore;
+  final String role; // USER, ADMIN, MODERATOR
 
   UserProfile({
     required this.id,
@@ -533,6 +530,7 @@ class UserProfile {
     this.avatarUrl,
     this.totalGamesPlayed = 0,
     this.totalScore = 0,
+    this.role = 'USER',
   });
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
@@ -544,6 +542,7 @@ class UserProfile {
         avatarUrl: json['avatarUrl']?.toString(),
         totalGamesPlayed: json['totalGamesPlayed'] ?? 0,
         totalScore: json['totalScore'] ?? 0,
+        role: json['role']?.toString() ?? 'USER',
       );
     } catch (e) {
       print('Error parsing UserProfile: $e');
@@ -560,6 +559,7 @@ class UserProfile {
       'avatarUrl': avatarUrl,
       'totalGamesPlayed': totalGamesPlayed,
       'totalScore': totalScore,
+      'role': role,
     };
   }
 }

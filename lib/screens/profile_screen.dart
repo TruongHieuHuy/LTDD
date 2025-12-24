@@ -703,6 +703,17 @@ class _ProfileScreenState extends State<ProfileScreen>
               ),
             ],
           ),
+          const SizedBox(height: 12),
+          // Logout Button
+          _buildActionButton(
+            context: context,
+            icon: Icons.logout,
+            label: 'Đăng xuất',
+            gradient: const LinearGradient(
+              colors: [Color(0xFFeb3349), Color(0xFFf45c43)],
+            ),
+            onTap: () => _handleLogout(context),
+          ),
         ],
       ),
     );
@@ -746,6 +757,45 @@ class _ProfileScreenState extends State<ProfileScreen>
         ),
       ),
     );
+  }
+
+  Future<void> _handleLogout(BuildContext context) async {
+    // Show confirmation dialog
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            const Icon(Icons.logout, color: Colors.red),
+            const SizedBox(width: 8),
+            const Text('Xác nhận đăng xuất'),
+          ],
+        ),
+        content: const Text('Bạn có chắc muốn đăng xuất?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Hủy'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Đăng xuất'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && context.mounted) {
+      final authProvider = context.read<AuthProvider>();
+      await authProvider.logout();
+
+      // Navigate to login screen
+      Navigator.of(context).pushNamedAndRemoveUntil(
+        '/login',
+        (route) => false,
+      );
+    }
   }
 
   void _showEditProfileDialog(BuildContext context) {

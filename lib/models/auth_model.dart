@@ -19,12 +19,16 @@ class AuthModel extends HiveObject {
   @HiveField(4)
   DateTime? sessionExpiry;
 
+  @HiveField(5)
+  String? role; // USER, ADMIN, MODERATOR
+
   AuthModel({
     this.email,
     this.sessionToken,
     this.lastLoginTime,
     this.rememberMe = false,
     this.sessionExpiry,
+    this.role = 'USER',
   });
 
   /// Check if session is still valid

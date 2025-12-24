@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'screens/translate_screen.dart';
 import 'screens/youtube_screen.dart';
@@ -8,6 +9,7 @@ import 'screens/login_screen.dart';
 import 'screens/forgot_password_screen.dart';
 import 'screens/achievements_screen.dart';
 import 'screens/new_home_screen.dart';
+import 'screens/admin_dashboard_screen.dart';
 import 'screens/games/guess_number_game_screen.dart';
 import 'screens/games/cows_bulls_game_screen.dart';
 import 'screens/games/memory_match_game_screen.dart';
@@ -35,6 +37,9 @@ import 'providers/group_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Load environment variables
+  await dotenv.load(fileName: ".env");
 
   // Initialize Hive database
   await DatabaseService.init();
@@ -85,13 +90,15 @@ class SmartStudentApp extends StatelessWidget {
             themeMode: themeProvider.themeMode,
             theme: themeProvider.lightTheme,
             darkTheme: themeProvider.darkTheme,
-            // Bắt đầu từ LoginScreen nếu chưa đăng nhập, ModularNavigation nếu đã đăng nhập
-            initialRoute: authProvider.isLoggedIn ? '/modular' : '/login',
+            // Auto-navigate based on login status and role
+            initialRoute: _getInitialRoute(authProvider),
             routes: {
               '/login': (context) => const LoginScreen(),
               '/forgot-password': (context) => const ForgotPasswordScreen(),
               '/modular': (context) => const ModularNavigation(),
-              '/new-home': (context) => const NewHomeScreen(), // 🎮 New Gaming Hub
+              '/admin-dashboard': (context) => const AdminDashboardScreen(),
+              '/new-home': (context) =>
+                  const NewHomeScreen(), // 🎮 New Gaming Hub
               '/profile': (context) => const ProfileScreen(),
               '/translate': (context) => const TranslateScreen(),
               '/youtube': (context) => const YouTubeScreen(),
@@ -128,5 +135,20 @@ class SmartStudentApp extends StatelessWidget {
         },
       ),
     );
+  }
+
+  /// Determine initial route based on login status and user role
+  String _getInitialRoute(AuthProvider authProvider) {
+    if (!authProvider.isLoggedIn) {
+      return '/login';
+    }
+
+    // Check user role
+    final role = authProvider.userRole;
+    if (role == 'ADMIN' || role == 'MODERATOR') {
+      return '/admin-dashboard';
+    }
+
+    return '/modular';
   }
 }
