@@ -428,53 +428,56 @@ class _PostsScreenState extends State<PostsScreen>
     showDialog(
       context: context,
       barrierDismissible: true,
+      barrierColor: Colors.black26,
       builder: (context) => Dialog(
         backgroundColor: Colors.transparent,
-        insetPadding: const EdgeInsets.all(100),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(30),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.2),
-                blurRadius: 10,
-                offset: const Offset(0, 5),
-              ),
-            ],
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: _reactionTypes.map((reaction) {
-              return GestureDetector(
-                onTap: () {
-                  Navigator.pop(context);
-                  _handleLike(post); // For now, still use like API
-                },
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        reaction['emoji'],
-                        style: const TextStyle(fontSize: 28),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        reaction['label'],
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: reaction['color'],
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
+        elevation: 0,
+        child: Center(
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: Theme.of(context).cardColor,
+              borderRadius: BorderRadius.circular(40),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.3),
+                  blurRadius: 15,
+                  offset: const Offset(0, 5),
                 ),
-              );
-            }).toList(),
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: _reactionTypes.map((reaction) {
+                return GestureDetector(
+                  onTap: () {
+                    Navigator.pop(context);
+                    _handleLike(post); // For now, still use like API
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          reaction['emoji'],
+                          style: const TextStyle(fontSize: 32),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          reaction['label'],
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: reaction['color'],
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
           ),
         ),
       ),

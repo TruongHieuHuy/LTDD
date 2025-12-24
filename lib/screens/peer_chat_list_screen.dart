@@ -15,35 +15,51 @@ class PeerChatListScreen extends StatefulWidget {
 }
 
 class _PeerChatListScreenState extends State<PeerChatListScreen> {
+  List<FriendData> _friends = [];
+  bool _isLoadingFriends = true;
+
   @override
   void initState() {
     super.initState();
     // Delay initialization để tránh setState during build
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeChat();
+      _loadFriends();
     });
   }
 
   Future<void> _initializeChat() async {
     final authProvider = context.read<AuthProvider>();
-    final userDataService = UserDataService();
+    final userId = authProvider.userId;
 
-    // Find user by email from auth
-    final userEmail = authProvider.userEmail;
-    final user = userDataService.members.firstWhere(
-      (m) => m['email'] == userEmail,
-      orElse: () => userDataService.currentUser,
-    );
+    if (userId != null && mounted) {
+      await context.read<PeerChatProvider>().initialize(userId);
+    }
+  }
 
-    if (mounted) {
-      await context.read<PeerChatProvider>().initialize(user['mssv']);
+  Future<void> _loadFriends() async {
+    try {
+      final apiService = ApiService();
+      final response = await apiService.getFriends();
+      if (mounted) {
+        setState(() {
+          _friends = response.data ?? [];
+          _isLoadingFriends = false;
+        });
+      }
+    } catch (e) {
+      print('Error loading friends: $e');
+      if (mounted) {
+        setState(() {
+          _isLoadingFriends = false;
+        });
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final userDataService = UserDataService();
 
     return Scaffold(
       appBar: AppBar(
@@ -105,12 +121,11 @@ class _PeerChatListScreenState extends State<PeerChatListScreen> {
       ),
       body: Consumer<PeerChatProvider>(
         builder: (context, chatProvider, child) {
-          if (!chatProvider.isInitialized) {
+          if (!chatProvider.isInitialized || _isLoadingFriends) {
             return const Center(child: CircularProgressIndicator());
           }
 
           final conversations = chatProvider.getConversations();
-          final allMembers = userDataService.members;
 
           if (conversations.isEmpty) {
             return _buildEmptyState(context);
@@ -124,15 +139,30 @@ class _PeerChatListScreenState extends State<PeerChatListScreen> {
               final otherUserId = conversation.getOtherUserId(
                 chatProvider.currentUserId!,
               );
-              final member = chatProvider.getMemberInfo(
-                otherUserId,
-                allMembers,
+
+              // Debug log
+              print('Looking for friend with otherUserId: $otherUserId');
+              print('Total friends loaded: ${_friends.length}');
+              print('Friend IDs: ${_friends.map((f) => f.id).toList()}');
+
+              // Find friend by userId
+              final friend = _friends.firstWhere(
+                (f) => f.id == otherUserId,
+                orElse: () => FriendData(
+                  friendshipId: '',
+                  id: otherUserId,
+                  username: 'Unknown User',
+                  email: '',
+                  totalScore: 0,
+                  totalGamesPlayed: 0,
+                  friendsSince: DateTime.now(),
+                ),
               );
 
               return _buildConversationTile(
                 context,
                 conversation,
-                member,
+                friend,
                 chatProvider,
               );
             },
@@ -150,7 +180,7 @@ class _PeerChatListScreenState extends State<PeerChatListScreen> {
   Widget _buildConversationTile(
     BuildContext context,
     conversation,
-    Map<String, dynamic>? member,
+    FriendData friend,
     PeerChatProvider chatProvider,
   ) {
     final theme = Theme.of(context);
@@ -170,7 +200,7 @@ class _PeerChatListScreenState extends State<PeerChatListScreen> {
           builder: (context) => AlertDialog(
             title: const Text('Xóa đoạn chat?'),
             content: Text(
-              'Bạn có chắc muốn xóa đoạn chat với ${member?['name'] ?? "người này"}?',
+              'Bạn có chắc muốn xóa đoạn chat với ${friend.username ?? "Unknown User"}?',
             ),
             actions: [
               TextButton(
@@ -190,7 +220,7 @@ class _PeerChatListScreenState extends State<PeerChatListScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Đã xóa đoạn chat với ${member?['name'] ?? "người này"}',
+              'Đã xóa đoạn chat với ${friend.username ?? "Unknown User"}',
             ),
           ),
         );
@@ -201,21 +231,30 @@ class _PeerChatListScreenState extends State<PeerChatListScreen> {
           child: CircleAvatar(
             radius: 28,
             backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.2),
-            child: Text(
-              member?['name'].substring(0, 1).toUpperCase() ?? '?',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: theme.colorScheme.primary,
-              ),
-            ),
+            backgroundImage: friend.avatarUrl != null
+                ? NetworkImage(friend.avatarUrl!)
+                : null,
+            child: friend.avatarUrl == null
+                ? Text(
+                    ((friend.username?.isNotEmpty ?? false)
+                            ? friend.username!
+                            : 'U')
+                        .substring(0, 1)
+                        .toUpperCase(),
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.primary,
+                    ),
+                  )
+                : null,
           ),
         ),
         title: Row(
           children: [
             Expanded(
               child: Text(
-                member?['name'] ?? 'Unknown User',
+                friend.username ?? 'Unknown User',
                 style: const TextStyle(fontWeight: FontWeight.bold),
                 overflow: TextOverflow.ellipsis,
               ),
@@ -276,14 +315,20 @@ class _PeerChatListScreenState extends State<PeerChatListScreen> {
           ],
         ),
         onTap: () {
-          if (member != null) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => PeerChatScreen(member: member),
-              ),
-            );
-          }
+          // Convert FriendData to Map format for PeerChatScreen
+          final memberMap = {
+            'id': friend.id,
+            'username': friend.username,
+            'email': friend.email,
+            'avatarUrl': friend.avatarUrl,
+          };
+
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => PeerChatScreen(member: memberMap),
+            ),
+          );
         },
       ),
     );
@@ -350,9 +395,9 @@ class _PeerChatListScreenState extends State<PeerChatListScreen> {
 
   Future<void> _showNewChatDialog(BuildContext context) async {
     final chatProvider = context.read<PeerChatProvider>();
-    final currentMssv = chatProvider.currentUserId;
+    final currentUserId = chatProvider.currentUserId;
 
-    if (currentMssv == null) {
+    if (currentUserId == null) {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Chưa khởi tạo chat')));
@@ -367,137 +412,146 @@ class _PeerChatListScreenState extends State<PeerChatListScreen> {
     );
 
     // Load friends from API
-    final response = await ApiService().getFriends();
+    try {
+      final response = await ApiService().getFriends();
+      final friends = response.data ?? [];
 
-    if (!context.mounted) return;
-    Navigator.pop(context); // Close loading
+      if (!context.mounted) return;
+      Navigator.pop(context); // Close loading
 
-    if (!response.success || response.data == null || response.data!.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            response.message ?? 'Bạn chưa có bạn bè nào. Hãy kết bạn trước!',
+      if (friends.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Bạn chưa có bạn bè nào. Hãy kết bạn trước!'),
+            action: SnackBarAction(
+              label: 'Tìm bạn',
+              onPressed: () => Navigator.pushNamed(context, '/search-friends'),
+            ),
           ),
-          action: SnackBarAction(
-            label: 'Tìm bạn',
-            onPressed: () => Navigator.pushNamed(context, '/search-friends'),
+        );
+        return;
+      }
+
+      showModalBottomSheet(
+        context: context,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        isScrollControlled: true,
+        builder: (context) => DraggableScrollableSheet(
+          initialChildSize: 0.6,
+          minChildSize: 0.4,
+          maxChildSize: 0.9,
+          expand: false,
+          builder: (context, scrollController) => Container(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.people,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      'Chọn bạn bè để chat',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    const Spacer(),
+                    Text(
+                      '${friends.length} bạn bè',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Expanded(
+                  child: ListView.builder(
+                    controller: scrollController,
+                    shrinkWrap: true,
+                    itemCount: friends.length,
+                    itemBuilder: (context, index) {
+                      final friend = friends[index];
+                      return Card(
+                        margin: const EdgeInsets.symmetric(vertical: 4),
+                        child: ListTile(
+                          leading: CircleAvatar(
+                            backgroundColor: Theme.of(
+                              context,
+                            ).colorScheme.primary.withValues(alpha: 0.2),
+                            child: friend.avatarUrl != null
+                                ? ClipOval(
+                                    child: Image.network(
+                                      friend.avatarUrl!,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (_, __, ___) => Text(
+                                        (friend.username?.isNotEmpty ?? false)
+                                            ? friend.username![0].toUpperCase()
+                                            : 'U',
+                                        style: TextStyle(
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.primary,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  )
+                                : Text(
+                                    (friend.username?.isNotEmpty ?? false)
+                                        ? friend.username![0].toUpperCase()
+                                        : 'U',
+                                    style: TextStyle(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.primary,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                          ),
+                          title: Text(
+                            friend.username ?? 'Unknown User',
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          subtitle: Text(friend.email),
+                          trailing: const Icon(Icons.chat_bubble_outline),
+                          onTap: () {
+                            Navigator.pop(context);
+                            // Convert FriendData to member format for PeerChatScreen
+                            final memberData = {
+                              'mssv': friend.id.toString(),
+                              'name': friend.username,
+                              'email': friend.email,
+                              'avatar': friend.avatarUrl,
+                            };
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    PeerChatScreen(member: memberData),
+                              ),
+                            );
+                          },
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       );
-      return;
+    } catch (e) {
+      if (!context.mounted) return;
+      Navigator.pop(context); // Close loading
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Lỗi tải danh sách bạn bè: $e')));
     }
-
-    final friends = response.data!;
-
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      isScrollControlled: true,
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.6,
-        minChildSize: 0.4,
-        maxChildSize: 0.9,
-        expand: false,
-        builder: (context, scrollController) => Container(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(
-                    Icons.people,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    'Chọn bạn bè để chat',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const Spacer(),
-                  Text(
-                    '${friends.length} bạn bè',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Expanded(
-                child: ListView.builder(
-                  controller: scrollController,
-                  shrinkWrap: true,
-                  itemCount: friends.length,
-                  itemBuilder: (context, index) {
-                    final friend = friends[index];
-                    return Card(
-                      margin: const EdgeInsets.symmetric(vertical: 4),
-                      child: ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: Theme.of(
-                            context,
-                          ).colorScheme.primary.withValues(alpha: 0.2),
-                          child: friend.avatarUrl != null
-                              ? ClipOval(
-                                  child: Image.network(
-                                    friend.avatarUrl!,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (_, __, ___) => Text(
-                                      friend.username[0].toUpperCase(),
-                                      style: TextStyle(
-                                        color: Theme.of(
-                                          context,
-                                        ).colorScheme.primary,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                )
-                              : Text(
-                                  friend.username[0].toUpperCase(),
-                                  style: TextStyle(
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.primary,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                        ),
-                        title: Text(
-                          friend.username,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        subtitle: Text(friend.email),
-                        trailing: const Icon(Icons.chat_bubble_outline),
-                        onTap: () {
-                          Navigator.pop(context);
-                          // Convert FriendData to member format for PeerChatScreen
-                          final memberData = {
-                            'mssv': friend.id.toString(),
-                            'name': friend.username,
-                            'email': friend.email,
-                            'avatar': friend.avatarUrl,
-                          };
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  PeerChatScreen(member: memberData),
-                            ),
-                          );
-                        },
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 
   String _formatTime(DateTime? time) {

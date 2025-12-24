@@ -54,7 +54,7 @@ class _PeerChatScreenState extends State<PeerChatScreen> {
       final chatProvider = context.read<PeerChatProvider>();
       _chatRoomId = PeerMessage.getChatRoomId(
         chatProvider.currentUserId!,
-        widget.member['mssv'],
+        (widget.member['mssv'] ?? widget.member['id']) as String,
       );
       chatProvider.markAsRead(_chatRoomId!);
       _scrollToBottom();
@@ -119,12 +119,15 @@ class _PeerChatScreenState extends State<PeerChatScreen> {
         title: Row(
           children: [
             Hero(
-              tag: 'avatar_${widget.member['mssv']}',
+              tag: 'avatar_${widget.member['mssv'] ?? widget.member['id']}',
               child: CircleAvatar(
                 radius: 18,
                 backgroundColor: theme.colorScheme.primary.withOpacity(0.2),
                 child: Text(
-                  widget.member['name'].substring(0, 1).toUpperCase(),
+                  ((widget.member['name'] ?? widget.member['username'] ?? 'U')
+                          as String)
+                      .substring(0, 1)
+                      .toUpperCase(),
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -139,7 +142,10 @@ class _PeerChatScreenState extends State<PeerChatScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    widget.member['name'],
+                    (widget.member['name'] ??
+                            widget.member['username'] ??
+                            'Unknown User')
+                        as String,
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -147,7 +153,8 @@ class _PeerChatScreenState extends State<PeerChatScreen> {
                     overflow: TextOverflow.ellipsis,
                   ),
                   Text(
-                    widget.member['mssv'],
+                    (widget.member['mssv'] ?? widget.member['id'] ?? '')
+                        as String,
                     style: const TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.normal,
@@ -518,7 +525,10 @@ class _PeerChatScreenState extends State<PeerChatScreen> {
               radius: 48,
               backgroundColor: theme.colorScheme.primary.withOpacity(0.2),
               child: Text(
-                widget.member['name'].substring(0, 1).toUpperCase(),
+                ((widget.member['name'] ?? widget.member['username'] ?? 'U')
+                        as String)
+                    .substring(0, 1)
+                    .toUpperCase(),
                 style: TextStyle(
                   fontSize: 36,
                   fontWeight: FontWeight.bold,
@@ -528,7 +538,7 @@ class _PeerChatScreenState extends State<PeerChatScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Bắt đầu trò chuyện với ${widget.member['name']}',
+              'Bắt đầu trò chuyện với ${(widget.member['name'] ?? widget.member['username'] ?? 'Unknown User') as String}',
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -555,7 +565,7 @@ class _PeerChatScreenState extends State<PeerChatScreen> {
     final chatProvider = context.read<PeerChatProvider>();
 
     await chatProvider.sendMessage(
-      receiverId: widget.member['mssv'],
+      receiverId: (widget.member['mssv'] ?? widget.member['id']) as String,
       message: text,
     );
 
