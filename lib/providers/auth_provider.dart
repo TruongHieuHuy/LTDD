@@ -24,7 +24,11 @@ class AuthProvider with ChangeNotifier {
   int get totalScore => _userProfile?.totalScore ?? 0;
   int get totalGamesPlayed => _userProfile?.totalGamesPlayed ?? 0;
   String? get token => _currentAuth?.sessionToken;
-  int? get userId => _userProfile?.id;
+  String? get userId => _userProfile?.id;
+  String get userRole => _userProfile?.role ?? _currentAuth?.role ?? 'USER';
+  bool get isAdmin => userRole == 'ADMIN';
+  bool get isModerator => userRole == 'MODERATOR';
+  bool get isAdminOrModerator => isAdmin || isModerator;
 
   /// Initialize Hive box and load auth state
   Future<void> initialize() async {
@@ -148,6 +152,7 @@ class AuthProvider with ChangeNotifier {
           lastLoginTime: DateTime.now(),
           rememberMe: rememberMe,
           sessionExpiry: expiry,
+          role: authData.user.role, // Save role
         );
 
         // Save user profile

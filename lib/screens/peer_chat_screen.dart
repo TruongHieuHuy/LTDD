@@ -19,19 +19,55 @@ class _PeerChatScreenState extends State<PeerChatScreen> {
   String? _chatRoomId;
   bool _isSelectionMode = false;
   final Set<String> _selectedMessageIds = {};
+  bool _showEmojiPicker = false;
+  bool _isTyping = false;
+
+  // Popular emojis for quick access
+  final List<String> _quickEmojis = [
+    '😀',
+    '😂',
+    '😍',
+    '😢',
+    '😡',
+    '👍',
+    '👎',
+    '❤️',
+    '🔥',
+    '✨',
+    '🎮',
+    '🏆',
+    '🎯',
+    '💯',
+    '🎉',
+    '😎',
+    '🤔',
+    '😴',
+    '🤗',
+    '😱',
+  ];
 
   @override
   void initState() {
     super.initState();
+    _messageController.addListener(_onTextChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final chatProvider = context.read<PeerChatProvider>();
       _chatRoomId = PeerMessage.getChatRoomId(
         chatProvider.currentUserId!,
-        widget.member['mssv'],
+        (widget.member['mssv'] ?? widget.member['id']) as String,
       );
       chatProvider.markAsRead(_chatRoomId!);
       _scrollToBottom();
     });
+  }
+
+  void _onTextChanged() {
+    final isCurrentlyTyping = _messageController.text.trim().isNotEmpty;
+    if (_isTyping != isCurrentlyTyping) {
+      setState(() {
+        _isTyping = isCurrentlyTyping;
+      });
+    }
   }
 
   @override
@@ -83,12 +119,15 @@ class _PeerChatScreenState extends State<PeerChatScreen> {
         title: Row(
           children: [
             Hero(
-              tag: 'avatar_${widget.member['mssv']}',
+              tag: 'avatar_${widget.member['mssv'] ?? widget.member['id']}',
               child: CircleAvatar(
                 radius: 18,
                 backgroundColor: theme.colorScheme.primary.withOpacity(0.2),
                 child: Text(
-                  widget.member['name'].substring(0, 1).toUpperCase(),
+                  ((widget.member['name'] ?? widget.member['username'] ?? 'U')
+                          as String)
+                      .substring(0, 1)
+                      .toUpperCase(),
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -103,7 +142,10 @@ class _PeerChatScreenState extends State<PeerChatScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    widget.member['name'],
+                    (widget.member['name'] ??
+                            widget.member['username'] ??
+                            'Unknown User')
+                        as String,
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -111,7 +153,8 @@ class _PeerChatScreenState extends State<PeerChatScreen> {
                     overflow: TextOverflow.ellipsis,
                   ),
                   Text(
-                    widget.member['mssv'],
+                    (widget.member['mssv'] ?? widget.member['id'] ?? '')
+                        as String,
                     style: const TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.normal,
@@ -177,65 +220,178 @@ class _PeerChatScreenState extends State<PeerChatScreen> {
             ),
           ),
 
-          // Input field
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 4,
-                  offset: const Offset(0, -2),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.emoji_emotions_outlined),
-                  onPressed: () {
-                    // TODO: Add emoji picker
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Emoji picker coming soon!'),
-                        duration: Duration(seconds: 1),
+          // Input field with emoji picker
+          Column(
+            children: [
+              // Emoji picker
+              if (_showEmojiPicker)
+                Container(
+                  height: 250,
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surface,
+                    border: Border(
+                      top: BorderSide(color: Colors.grey.shade300),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Emoji phổ biến',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: theme.colorScheme.primary,
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.close),
+                            onPressed: () {
+                              setState(() => _showEmojiPicker = false);
+                            },
+                          ),
+                        ],
                       ),
-                    );
-                  },
-                ),
-                Expanded(
-                  child: TextField(
-                    controller: _messageController,
-                    decoration: InputDecoration(
-                      hintText: 'Nhập tin nhắn...',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(24),
-                        borderSide: BorderSide.none,
+                      Expanded(
+                        child: GridView.builder(
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 8,
+                                crossAxisSpacing: 4,
+                                mainAxisSpacing: 4,
+                              ),
+                          itemCount: _quickEmojis.length,
+                          itemBuilder: (context, index) {
+                            return InkWell(
+                              onTap: () {
+                                _messageController.text += _quickEmojis[index];
+                              },
+                              child: Container(
+                                alignment: Alignment.center,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(8),
+                                  color: theme.colorScheme.surface,
+                                ),
+                                child: Text(
+                                  _quickEmojis[index],
+                                  style: const TextStyle(fontSize: 28),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
                       ),
-                      filled: true,
-                      fillColor: theme.colorScheme.surface,
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
+                    ],
+                  ),
+                ),
+
+              // Message input bar
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surface,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 4,
+                      offset: const Offset(0, -2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    IconButton(
+                      icon: Icon(
+                        _showEmojiPicker
+                            ? Icons.keyboard
+                            : Icons.emoji_emotions_outlined,
+                        color: _showEmojiPicker
+                            ? theme.colorScheme.primary
+                            : null,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _showEmojiPicker = !_showEmojiPicker;
+                        });
+                      },
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.attach_file),
+                      onPressed: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Tính năng đính kèm file đang phát triển!',
+                            ),
+                            duration: Duration(seconds: 1),
+                          ),
+                        );
+                      },
+                    ),
+                    Expanded(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: theme.brightness == Brightness.dark
+                              ? Colors.grey[800]
+                              : Colors.grey[200],
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        child: TextField(
+                          controller: _messageController,
+                          decoration: const InputDecoration(
+                            hintText: 'Nhập tin nhắn...',
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 10,
+                            ),
+                          ),
+                          maxLines: null,
+                          textCapitalization: TextCapitalization.sentences,
+                          onSubmitted: (_) => _sendMessage(),
+                        ),
                       ),
                     ),
-                    maxLines: null,
-                    textCapitalization: TextCapitalization.sentences,
-                    onSubmitted: (_) => _sendMessage(),
-                  ),
+                    const SizedBox(width: 4),
+                    Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: LinearGradient(
+                          colors: _isTyping
+                              ? [
+                                  theme.colorScheme.primary,
+                                  theme.colorScheme.secondary,
+                                ]
+                              : [Colors.grey, Colors.grey.shade600],
+                        ),
+                      ),
+                      child: IconButton(
+                        icon: Icon(
+                          _isTyping ? Icons.send : Icons.mic,
+                          color: Colors.white,
+                          size: 22,
+                        ),
+                        onPressed: _isTyping
+                            ? _sendMessage
+                            : () {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Tính năng ghi âm đang phát triển!',
+                                    ),
+                                    duration: Duration(seconds: 1),
+                                  ),
+                                );
+                              },
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 8),
-                CircleAvatar(
-                  radius: 24,
-                  backgroundColor: theme.colorScheme.primary,
-                  child: IconButton(
-                    icon: const Icon(Icons.send, color: Colors.white),
-                    onPressed: _sendMessage,
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ],
       ),
@@ -275,8 +431,8 @@ class _PeerChatScreenState extends State<PeerChatScreen> {
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         constraints: BoxConstraints(
           maxWidth: MediaQuery.of(context).size.width * 0.75,
         ),
@@ -285,8 +441,10 @@ class _PeerChatScreenState extends State<PeerChatScreen> {
               ? LinearGradient(
                   colors: [
                     theme.colorScheme.primary,
-                    theme.colorScheme.secondary,
+                    theme.colorScheme.primary.withOpacity(0.8),
                   ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 )
               : null,
           color: isMe
@@ -295,16 +453,16 @@ class _PeerChatScreenState extends State<PeerChatScreen> {
               ? Colors.grey[800]
               : Colors.grey[200],
           borderRadius: BorderRadius.only(
-            topLeft: const Radius.circular(16),
-            topRight: const Radius.circular(16),
-            bottomLeft: Radius.circular(isMe ? 16 : 4),
-            bottomRight: Radius.circular(isMe ? 4 : 16),
+            topLeft: const Radius.circular(18),
+            topRight: const Radius.circular(18),
+            bottomLeft: Radius.circular(isMe ? 18 : 4),
+            bottomRight: Radius.circular(isMe ? 4 : 18),
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 3,
+              offset: const Offset(0, 1),
             ),
           ],
         ),
@@ -313,32 +471,37 @@ class _PeerChatScreenState extends State<PeerChatScreen> {
               ? CrossAxisAlignment.end
               : CrossAxisAlignment.start,
           children: [
+            // Message content with better typography
             Text(
               message.message,
               style: TextStyle(
                 color: isMe ? Colors.white : theme.textTheme.bodyLarge?.color,
                 fontSize: 15,
+                height: 1.4,
               ),
             ),
             const SizedBox(height: 4),
+            // Time and read status
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   _formatTime(message.timestamp),
                   style: TextStyle(
-                    fontSize: 10,
+                    fontSize: 11,
                     color: isMe
                         ? Colors.white.withOpacity(0.8)
-                        : theme.textTheme.bodySmall?.color,
+                        : theme.textTheme.bodySmall?.color?.withOpacity(0.7),
                   ),
                 ),
                 if (isMe) ...[
                   const SizedBox(width: 4),
                   Icon(
                     message.isRead ? Icons.done_all : Icons.done,
-                    size: 14,
-                    color: Colors.white.withOpacity(0.8),
+                    size: 16,
+                    color: message.isRead
+                        ? Colors.lightBlueAccent
+                        : Colors.white.withOpacity(0.8),
                   ),
                 ],
               ],
@@ -362,7 +525,10 @@ class _PeerChatScreenState extends State<PeerChatScreen> {
               radius: 48,
               backgroundColor: theme.colorScheme.primary.withOpacity(0.2),
               child: Text(
-                widget.member['name'].substring(0, 1).toUpperCase(),
+                ((widget.member['name'] ?? widget.member['username'] ?? 'U')
+                        as String)
+                    .substring(0, 1)
+                    .toUpperCase(),
                 style: TextStyle(
                   fontSize: 36,
                   fontWeight: FontWeight.bold,
@@ -372,7 +538,7 @@ class _PeerChatScreenState extends State<PeerChatScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Bắt đầu trò chuyện với ${widget.member['name']}',
+              'Bắt đầu trò chuyện với ${(widget.member['name'] ?? widget.member['username'] ?? 'Unknown User') as String}',
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -399,7 +565,7 @@ class _PeerChatScreenState extends State<PeerChatScreen> {
     final chatProvider = context.read<PeerChatProvider>();
 
     await chatProvider.sendMessage(
-      receiverId: widget.member['mssv'],
+      receiverId: (widget.member['mssv'] ?? widget.member['id']) as String,
       message: text,
     );
 

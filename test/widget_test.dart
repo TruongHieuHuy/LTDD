@@ -7,9 +7,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:truonghieuhuy/providers/theme_provider.dart';
-import 'package:truonghieuhuy/providers/auth_provider.dart';
-import 'package:truonghieuhuy/main.dart';
+import 'package:minigamecenter/providers/theme_provider.dart';
+import 'package:minigamecenter/providers/auth_provider.dart';
+import 'package:minigamecenter/main.dart';
 
 void main() {
   testWidgets('App initialization test', (WidgetTester tester) async {

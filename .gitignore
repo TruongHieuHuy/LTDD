@@ -12,6 +12,11 @@
 .swiftpm/
 migrate_working_dir/
 
+# Environment variables (KHÔNG ĐƯỢC PUSH LÊN GITHUB)
+.env
+.env.local
+.env.production
+
 # IntelliJ related
 *.iml
 *.ipr

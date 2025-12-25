@@ -1,16 +1,13 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
+import '../models/achievement_model.dart';
+import '../config/config_url.dart';
 
 /// API Service để giao tiếp với Backend
 class ApiService {
-  // Base URL - Thay đổi theo platform
-  // Android Emulator: 10.0.2.2 (đại diện cho localhost của host machine)
-  // iOS Simulator: localhost
-  // Physical Device: Dùng IP thật của máy (ví dụ: 192.168.1.100)
-  static const String baseUrl = kIsWeb
-      ? 'http://localhost:3000'
-      : 'http://10.0.2.2:3000';
+  // Base URL từ .env file
+  static String get baseUrl => ConfigUrl.baseUrl;
 
   // Singleton pattern
   static final ApiService _instance = ApiService._internal();
@@ -156,6 +153,162 @@ class ApiService {
     } catch (e) {
       debugPrint('Get user error: $e');
       return ApiResponse<UserProfile>(
+        success: false,
+        message: 'Network error: ${e.toString()}',
+      );
+    }
+  }
+
+  /// Forgot Password - Send reset token
+  /// POST /api/auth/forgot-password
+  Future<ApiResponse<Map<String, dynamic>>> forgotPassword({
+    required String email,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/auth/forgot-password'),
+        headers: _headers,
+        body: jsonEncode({'email': email}),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        return ApiResponse<Map<String, dynamic>>(
+          success: true,
+          data: data['data'],
+          message: data['message'],
+        );
+      } else {
+        return ApiResponse<Map<String, dynamic>>(
+          success: false,
+          message: data['message'] ?? 'Failed to send reset token',
+        );
+      }
+    } catch (e) {
+      debugPrint('Forgot password error: $e');
+      return ApiResponse<Map<String, dynamic>>(
+        success: false,
+        message: 'Network error: ${e.toString()}',
+      );
+    }
+  }
+
+  /// Reset Password - With token
+  /// POST /api/auth/reset-password
+  Future<ApiResponse<Map<String, dynamic>>> resetPassword({
+    required String email,
+    required String token,
+    required String newPassword,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/auth/reset-password'),
+        headers: _headers,
+        body: jsonEncode({
+          'email': email,
+          'token': token,
+          'newPassword': newPassword,
+        }),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        return ApiResponse<Map<String, dynamic>>(
+          success: true,
+          data: data['data'] ?? {},
+          message: data['message'],
+        );
+      } else {
+        return ApiResponse<Map<String, dynamic>>(
+          success: false,
+          message: data['message'] ?? 'Failed to reset password',
+        );
+      }
+    } catch (e) {
+      debugPrint('Reset password error: $e');
+      return ApiResponse<Map<String, dynamic>>(
+        success: false,
+        message: 'Network error: ${e.toString()}',
+      );
+    }
+  }
+
+  /// Update Profile - Username and Avatar
+  /// PUT /api/auth/profile
+  Future<ApiResponse<UserProfile>> updateProfile({
+    String? username,
+    String? avatarUrl,
+  }) async {
+    try {
+      final body = <String, dynamic>{};
+      if (username != null) body['username'] = username;
+      if (avatarUrl != null) body['avatarUrl'] = avatarUrl;
+
+      final response = await http.put(
+        Uri.parse('$baseUrl/api/auth/profile'),
+        headers: _headers,
+        body: jsonEncode(body),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        final user = UserProfile.fromJson(data['data']['user']);
+        return ApiResponse<UserProfile>(
+          success: true,
+          data: user,
+          message: data['message'],
+        );
+      } else {
+        return ApiResponse<UserProfile>(
+          success: false,
+          message: data['message'] ?? 'Failed to update profile',
+        );
+      }
+    } catch (e) {
+      debugPrint('Update profile error: $e');
+      return ApiResponse<UserProfile>(
+        success: false,
+        message: 'Network error: ${e.toString()}',
+      );
+    }
+  }
+
+  /// Change Password - Requires current password
+  /// POST /api/auth/change-password
+  Future<ApiResponse<Map<String, dynamic>>> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/auth/change-password'),
+        headers: _headers,
+        body: jsonEncode({
+          'currentPassword': currentPassword,
+          'newPassword': newPassword,
+        }),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        return ApiResponse<Map<String, dynamic>>(
+          success: true,
+          data: data['data'] ?? {},
+          message: data['message'],
+        );
+      } else {
+        return ApiResponse<Map<String, dynamic>>(
+          success: false,
+          message: data['message'] ?? 'Failed to change password',
+        );
+      }
+    } catch (e) {
+      debugPrint('Change password error: $e');
+      return ApiResponse<Map<String, dynamic>>(
         success: false,
         message: 'Network error: ${e.toString()}',
       );
@@ -362,12 +515,13 @@ class AuthResponse {
 
 /// User profile data
 class UserProfile {
-  final int id;
+  final String id;
   final String username;
   final String email;
   final String? avatarUrl;
   final int totalGamesPlayed;
   final int totalScore;
+  final String role; // USER, ADMIN, MODERATOR
 
   UserProfile({
     required this.id,
@@ -376,17 +530,25 @@ class UserProfile {
     this.avatarUrl,
     this.totalGamesPlayed = 0,
     this.totalScore = 0,
+    this.role = 'USER',
   });
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
-    return UserProfile(
-      id: json['id'],
-      username: json['username'],
-      email: json['email'],
-      avatarUrl: json['avatarUrl'],
-      totalGamesPlayed: json['totalGamesPlayed'] ?? 0,
-      totalScore: json['totalScore'] ?? 0,
-    );
+    try {
+      return UserProfile(
+        id: (json['id'] ?? '').toString(),
+        username: json['username']?.toString() ?? '',
+        email: json['email']?.toString() ?? '',
+        avatarUrl: json['avatarUrl']?.toString(),
+        totalGamesPlayed: json['totalGamesPlayed'] ?? 0,
+        totalScore: json['totalScore'] ?? 0,
+        role: json['role']?.toString() ?? 'USER',
+      );
+    } catch (e) {
+      print('Error parsing UserProfile: $e');
+      print('JSON: $json');
+      rethrow;
+    }
   }
 
   Map<String, dynamic> toJson() {
@@ -397,6 +559,7 @@ class UserProfile {
       'avatarUrl': avatarUrl,
       'totalGamesPlayed': totalGamesPlayed,
       'totalScore': totalScore,
+      'role': role,
     };
   }
 }
@@ -952,11 +1115,12 @@ class ConversationData {
 
 /// Post Data Model
 class PostData {
-  final int id;
-  final int userId;
+  final String id;
+  final String userId;
   final String content;
   final String? imageUrl;
   final String visibility;
+  final String? category;
   final int likeCount;
   final int commentCount;
   final int shareCount;
@@ -973,6 +1137,7 @@ class PostData {
     required this.content,
     this.imageUrl,
     required this.visibility,
+    this.category,
     required this.likeCount,
     required this.commentCount,
     required this.shareCount,
@@ -985,34 +1150,45 @@ class PostData {
   });
 
   factory PostData.fromJson(Map<String, dynamic> json) {
-    return PostData(
-      id: json['id'],
-      userId: json['userId'],
-      content: json['content'] ?? '',
-      imageUrl: json['imageUrl'],
-      visibility: json['visibility'] ?? 'public',
-      likeCount: json['likeCount'] ?? 0,
-      commentCount: json['commentCount'] ?? 0,
-      shareCount: json['shareCount'] ?? 0,
-      createdAt: DateTime.parse(json['createdAt']),
-      updatedAt: DateTime.parse(json['updatedAt']),
-      user: UserProfile.fromJson(json['user']),
-      isLiked: json['isLiked'] ?? false,
-      isSaved: json['isSaved'] ?? false,
-      comments: json['comments'] != null
-          ? (json['comments'] as List)
-                .map((c) => CommentData.fromJson(c))
-                .toList()
-          : null,
-    );
+    try {
+      return PostData(
+        id: (json['id'] ?? '').toString(),
+        userId: (json['userId'] ?? '').toString(),
+        content: json['content']?.toString() ?? '',
+        imageUrl: json['imageUrl']?.toString(),
+        visibility: json['visibility']?.toString() ?? 'public',
+        category: json['category']?.toString(),
+        likeCount: json['likeCount'] ?? 0,
+        commentCount: json['commentCount'] ?? 0,
+        shareCount: json['shareCount'] ?? 0,
+        createdAt: json['createdAt'] != null
+            ? DateTime.parse(json['createdAt'].toString())
+            : DateTime.now(),
+        updatedAt: json['updatedAt'] != null
+            ? DateTime.parse(json['updatedAt'].toString())
+            : DateTime.now(),
+        user: UserProfile.fromJson(json['user'] ?? {}),
+        isLiked: json['isLiked'] ?? false,
+        isSaved: json['isSaved'] ?? false,
+        comments: json['comments'] != null
+            ? (json['comments'] as List)
+                  .map((c) => CommentData.fromJson(c))
+                  .toList()
+            : null,
+      );
+    } catch (e) {
+      print('Error parsing PostData: $e');
+      print('JSON: $json');
+      rethrow;
+    }
   }
 }
 
 /// Comment Data Model
 class CommentData {
-  final int id;
-  final int postId;
-  final int userId;
+  final String id;
+  final String postId;
+  final String userId;
   final String content;
   final DateTime createdAt;
   final UserProfile user;
@@ -1027,14 +1203,22 @@ class CommentData {
   });
 
   factory CommentData.fromJson(Map<String, dynamic> json) {
-    return CommentData(
-      id: json['id'],
-      postId: json['postId'],
-      userId: json['userId'],
-      content: json['content'] ?? '',
-      createdAt: DateTime.parse(json['createdAt']),
-      user: UserProfile.fromJson(json['user']),
-    );
+    try {
+      return CommentData(
+        id: (json['id'] ?? '').toString(),
+        postId: (json['postId'] ?? '').toString(),
+        userId: (json['userId'] ?? '').toString(),
+        content: json['content']?.toString() ?? '',
+        createdAt: json['createdAt'] != null
+            ? DateTime.parse(json['createdAt'].toString())
+            : DateTime.now(),
+        user: UserProfile.fromJson(json['user'] ?? {}),
+      );
+    } catch (e) {
+      print('Error parsing CommentData: $e');
+      print('JSON: $json');
+      rethrow;
+    }
   }
 }
 
@@ -1046,6 +1230,7 @@ extension PostsAPI on ApiService {
     required String content,
     String? imageUrl,
     String visibility = 'public',
+    String? category,
   }) async {
     final url = Uri.parse('${ApiService.baseUrl}/api/posts');
     final response = await http.post(
@@ -1055,6 +1240,7 @@ extension PostsAPI on ApiService {
         'content': content,
         'imageUrl': imageUrl,
         'visibility': visibility,
+        'category': category,
       }),
     );
 
@@ -1067,15 +1253,49 @@ extension PostsAPI on ApiService {
     }
   }
 
-  /// Get posts feed (all or filtered by userId)
+  /// Upload image file
+  Future<String> uploadImage(String filePath) async {
+    final url = Uri.parse('${ApiService.baseUrl}/api/upload');
+    final request = http.MultipartRequest('POST', url);
+
+    // Add auth header
+    if (_authToken != null) {
+      request.headers['Authorization'] = 'Bearer $_authToken';
+    }
+
+    // Add file
+    request.files.add(await http.MultipartFile.fromPath('image', filePath));
+
+    final response = await request.send();
+    final responseBody = await response.stream.bytesToString();
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(responseBody);
+      return data['imageUrl'];
+    } else {
+      throw Exception(
+        'Failed to upload image: ${jsonDecode(responseBody)['error'] ?? response.statusCode}',
+      );
+    }
+  }
+
+  /// Get posts feed (all or filtered by userId, category, or search)
   Future<List<PostData>> getPosts({
     int limit = 20,
     int offset = 0,
-    int? userId,
+    String? userId,
+    String? category,
+    String? search,
   }) async {
     var url = '${ApiService.baseUrl}/api/posts?limit=$limit&offset=$offset';
     if (userId != null) {
       url += '&userId=$userId';
+    }
+    if (category != null && category.isNotEmpty) {
+      url += '&category=$category';
+    }
+    if (search != null && search.isNotEmpty) {
+      url += '&search=${Uri.encodeComponent(search)}';
     }
 
     final response = await http.get(Uri.parse(url), headers: _headers);
@@ -1094,13 +1314,15 @@ extension PostsAPI on ApiService {
   }
 
   /// Get single post with comments
-  Future<PostData> getPost(int postId) async {
+  Future<PostData> getPost(String postId) async {
     final url = Uri.parse('${ApiService.baseUrl}/api/posts/$postId');
     final response = await http.get(url, headers: _headers);
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
-      return PostData.fromJson(data['post']);
+      print('DEBUG: getPost response: ${data.toString().substring(0, 200)}...');
+      print('DEBUG: comments in response: ${data['comments']?.length ?? 0}');
+      return PostData.fromJson(data);
     } else {
       throw Exception(
         'Failed to get post: ${jsonDecode(response.body)['error'] ?? response.statusCode}',
@@ -1110,10 +1332,11 @@ extension PostsAPI on ApiService {
 
   /// Update post (owner only)
   Future<Map<String, dynamic>> updatePost({
-    required int postId,
+    required String postId,
     required String content,
     String? imageUrl,
     String? visibility,
+    String? category,
   }) async {
     final url = Uri.parse('${ApiService.baseUrl}/api/posts/$postId');
     final response = await http.put(
@@ -1123,6 +1346,7 @@ extension PostsAPI on ApiService {
         'content': content,
         'imageUrl': imageUrl,
         'visibility': visibility,
+        'category': category,
       }),
     );
 
@@ -1136,7 +1360,7 @@ extension PostsAPI on ApiService {
   }
 
   /// Delete post (owner only)
-  Future<Map<String, dynamic>> deletePost(int postId) async {
+  Future<Map<String, dynamic>> deletePost(String postId) async {
     final url = Uri.parse('${ApiService.baseUrl}/api/posts/$postId');
     final response = await http.delete(url, headers: _headers);
 
@@ -1150,7 +1374,7 @@ extension PostsAPI on ApiService {
   }
 
   /// Toggle like on post
-  Future<Map<String, dynamic>> toggleLike(int postId) async {
+  Future<Map<String, dynamic>> toggleLike(String postId) async {
     final url = Uri.parse('${ApiService.baseUrl}/api/posts/$postId/like');
     final response = await http.post(url, headers: _headers);
 
@@ -1165,7 +1389,7 @@ extension PostsAPI on ApiService {
 
   /// Add comment to post
   Future<CommentData> addComment({
-    required int postId,
+    required String postId,
     required String content,
   }) async {
     final url = Uri.parse('${ApiService.baseUrl}/api/posts/$postId/comments');
@@ -1177,7 +1401,7 @@ extension PostsAPI on ApiService {
 
     if (response.statusCode == 201) {
       final data = jsonDecode(response.body);
-      return CommentData.fromJson(data['comment']);
+      return CommentData.fromJson(data);
     } else {
       throw Exception(
         'Failed to add comment: ${jsonDecode(response.body)['error'] ?? response.statusCode}',
@@ -1186,7 +1410,7 @@ extension PostsAPI on ApiService {
   }
 
   /// Toggle save post to favorites
-  Future<Map<String, dynamic>> toggleSavePost(int postId) async {
+  Future<Map<String, dynamic>> toggleSavePost(String postId) async {
     final url = Uri.parse('${ApiService.baseUrl}/api/posts/$postId/save');
     final response = await http.post(url, headers: _headers);
 
@@ -1218,7 +1442,7 @@ extension PostsAPI on ApiService {
   }
 
   /// Toggle follow user
-  Future<Map<String, dynamic>> toggleFollow(int targetUserId) async {
+  Future<Map<String, dynamic>> toggleFollow(String targetUserId) async {
     final url = Uri.parse(
       '${ApiService.baseUrl}/api/posts/follow/$targetUserId',
     );
@@ -1229,6 +1453,104 @@ extension PostsAPI on ApiService {
     } else {
       throw Exception(
         'Failed to toggle follow: ${jsonDecode(response.body)['error'] ?? response.statusCode}',
+      );
+    }
+  }
+
+  /// Share post (increment share count)
+  Future<Map<String, dynamic>> sharePost(String postId) async {
+    final url = Uri.parse('${ApiService.baseUrl}/api/posts/$postId/share');
+    final response = await http.post(url, headers: _headers);
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception(
+        'Failed to share post: ${jsonDecode(response.body)['error'] ?? response.statusCode}',
+      );
+    }
+  }
+
+  // ==================== ACHIEVEMENT ENDPOINTS ====================
+
+  /// Get user achievements
+  Future<List<dynamic>> getUserAchievements(int userId) async {
+    final url = Uri.parse(
+      '${ApiService.baseUrl}/api/users/$userId/achievements',
+    );
+    final response = await http.get(url, headers: _headers);
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body)['achievements'] ?? [];
+    } else {
+      throw Exception('Failed to get user achievements');
+    }
+  }
+
+  /// Get achievement stats
+  Future<Map<String, dynamic>> getAchievementStats(int userId) async {
+    final url = Uri.parse(
+      '${ApiService.baseUrl}/api/users/$userId/achievements/stats',
+    );
+    final response = await http.get(url, headers: _headers);
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to get achievement stats');
+    }
+  }
+
+  /// Check achievements
+  Future<List<dynamic>> checkAchievements(int userId) async {
+    final url = Uri.parse(
+      '${ApiService.baseUrl}/api/users/$userId/achievements/check',
+    );
+    final response = await http.post(url, headers: _headers);
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body)['newAchievements'] ?? [];
+    } else {
+      throw Exception('Failed to check achievements');
+    }
+  }
+
+  /// Get all achievements (optionally filtered by category)
+  /// GET /api/achievements?category=general|games|social|milestone
+  Future<ApiResponse<List<AchievementData>>> getAllAchievements({
+    String? category,
+  }) async {
+    try {
+      var url = '${ApiService.baseUrl}/api/achievements';
+      if (category != null && category.isNotEmpty) {
+        url += '?category=$category';
+      }
+
+      final response = await http.get(Uri.parse(url), headers: _headers);
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        final achievements = (data['data']['achievements'] as List)
+            .map((json) => AchievementData.fromJson(json))
+            .toList();
+
+        return ApiResponse<List<AchievementData>>(
+          success: true,
+          data: achievements,
+          message: data['message'],
+        );
+      } else {
+        return ApiResponse<List<AchievementData>>(
+          success: false,
+          message: data['message'] ?? 'Failed to get achievements',
+        );
+      }
+    } catch (e) {
+      debugPrint('Get achievements error: $e');
+      return ApiResponse<List<AchievementData>>(
+        success: false,
+        message: 'Network error: ${e.toString()}',
       );
     }
   }

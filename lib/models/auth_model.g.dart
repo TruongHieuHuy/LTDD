@@ -22,13 +22,14 @@ class AuthModelAdapter extends TypeAdapter<AuthModel> {
       lastLoginTime: fields[2] as DateTime?,
       rememberMe: fields[3] as bool,
       sessionExpiry: fields[4] as DateTime?,
+      role: fields[5] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, AuthModel obj) {
     writer
-      ..writeByte(5)
+      ..writeByte(6)
       ..writeByte(0)
       ..write(obj.email)
       ..writeByte(1)
@@ -38,7 +39,9 @@ class AuthModelAdapter extends TypeAdapter<AuthModel> {
       ..writeByte(3)
       ..write(obj.rememberMe)
       ..writeByte(4)
-      ..write(obj.sessionExpiry);
+      ..write(obj.sessionExpiry)
+      ..writeByte(5)
+      ..write(obj.role);
   }
 
   @override

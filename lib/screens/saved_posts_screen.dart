@@ -150,7 +150,7 @@ class _SavedPostsScreenState extends State<SavedPostsScreen> {
                 itemBuilder: (context, index) {
                   return _SavedPostCard(
                     post: _savedPosts[index],
-                    currentUserId: authProvider.userId ?? 0,
+                    currentUserId: authProvider.userId ?? '',
                     onLike: () => _handleLike(_savedPosts[index]),
                     onComment: () => _showCommentSheet(_savedPosts[index]),
                     onUnsave: () => _handleUnsave(_savedPosts[index]),
@@ -173,7 +173,7 @@ class _SavedPostsScreenState extends State<SavedPostsScreen> {
 
 class _SavedPostCard extends StatelessWidget {
   final PostData post;
-  final int currentUserId;
+  final String currentUserId;
   final VoidCallback onLike;
   final VoidCallback onComment;
   final VoidCallback onUnsave;

@@ -7,6 +7,7 @@ import '../models/achievement_model.dart';
 import '../models/auth_model.dart';
 import '../models/chatbot_message_model.dart';
 import '../models/post_model.dart';
+import '../models/product_model.dart';
 
 class DatabaseService {
   static const String alarmsBoxName = 'alarms';
@@ -16,6 +17,8 @@ class DatabaseService {
   static const String achievementsBoxName = 'achievements';
   static const String chatbotMessagesBoxName = 'chatbot_messages';
   static const String postsBoxName = 'posts';
+  static const String productsBoxName = 'products';
+  static const String categoriesBoxName = 'categories';
   static const String settingsKey = 'app_settings';
 
   // Boxes
@@ -26,6 +29,8 @@ class DatabaseService {
   static Box<AchievementModel>? _achievementsBox;
   static Box<ChatbotMessage>? _chatbotMessagesBox;
   static Box<Post>? _postsBox;
+  static Box<Product>? _productsBox;
+  static Box<Category>? _categoriesBox;
 
   // Getters
   static Box<AlarmModel> get alarmsBox => _alarmsBox!;
@@ -35,6 +40,8 @@ class DatabaseService {
   static Box<AchievementModel> get achievementsBox => _achievementsBox!;
   static Box<ChatbotMessage> get chatbotMessagesBox => _chatbotMessagesBox!;
   static Box<Post> get postsBox => _postsBox!;
+  static Box<Product> get productsBox => _productsBox!;
+  static Box<Category> get categoriesBox => _categoriesBox!;
 
   /// Initialize Hive and open all boxes
   static Future<void> init() async {
@@ -49,6 +56,8 @@ class DatabaseService {
     Hive.registerAdapter(AuthModelAdapter());
     Hive.registerAdapter(ChatbotMessageAdapter());
     Hive.registerAdapter(PostAdapter());
+    Hive.registerAdapter(ProductAdapter());
+    Hive.registerAdapter(CategoryAdapter());
 
     // Open boxes
     _alarmsBox = await Hive.openBox<AlarmModel>(alarmsBoxName);
@@ -64,6 +73,8 @@ class DatabaseService {
       chatbotMessagesBoxName,
     );
     _postsBox = await Hive.openBox<Post>(postsBoxName);
+    _productsBox = await Hive.openBox<Product>(productsBoxName);
+    _categoriesBox = await Hive.openBox<Category>(categoriesBoxName);
 
     // Initialize settings if not exists
     if (_settingsBox!.isEmpty) {
@@ -73,6 +84,50 @@ class DatabaseService {
     // Initialize achievements if not exists
     if (_achievementsBox!.isEmpty) {
       await _initializeAchievements();
+    }
+
+    // Initialize default categories if empty
+    if (_categoriesBox!.isEmpty) {
+      await _initializeDefaultCategories();
+    }
+  }
+
+  static Future<void> _initializeDefaultCategories() async {
+    final defaultCategories = [
+      Category(
+        id: 'cat1',
+        name: 'Accessories',
+        description: 'Gaming accessories and peripherals',
+        icon: '🎮',
+      ),
+      Category(
+        id: 'cat2',
+        name: 'Electronics',
+        description: 'Electronic devices and gadgets',
+        icon: '💻',
+      ),
+      Category(
+        id: 'cat3',
+        name: 'Software',
+        description: 'Software licenses and tools',
+        icon: '💿',
+      ),
+      Category(
+        id: 'cat4',
+        name: 'Services',
+        description: 'Digital services and subscriptions',
+        icon: '🔧',
+      ),
+      Category(
+        id: 'cat5',
+        name: 'Books',
+        description: 'Educational books and resources',
+        icon: '📚',
+      ),
+    ];
+
+    for (var cat in defaultCategories) {
+      await _categoriesBox!.put(cat.id, cat);
     }
   }
 
@@ -90,6 +145,8 @@ class DatabaseService {
     await _settingsBox?.close();
     await _gameScoresBox?.close();
     await _achievementsBox?.close();
+    await _productsBox?.close();
+    await _categoriesBox?.close();
   }
 
   /// Clear all data (for testing/reset)
@@ -99,10 +156,58 @@ class DatabaseService {
     await _settingsBox?.clear();
     await _gameScoresBox?.clear();
     await _achievementsBox?.clear();
+    await _productsBox?.clear();
+    await _categoriesBox?.clear();
     // Reinitialize settings
     await _settingsBox?.put(settingsKey, AppSettingsModel());
     // Reinitialize achievements
     await _initializeAchievements();
+    // Reinitialize categories
+    await _initializeDefaultCategories();
+  }
+
+  // ============ PRODUCT OPERATIONS ============
+
+  static Future<void> saveProduct(Product product) async {
+    if (product.id == null || product.id!.isEmpty) {
+      product.id = 'prod_${DateTime.now().millisecondsSinceEpoch}';
+    }
+    await _productsBox!.put(product.id, product);
+  }
+
+  static List<Product> getAllProducts() {
+    return _productsBox!.values.toList()
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+  }
+
+  static Future<void> deleteProduct(String id) async {
+    await _productsBox!.delete(id);
+  }
+
+  // ============ CATEGORY OPERATIONS ============
+
+  static Future<void> saveCategory(Category category) async {
+    if (category.id == null || category.id!.isEmpty) {
+      category.id = 'cat_${DateTime.now().millisecondsSinceEpoch}';
+    }
+    await _categoriesBox!.put(category.id, category);
+  }
+
+  static List<Category> getAllCategories() {
+    return _categoriesBox!.values.toList()
+      ..sort((a, b) => a.name.compareTo(b.name));
+  }
+
+  static Future<void> deleteCategory(String id) async {
+    await _categoriesBox!.delete(id);
+
+    // Optional: Update products that were in this category
+    final products = _productsBox!.values.where((p) => p.categoryId == id);
+    for (var product in products) {
+      product.categoryId = null;
+      product.categoryName = null;
+      await product.save();
+    }
   }
 
   // ============ ALARM OPERATIONS ============

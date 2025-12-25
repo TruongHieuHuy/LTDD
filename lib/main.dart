@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'screens/translate_screen.dart';
 import 'screens/youtube_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/modular_navigation_screen.dart';
 import 'screens/login_screen.dart';
+import 'screens/forgot_password_screen.dart';
+import 'screens/achievements_screen.dart';
+import 'screens/new_home_screen.dart';
+import 'screens/simple_home_screen.dart';
+import 'screens/admin_dashboard_screen.dart';
 import 'screens/games/guess_number_game_screen.dart';
 import 'screens/games/cows_bulls_game_screen.dart';
 import 'screens/games/memory_match_game_screen.dart';
@@ -18,6 +24,8 @@ import 'screens/friend_requests_screen.dart';
 import 'screens/user_profile_screen.dart';
 import 'screens/saved_posts_screen.dart';
 import 'screens/create_post_screen.dart';
+import 'screens/products_screen.dart';
+import 'screens/categories_screen.dart';
 import 'utils/database_service.dart';
 import 'providers/alarm_provider.dart';
 import 'providers/translation_provider.dart';
@@ -32,6 +40,9 @@ import 'providers/group_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Load environment variables
+  await dotenv.load(fileName: ".env");
 
   // Initialize Hive database
   await DatabaseService.init();
@@ -82,12 +93,20 @@ class SmartStudentApp extends StatelessWidget {
             themeMode: themeProvider.themeMode,
             theme: themeProvider.lightTheme,
             darkTheme: themeProvider.darkTheme,
-            // Bắt đầu từ LoginScreen nếu chưa đăng nhập, ModularNavigation nếu đã đăng nhập
-            initialRoute: authProvider.isLoggedIn ? '/modular' : '/login',
+            // Auto-navigate based on login status and role
+            initialRoute: _getInitialRoute(authProvider),
             routes: {
               '/login': (context) => const LoginScreen(),
+              '/forgot-password': (context) => const ForgotPasswordScreen(),
               '/modular': (context) => const ModularNavigation(),
+              '/admin-dashboard': (context) => const AdminDashboardScreen(),
+              '/home': (context) =>
+                  const SimpleHomeScreen(), // 🎯 Giao diện đơn giản
+              '/new-home': (context) =>
+                  const NewHomeScreen(), // 🎮 New Gaming Hub (dự phòng)
               '/profile': (context) => const ProfileScreen(),
+              '/products': (context) => const ProductsScreen(),
+              '/categories': (context) => const CategoriesScreen(),
               '/translate': (context) => const TranslateScreen(),
               '/youtube': (context) => const YouTubeScreen(),
               '/guess_number_game': (context) => const GuessNumberGameScreen(),
@@ -105,9 +124,16 @@ class SmartStudentApp extends StatelessWidget {
             onGenerateRoute: (settings) {
               // Handle user profile route with userId parameter
               if (settings.name == '/user-profile') {
-                final userId = settings.arguments as int;
+                final userId = settings.arguments as String;
                 return MaterialPageRoute(
                   builder: (context) => UserProfileScreen(userId: userId),
+                );
+              }
+              // Handle backend achievements screen with userId
+              if (settings.name == '/backend-achievements') {
+                final userId = settings.arguments as String;
+                return MaterialPageRoute(
+                  builder: (context) => AchievementsScreen(userId: userId),
                 );
               }
               return null;
@@ -116,5 +142,24 @@ class SmartStudentApp extends StatelessWidget {
         },
       ),
     );
+  }
+
+  /// Determine initial route based on login status and user role
+  String _getInitialRoute(AuthProvider authProvider) {
+    if (!authProvider.isLoggedIn) {
+      return '/login';
+    }
+
+    // Check user role - CRITICAL: Must check role from both sources
+    final role = authProvider.userRole;
+    debugPrint(
+      'Initial route check - Role: $role, isAdmin: ${authProvider.isAdmin}',
+    );
+
+    if (role == 'ADMIN' || role == 'MODERATOR') {
+      return '/admin-dashboard';
+    }
+
+    return '/modular';
   }
 }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../models/navigation_models.dart';
 import '../screens/home_screen.dart';
+import '../screens/new_home_screen.dart';
+import '../screens/simple_home_screen.dart';
 import '../screens/translate_screen.dart';
 import '../screens/alarm_screen.dart';
 import '../screens/youtube_screen.dart';
@@ -17,6 +19,8 @@ import '../screens/chatbot_screen.dart';
 import '../screens/peer_chat_list_screen.dart';
 import '../screens/social_test_screen.dart';
 import '../screens/posts_screen.dart';
+import '../screens/products_screen.dart';
+import '../screens/categories_screen.dart';
 
 /// Configuration for modular navigation system
 class NavigationConfig {
@@ -32,8 +36,28 @@ class NavigationConfig {
             id: 'home',
             name: 'Trang chủ',
             icon: Icons.home,
-            screen: const HomeScreen(),
+            screen: const SimpleHomeScreen(), // 🎯 Giao diện đơn giản
             route: '/home',
+          ),
+          NavigationItem(
+            id: 'products',
+            name: 'Sản phẩm',
+            icon: Icons.shopping_bag,
+            screen: const ProductsScreen(),
+            enabled: true,
+          ),
+          NavigationItem(
+            id: 'categories',
+            name: 'Danh mục',
+            icon: Icons.category,
+            screen: const CategoriesScreen(),
+            enabled: true,
+          ),
+          NavigationItem(
+            id: 'group',
+            name: 'Nhóm',
+            icon: Icons.group,
+            screen: const GroupScreen(),
           ),
           NavigationItem(
             id: 'translate',
@@ -114,12 +138,6 @@ class NavigationConfig {
             icon: Icons.account_circle,
             screen: const ProfileScreen(),
             route: '/profile',
-          ),
-          NavigationItem(
-            id: 'group',
-            name: 'Nhóm',
-            icon: Icons.group,
-            screen: const GroupScreen(),
           ),
         ],
       ),
