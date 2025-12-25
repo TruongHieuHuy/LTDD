@@ -160,6 +160,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
     final isOwnProfile = widget.userId == authProvider.userId;
+    final isAdmin = authProvider.isAdmin;
 
     if (_isLoading) {
       return Scaffold(
@@ -179,6 +180,14 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       appBar: AppBar(
         title: Text(_userProfile!.username),
         actions: [
+          if (isAdmin)
+            IconButton(
+              icon: const Icon(Icons.admin_panel_settings),
+              tooltip: 'Chuyển về trang Admin',
+              onPressed: () {
+                Navigator.pushReplacementNamed(context, '/admin');
+              },
+            ),
           if (!isOwnProfile)
             IconButton(
               icon: Icon(

@@ -205,22 +205,36 @@ class _ModularNavigationState extends State<ModularNavigation> {
         }
       },
       child: Scaffold(
-        body: SafeArea(child: currentScreen),
-        bottomNavigationBar: BottomNavigationBar(
-          currentIndex: _selectedCategoryIndex,
-          onTap: _onCategoryTapped,
-          type: BottomNavigationBarType.fixed,
-          selectedItemColor: themeProvider.primaryColor,
-          unselectedItemColor: Colors.grey.shade600,
-          selectedFontSize: 12,
-          unselectedFontSize: 12,
-          elevation: 8,
-          items: _categories.map((category) {
-            return BottomNavigationBarItem(
-              icon: Icon(category.icon),
-              label: category.name,
-            );
-          }).toList(),
+        body: currentScreen,
+        bottomNavigationBar: Container(
+          decoration: BoxDecoration(
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 10,
+                offset: const Offset(0, -2),
+              ),
+            ],
+          ),
+          child: BottomNavigationBar(
+            currentIndex: _selectedCategoryIndex,
+            onTap: _onCategoryTapped,
+            type: BottomNavigationBarType.fixed,
+            selectedItemColor: themeProvider.primaryColor,
+            unselectedItemColor: Colors.grey.shade600,
+            selectedFontSize: 12,
+            unselectedFontSize: 12,
+            elevation: 8,
+            backgroundColor: themeProvider.isDarkMode
+                ? const Color(0xFF1B263B)
+                : Colors.white,
+            items: _categories.map((category) {
+              return BottomNavigationBarItem(
+                icon: Icon(category.icon),
+                label: category.name,
+              );
+            }).toList(),
+          ),
         ),
       ),
     );

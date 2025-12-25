@@ -86,19 +86,20 @@ class _LoginScreenState extends State<LoginScreen>
       if (result.success && mounted) {
         // Success - Navigate based on user role
         final role = authProvider.userRole;
+        debugPrint(
+          'Login success - Role: $role, isAdmin: ${authProvider.isAdmin}',
+        );
 
         if (role == 'ADMIN' || role == 'MODERATOR') {
           // Navigate to Admin Dashboard
-          Navigator.of(context).pushNamedAndRemoveUntil(
-            '/admin-dashboard',
-            (route) => false,
-          );
+          Navigator.of(
+            context,
+          ).pushNamedAndRemoveUntil('/admin-dashboard', (route) => false);
         } else {
           // Navigate to main app for regular users
-          Navigator.of(context).pushNamedAndRemoveUntil(
-            '/modular',
-            (route) => false,
-          );
+          Navigator.of(
+            context,
+          ).pushNamedAndRemoveUntil('/modular', (route) => false);
         }
       } else if (mounted) {
         // Show error

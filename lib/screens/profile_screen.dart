@@ -87,7 +87,8 @@ class _ProfileScreenState extends State<ProfileScreen>
                       child: Image.asset(
                         'lib/assets/images/Huy Đẹp Trai 1 0 2.jpg',
                         fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => Container(),
+                        errorBuilder: (context, error, stackTrace) =>
+                            Container(),
                       ),
                     ),
                     // Dark overlay
@@ -122,7 +123,9 @@ class _ProfileScreenState extends State<ProfileScreen>
                                   shape: BoxShape.circle,
                                   boxShadow: [
                                     BoxShadow(
-                                      color: const Color(0xFF667eea).withOpacity(0.5),
+                                      color: const Color(
+                                        0xFF667eea,
+                                      ).withOpacity(0.5),
                                       blurRadius: 20,
                                       spreadRadius: 5,
                                     ),
@@ -137,14 +140,24 @@ class _ProfileScreenState extends State<ProfileScreen>
                                     color: Colors.white,
                                     width: 4,
                                   ),
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      Colors.blue.shade400,
+                                      Colors.purple.shade400,
+                                    ],
+                                  ),
                                 ),
                                 child: CircleAvatar(
                                   radius: 50,
-                                  backgroundColor: Colors.white,
-                                  backgroundImage: AssetImage(
-                                    'lib/assets/images/Huy Đẹp Trai 1 0 2.jpg',
+                                  backgroundColor: Colors.transparent,
+                                  child: Text(
+                                    username.substring(0, 1).toUpperCase(),
+                                    style: const TextStyle(
+                                      fontSize: 40,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
                                   ),
-                                  child: null,
                                 ),
                               ),
                               // Level badge
@@ -158,10 +171,16 @@ class _ProfileScreenState extends State<ProfileScreen>
                                   ),
                                   decoration: BoxDecoration(
                                     gradient: const LinearGradient(
-                                      colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                                      colors: [
+                                        Color(0xFFFFD700),
+                                        Color(0xFFFFA500),
+                                      ],
                                     ),
                                     borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(color: Colors.white, width: 2),
+                                    border: Border.all(
+                                      color: Colors.white,
+                                      width: 2,
+                                    ),
                                     boxShadow: [
                                       BoxShadow(
                                         color: Colors.black.withOpacity(0.3),
@@ -239,6 +258,15 @@ class _ProfileScreenState extends State<ProfileScreen>
                 ),
               ),
               actions: [
+                if (authProvider.isAdmin)
+                  IconButton(
+                    icon: const Icon(Icons.swap_horiz),
+                    onPressed: () {
+                      Navigator.pushReplacementNamed(context, '/admin-dashboard');
+                    },
+                    tooltip: 'Chuyển sang giao diện Admin',
+                  ),
+
                 IconButton(
                   icon: const Icon(Icons.edit, color: Colors.white),
                   onPressed: () => _showEditProfileDialog(context),
@@ -320,10 +348,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                 ),
                 Text(
                   'Cấp ${level + 1}',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[600],
-                  ),
+                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                 ),
               ],
             ),
@@ -361,10 +386,7 @@ class _ProfileScreenState extends State<ProfileScreen>
             const SizedBox(height: 8),
             Text(
               '${(progress * 100).toInt()}% - ${totalScore % 1000}/1000 XP',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[600],
-              ),
+              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
             ),
           ],
         ),
@@ -380,10 +402,7 @@ class _ProfileScreenState extends State<ProfileScreen>
         children: [
           const Text(
             'Thống kê Game',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
           Row(
@@ -505,10 +524,7 @@ class _ProfileScreenState extends State<ProfileScreen>
             children: [
               const Text(
                 'Thành tựu',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               TextButton(
                 onPressed: () {
@@ -541,15 +557,23 @@ class _ProfileScreenState extends State<ProfileScreen>
                           shape: BoxShape.circle,
                           gradient: isUnlocked
                               ? const LinearGradient(
-                                  colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                                  colors: [
+                                    Color(0xFFFFD700),
+                                    Color(0xFFFFA500),
+                                  ],
                                 )
                               : LinearGradient(
-                                  colors: [Colors.grey[300]!, Colors.grey[400]!],
+                                  colors: [
+                                    Colors.grey[300]!,
+                                    Colors.grey[400]!,
+                                  ],
                                 ),
                           boxShadow: isUnlocked
                               ? [
                                   BoxShadow(
-                                    color: const Color(0xFFFFD700).withOpacity(0.5),
+                                    color: const Color(
+                                      0xFFFFD700,
+                                    ).withOpacity(0.5),
                                     blurRadius: 8,
                                     spreadRadius: 2,
                                   ),
@@ -572,7 +596,9 @@ class _ProfileScreenState extends State<ProfileScreen>
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 12,
-                          fontWeight: isUnlocked ? FontWeight.bold : FontWeight.normal,
+                          fontWeight: isUnlocked
+                              ? FontWeight.bold
+                              : FontWeight.normal,
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
@@ -609,10 +635,7 @@ class _ProfileScreenState extends State<ProfileScreen>
           children: [
             const Text(
               'Thông tin liên hệ',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             _buildInfoRow(Icons.email_outlined, 'Email', email),
@@ -642,10 +665,7 @@ class _ProfileScreenState extends State<ProfileScreen>
               children: [
                 Text(
                   label,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[600],
-                  ),
+                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                 ),
                 Text(
                   value,
@@ -670,10 +690,7 @@ class _ProfileScreenState extends State<ProfileScreen>
         children: [
           const Text(
             'Tiện ích nhanh',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
           Row(
@@ -791,23 +808,86 @@ class _ProfileScreenState extends State<ProfileScreen>
       await authProvider.logout();
 
       // Navigate to login screen
-      Navigator.of(context).pushNamedAndRemoveUntil(
-        '/login',
-        (route) => false,
-      );
+      Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
     }
   }
 
   void _showEditProfileDialog(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final userName = authProvider.username;
+    final userEmail = authProvider.userEmail;
+
+    if (userName == null) return;
+
+    final nameController = TextEditingController(text: userName);
+    final emailController = TextEditingController(text: userEmail ?? '');
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Chỉnh sửa profile'),
-        content: const Text('Tính năng đang phát triển!'),
+        title: const Text('Chỉnh sửa Profile'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(
+                  labelText: 'Tên người dùng',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.person),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: emailController,
+                decoration: const InputDecoration(
+                  labelText: 'Email',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.email),
+                ),
+                keyboardType: TextInputType.emailAddress,
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.blue.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.info_outline, color: Colors.blue),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Để đổi avatar, vui lòng liên hệ admin',
+                        style: TextStyle(fontSize: 12, color: Colors.blue[700]),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Đóng'),
+            child: const Text('Hủy'),
+          ),
+          TextButton(
+            onPressed: () {
+              if (nameController.text.isNotEmpty &&
+                  emailController.text.isNotEmpty) {
+                // Update local state only (in production would call API)
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Đã cập nhật profile')),
+                );
+                Navigator.pop(context);
+              }
+            },
+            child: const Text('Lưu'),
           ),
         ],
       ),

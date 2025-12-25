@@ -18,10 +18,7 @@ class AdminDashboardScreen extends StatelessWidget {
       appBar: AppBar(
         title: Row(
           children: [
-            Icon(
-              Icons.admin_panel_settings,
-              color: Colors.amber,
-            ),
+            Icon(Icons.admin_panel_settings, color: Colors.amber),
             const SizedBox(width: 8),
             const Text(
               'Admin Dashboard',
@@ -30,6 +27,14 @@ class AdminDashboardScreen extends StatelessWidget {
           ],
         ),
         actions: [
+          // Switch to User View
+          IconButton(
+            icon: const Icon(Icons.swap_horiz),
+            onPressed: () {
+              Navigator.pushReplacementNamed(context, '/modular');
+            },
+            tooltip: 'Chuyển sang giao diện User',
+          ),
           // Logout button
           IconButton(
             icon: const Icon(Icons.logout),
@@ -77,10 +82,7 @@ class AdminDashboardScreen extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            Colors.deepPurple,
-            Colors.deepPurple.shade700,
-          ],
+          colors: [Colors.deepPurple, Colors.deepPurple.shade700],
         ),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
@@ -119,8 +121,10 @@ class AdminDashboardScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.amber,
                     borderRadius: BorderRadius.circular(12),
@@ -190,10 +194,7 @@ class AdminDashboardScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1D1E33) : Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: color.withOpacity(0.3),
-          width: 2,
-        ),
+        border: Border.all(color: color.withOpacity(0.3), width: 2),
       ),
       child: Column(
         children: [
@@ -297,10 +298,7 @@ class AdminDashboardScreen extends StatelessWidget {
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF1D1E33) : Colors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: color.withOpacity(0.3),
-            width: 1.5,
-          ),
+          border: Border.all(color: color.withOpacity(0.3), width: 1.5),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -448,10 +446,7 @@ class AdminDashboardScreen extends StatelessWidget {
       await authProvider.logout();
 
       // Navigate to login screen
-      Navigator.of(context).pushNamedAndRemoveUntil(
-        '/login',
-        (route) => false,
-      );
+      Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
     }
   }
 }

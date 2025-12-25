@@ -9,6 +9,7 @@ import 'screens/login_screen.dart';
 import 'screens/forgot_password_screen.dart';
 import 'screens/achievements_screen.dart';
 import 'screens/new_home_screen.dart';
+import 'screens/simple_home_screen.dart';
 import 'screens/admin_dashboard_screen.dart';
 import 'screens/games/guess_number_game_screen.dart';
 import 'screens/games/cows_bulls_game_screen.dart';
@@ -23,6 +24,8 @@ import 'screens/friend_requests_screen.dart';
 import 'screens/user_profile_screen.dart';
 import 'screens/saved_posts_screen.dart';
 import 'screens/create_post_screen.dart';
+import 'screens/products_screen.dart';
+import 'screens/categories_screen.dart';
 import 'utils/database_service.dart';
 import 'providers/alarm_provider.dart';
 import 'providers/translation_provider.dart';
@@ -97,9 +100,13 @@ class SmartStudentApp extends StatelessWidget {
               '/forgot-password': (context) => const ForgotPasswordScreen(),
               '/modular': (context) => const ModularNavigation(),
               '/admin-dashboard': (context) => const AdminDashboardScreen(),
+              '/home': (context) =>
+                  const SimpleHomeScreen(), // 🎯 Giao diện đơn giản
               '/new-home': (context) =>
-                  const NewHomeScreen(), // 🎮 New Gaming Hub
+                  const NewHomeScreen(), // 🎮 New Gaming Hub (dự phòng)
               '/profile': (context) => const ProfileScreen(),
+              '/products': (context) => const ProductsScreen(),
+              '/categories': (context) => const CategoriesScreen(),
               '/translate': (context) => const TranslateScreen(),
               '/youtube': (context) => const YouTubeScreen(),
               '/guess_number_game': (context) => const GuessNumberGameScreen(),
@@ -143,8 +150,12 @@ class SmartStudentApp extends StatelessWidget {
       return '/login';
     }
 
-    // Check user role
+    // Check user role - CRITICAL: Must check role from both sources
     final role = authProvider.userRole;
+    debugPrint(
+      'Initial route check - Role: $role, isAdmin: ${authProvider.isAdmin}',
+    );
+
     if (role == 'ADMIN' || role == 'MODERATOR') {
       return '/admin-dashboard';
     }
