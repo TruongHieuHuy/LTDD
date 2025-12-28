@@ -3,6 +3,11 @@ import '../services/api_service.dart';
 import '../providers/auth_provider.dart';
 import 'package:provider/provider.dart';
 
+import '../models/user_profile.dart';
+import '../models/post_data.dart';
+// import '../models/friend_data.dart';
+// import '../models/friend_request_data.dart';
+
 /// Màn hình hiển thị thông tin profile người dùng
 class UserProfileScreen extends StatefulWidget {
   final String userId;
@@ -76,13 +81,13 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       final apiService = ApiService();
 
       // Kiểm tra xem đã là bạn bè chưa
-      final friends = await apiService.getFriends();
-      final friendsList = friends.data ?? [];
+
+      final friendsList = await apiService.getFriends();
       final isFriend = friendsList.any((f) => f.id == widget.userId.toString());
 
       // Kiểm tra xem đã gửi lời mời kết bạn chưa
-      final requests = await apiService.getFriendRequests();
-      final requestsList = requests.data ?? [];
+
+      final requestsList = await apiService.getFriendRequests();
       final isRequestSent = requestsList.any(
         (r) => r.receiverId == widget.userId.toString(),
       );

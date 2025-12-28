@@ -35,38 +35,35 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final response = await ApiService().forgotPassword(
-        email: _emailController.text.trim(),
-      );
+      final email = _emailController.text.trim();
+      await ApiService().forgotPassword(email: email);
 
+      // ApiService throws exception on failure, so if we get here, it succeeded
       if (!mounted) return;
 
-      if (response.success) {
-        setState(() {
-          _tokenSent = true;
-          _emailForReset = _emailController.text.trim();
-        });
+      setState(() {
+        _isLoading = false;
+        _tokenSent = true;
+        _emailForReset = email;
+      });
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(response.message ?? 'Mã xác thực đã được gửi!'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(response.message ?? 'Không thể gửi mã xác thực'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Lỗi: $e'), backgroundColor: Colors.red),
+        const SnackBar(
+          content: Text('Mã xác thực đã được gửi!'),
+          backgroundColor: Colors.green,
+        ),
       );
-    } finally {
-      setState(() => _isLoading = false);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceAll('Exception: ', '')),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -83,41 +80,46 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       return;
     }
 
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+    });
 
     try {
-      final response = await ApiService().resetPassword(
-        email: _emailForReset!,
-        token: _tokenController.text.trim(),
-        newPassword: _newPasswordController.text,
+      final email = _emailForReset!;
+      final token = _tokenController.text.trim();
+      final newPassword = _newPasswordController.text;
+
+      await ApiService().resetPassword(
+        email: email,
+        token: token,
+        newPassword: newPassword,
       );
 
       if (!mounted) return;
 
-      if (response.success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(response.message ?? 'Đổi mật khẩu thành công!'),
-            backgroundColor: Colors.green,
-          ),
-        );
+      setState(() {
+        _isLoading = false;
+      });
 
-        // Return to login screen
-        Navigator.of(context).pop();
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(response.message ?? 'Không thể đổi mật khẩu'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Lỗi: $e'), backgroundColor: Colors.red),
+        const SnackBar(
+          content: Text('Đổi mật khẩu thành công!'),
+          backgroundColor: Colors.green,
+        ),
       );
-    } finally {
-      setState(() => _isLoading = false);
+
+      Navigator.pop(context);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceAll('Exception: ', '')),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 

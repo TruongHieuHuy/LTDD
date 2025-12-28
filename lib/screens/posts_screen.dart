@@ -6,6 +6,8 @@ import '../providers/auth_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../widgets/animations/animation_widgets.dart';
+import '../models/post_data.dart';
+import '../models/comment_data.dart';
 
 /// Màn hình hiển thị danh sách posts (giống Facebook feed)
 class PostsScreen extends StatefulWidget {
@@ -2129,10 +2131,8 @@ class _ShareDialogState extends State<_ShareDialog> {
     setState(() => _isLoading = true);
 
     try {
-      final apiService = ApiService();
-
       // Create a new post that references the original
-      await apiService.createPost(
+      await ApiService().createPost(
         content: _contentController.text.trim().isEmpty
             ? 'Đã chia sẻ bài viết của ${widget.post.user.username}'
             : _contentController.text.trim(),
@@ -2141,7 +2141,7 @@ class _ShareDialogState extends State<_ShareDialog> {
       );
 
       // Increment share count on original post
-      await apiService.sharePost(widget.post.id);
+      await ApiService().sharePost(widget.post.id);
 
       if (mounted) {
         Navigator.pop(context);

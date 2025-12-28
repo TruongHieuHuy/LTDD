@@ -1,132 +1,171 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:flutter/foundation.dart';
-import '../models/post_model.dart';
+import '../models/post_data.dart';
+import '../models/comment_data.dart';
+import '../exceptions/api_exception.dart';
+import 'api_client.dart';
 
-/// Service để quản lý API calls cho Posts
 class PostService {
-  // TODO: Thay đổi base URL này thành URL backend thật của bạn
-  static const String baseUrl = 'YOUR_API_URL_HERE/api/posts';
+  final ApiClient apiClient;
+  PostService(this.apiClient);
 
-  /// Lấy tất cả posts
-  static Future<List<Post>> fetchPosts() async {
-    try {
-      final response = await http.get(Uri.parse(baseUrl));
+  Future<PostData> createPost({
+    required String content,
+    String? imageUrl,
+    String visibility = 'public',
+    String? category,
+  }) => apiClient.request(
+    'CreatePost',
+    httpRequest: () => http.post(
+      Uri.parse('${ApiClient.baseUrl}/api/posts'),
+      headers: apiClient.headers,
+      body: jsonEncode({
+        'content': content,
+        'imageUrl': imageUrl,
+        'visibility': visibility,
+        'category': category,
+      }),
+    ),
+    onSuccess: (data) => PostData.fromJson(data),
+    defaultErrorMessage: 'Failed to create post',
+  );
 
-      if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
-        return data.map((item) => Post.fromJson(item)).toList();
-      } else {
-        throw Exception('Failed to load posts: ${response.statusCode}');
-      }
-    } catch (e) {
-      debugPrint('Error fetching posts: $e');
-      rethrow;
+  Future<String> uploadImage(String filePath) =>
+      apiClient.uploadImage(filePath);
+
+  Future<List<PostData>> getPosts({
+    int limit = 20,
+    int offset = 0,
+    String? userId,
+    String? category,
+    String? search,
+  }) {
+    var url = '${ApiClient.baseUrl}/api/posts?limit=$limit&offset=$offset';
+    if (userId != null) {
+      url += '&userId=$userId';
     }
+    if (category != null && category.isNotEmpty) {
+      url += '&category=$category';
+    }
+    if (search != null && search.isNotEmpty) {
+      url += '&search=${Uri.encodeComponent(search)}';
+    }
+    return apiClient.request(
+      'GetPosts',
+      httpRequest: () => http.get(Uri.parse(url), headers: apiClient.headers),
+      onSuccess: (data) => (data['posts'] as List)
+          .map((post) => PostData.fromJson(post))
+          .toList(),
+      defaultErrorMessage: 'Failed to get posts',
+    );
   }
 
-  /// Lấy post theo ID
-  static Future<Post> getPostById(int id) async {
-    try {
-      final response = await http.get(Uri.parse('$baseUrl/$id'));
+  Future<PostData> getPost(String postId) => apiClient.request(
+    'GetPost',
+    httpRequest: () => http.get(
+      Uri.parse('${ApiClient.baseUrl}/api/posts/$postId'),
+      headers: apiClient.headers,
+    ),
+    onSuccess: (data) => PostData.fromJson(data),
+    defaultErrorMessage: 'Failed to get post',
+  );
 
-      if (response.statusCode == 200) {
-        return Post.fromJson(json.decode(response.body));
-      } else {
-        throw Exception('Failed to load post: ${response.statusCode}');
-      }
-    } catch (e) {
-      debugPrint('Error fetching post by ID: $e');
-      rethrow;
-    }
-  }
+  Future<PostData> updatePost({
+    required String postId,
+    required String content,
+    String? imageUrl,
+    String? visibility,
+    String? category,
+  }) => apiClient.request(
+    'UpdatePost',
+    httpRequest: () => http.put(
+      Uri.parse('${ApiClient.baseUrl}/api/posts/$postId'),
+      headers: apiClient.headers,
+      body: jsonEncode({
+        'content': content,
+        'imageUrl': imageUrl,
+        'visibility': visibility,
+        'category': category,
+      }),
+    ),
+    onSuccess: (data) => PostData.fromJson(data),
+    defaultErrorMessage: 'Failed to update post',
+  );
 
-  /// Tìm kiếm posts theo content
-  static Future<List<Post>> searchPosts(String query) async {
-    try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/search?q=${Uri.encodeComponent(query)}'),
+  Future<void> deletePost(String postId) => apiClient.request(
+    'DeletePost',
+    httpRequest: () => http.delete(
+      Uri.parse('${ApiClient.baseUrl}/api/posts/$postId'),
+      headers: apiClient.headers,
+    ),
+    onSuccess: (_) {},
+    defaultErrorMessage: 'Failed to delete post',
+  );
+
+  Future<Map<String, dynamic>> toggleLike(String postId) => apiClient.request(
+    'ToggleLike',
+    httpRequest: () => http.post(
+      Uri.parse('${ApiClient.baseUrl}/api/posts/$postId/like'),
+      headers: apiClient.headers,
+    ),
+    onSuccess: (data) => data as Map<String, dynamic>,
+    defaultErrorMessage: 'Failed to toggle like',
+  );
+
+  Future<CommentData> addComment({
+    required String postId,
+    required String content,
+  }) => apiClient.request(
+    'AddComment',
+    httpRequest: () => http.post(
+      Uri.parse('${ApiClient.baseUrl}/api/posts/$postId/comments'),
+      headers: apiClient.headers,
+      body: jsonEncode({'content': content}),
+    ),
+    onSuccess: (data) => CommentData.fromJson(data),
+    defaultErrorMessage: 'Failed to add comment',
+  );
+
+  Future<Map<String, dynamic>> toggleSavePost(String postId) =>
+      apiClient.request(
+        'ToggleSavePost',
+        httpRequest: () => http.post(
+          Uri.parse('${ApiClient.baseUrl}/api/posts/$postId/save'),
+          headers: apiClient.headers,
+        ),
+        onSuccess: (data) => data as Map<String, dynamic>,
+        defaultErrorMessage: 'Failed to toggle save',
       );
 
-      if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
-        return data.map((item) => Post.fromJson(item)).toList();
-      } else {
-        throw Exception('Failed to search posts: ${response.statusCode}');
-      }
-    } catch (e) {
-      debugPrint('Error searching posts: $e');
-      rethrow;
-    }
-  }
+  Future<List<PostData>> getSavedPosts() => apiClient.request(
+    'GetSavedPosts',
+    httpRequest: () => http.get(
+      Uri.parse('${ApiClient.baseUrl}/api/posts/saved/list'),
+      headers: apiClient.headers,
+    ),
+    onSuccess: (data) =>
+        (data['posts'] as List).map((post) => PostData.fromJson(post)).toList(),
+    defaultErrorMessage: 'Failed to get saved posts',
+  );
 
-  /// Tạo post mới
-  static Future<Post> createPost(Post post) async {
-    try {
-      final response = await http.post(
-        Uri.parse(baseUrl),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode(post.toJson()),
+  Future<Map<String, dynamic>> toggleFollow(String targetUserId) =>
+      apiClient.request(
+        'ToggleFollow',
+        httpRequest: () => http.post(
+          Uri.parse('${ApiClient.baseUrl}/api/posts/follow/$targetUserId'),
+          headers: apiClient.headers,
+        ),
+        onSuccess: (data) => data as Map<String, dynamic>,
+        defaultErrorMessage: 'Failed to toggle follow',
       );
 
-      if (response.statusCode == 201 || response.statusCode == 200) {
-        return Post.fromJson(json.decode(response.body));
-      } else {
-        throw Exception('Failed to create post: ${response.statusCode}');
-      }
-    } catch (e) {
-      debugPrint('Error creating post: $e');
-      rethrow;
-    }
-  }
-
-  /// Cập nhật post
-  static Future<Post> updatePost(int id, Post post) async {
-    try {
-      final response = await http.put(
-        Uri.parse('$baseUrl/$id'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode(post.toJson()),
-      );
-
-      if (response.statusCode == 200) {
-        return Post.fromJson(json.decode(response.body));
-      } else {
-        throw Exception('Failed to update post: ${response.statusCode}');
-      }
-    } catch (e) {
-      debugPrint('Error updating post: $e');
-      rethrow;
-    }
-  }
-
-  /// Xóa post
-  static Future<void> deletePost(int id) async {
-    try {
-      final response = await http.delete(Uri.parse('$baseUrl/$id'));
-
-      if (response.statusCode != 200 && response.statusCode != 204) {
-        throw Exception('Failed to delete post: ${response.statusCode}');
-      }
-    } catch (e) {
-      debugPrint('Error deleting post: $e');
-      rethrow;
-    }
-  }
-
-  /// Like/Unlike post (bonus feature)
-  static Future<Post> toggleLike(int id) async {
-    try {
-      final response = await http.post(Uri.parse('$baseUrl/$id/like'));
-
-      if (response.statusCode == 200) {
-        return Post.fromJson(json.decode(response.body));
-      } else {
-        throw Exception('Failed to toggle like: ${response.statusCode}');
-      }
-    } catch (e) {
-      debugPrint('Error toggling like: $e');
-      rethrow;
-    }
-  }
+  Future<void> sharePost(String postId) => apiClient.request(
+    'SharePost',
+    httpRequest: () => http.post(
+      Uri.parse('${ApiClient.baseUrl}/api/posts/$postId/share'),
+      headers: apiClient.headers,
+    ),
+    onSuccess: (_) {},
+    defaultErrorMessage: 'Failed to share post',
+  );
 }

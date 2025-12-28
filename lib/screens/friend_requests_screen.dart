@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../models/friend_request_data.dart';
 
 /// Màn hình xem và xử lý lời mời kết bạn
 class FriendRequestsScreen extends StatefulWidget {
@@ -23,21 +24,28 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
   Future<void> _loadRequests() async {
     setState(() => _isLoading = true);
 
-    final response = await _apiService.getFriendRequests();
-
-    setState(() {
-      _isLoading = false;
-      if (response.success && response.data != null) {
-        _requests = response.data!;
+    try {
+      final requests = await _apiService.getFriendRequests();
+      if (mounted) {
+        setState(() {
+          _requests = requests;
+          _isLoading = false;
+        });
       }
-    });
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        // Optional: show error snackbar
+        debugPrint('Error loading friend requests: $e');
+      }
+    }
   }
 
   Future<void> _acceptRequest(FriendRequestData request) async {
-    final response = await _apiService.acceptFriendRequest(request.id);
+    try {
+      await _apiService.acceptFriendRequest(request.id);
 
-    if (mounted) {
-      if (response.success) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -47,10 +55,12 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
           ),
         );
         _loadRequests(); // Reload
-      } else {
+      }
+    } catch (e) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(response.message ?? 'Chấp nhận thất bại'),
+            content: Text(e.toString().replaceAll('Exception: ', '')),
             backgroundColor: Colors.red,
           ),
         );
@@ -59,10 +69,10 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
   }
 
   Future<void> _rejectRequest(FriendRequestData request) async {
-    final response = await _apiService.rejectFriendRequest(request.id);
+    try {
+      await _apiService.rejectFriendRequest(request.id);
 
-    if (mounted) {
-      if (response.success) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -72,10 +82,12 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
           ),
         );
         _loadRequests(); // Reload
-      } else {
+      }
+    } catch (e) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(response.message ?? 'Từ chối thất bại'),
+            content: Text(e.toString().replaceAll('Exception: ', '')),
             backgroundColor: Colors.red,
           ),
         );

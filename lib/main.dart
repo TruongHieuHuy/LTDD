@@ -27,6 +27,10 @@ import 'screens/create_post_screen.dart';
 import 'screens/products_screen.dart';
 import 'screens/categories_screen.dart';
 import 'utils/database_service.dart';
+import 'services/api_service.dart';
+import 'services/api_client.dart';
+import 'services/post_service.dart';
+import 'providers/post_provider.dart';
 import 'providers/alarm_provider.dart';
 import 'providers/translation_provider.dart';
 import 'providers/settings_provider.dart';
@@ -47,35 +51,44 @@ void main() async {
   // Initialize Hive database
   await DatabaseService.init();
 
-  // Initialize ThemeProvider
-  final themeProvider = ThemeProvider();
-  await themeProvider.initialize();
-
-  // Initialize AuthProvider
-  final authProvider = AuthProvider();
-  await authProvider.initialize();
-
-  runApp(
-    SmartStudentApp(themeProvider: themeProvider, authProvider: authProvider),
-  );
+  runApp(const SmartStudentApp());
 }
 
 class SmartStudentApp extends StatelessWidget {
-  final ThemeProvider themeProvider;
-  final AuthProvider authProvider;
-
-  const SmartStudentApp({
-    super.key,
-    required this.themeProvider,
-    required this.authProvider,
-  });
+  const SmartStudentApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider.value(value: themeProvider),
-        ChangeNotifierProvider.value(value: authProvider),
+        // Foundational services
+        Provider<ApiClient>(create: (_) => ApiClient()),
+        Provider<ApiService>(create: (_) => ApiService()),
+
+        // PostService depends on ApiClient
+        ProxyProvider<ApiClient, PostService>(
+          update: (context, apiClient, _) => PostService(apiClient),
+        ),
+
+        // PostProvider depends on PostService
+        ChangeNotifierProxyProvider<PostService, PostProvider>(
+          create: (context) => PostProvider(context.read<PostService>()),
+          update: (context, postService, previous) =>
+              previous ?? PostProvider(postService),
+        ),
+
+        // Providers that depend on other providers (e.g., AuthProvider depends on ApiService)
+        ChangeNotifierProxyProvider<ApiService, AuthProvider>(
+          create: (context) =>
+              AuthProvider(context.read<ApiService>())..initialize(),
+          update: (context, apiService, previousAuthProvider) {
+            return previousAuthProvider ?? AuthProvider(apiService)
+              ..initialize();
+          },
+        ),
+
+        // Independent providers
+        ChangeNotifierProvider(create: (_) => ThemeProvider()..initialize()),
         ChangeNotifierProvider(create: (_) => AlarmProvider()),
         ChangeNotifierProvider(create: (_) => TranslationProvider()),
         ChangeNotifierProvider(create: (_) => SettingsProvider()),
@@ -102,8 +115,6 @@ class SmartStudentApp extends StatelessWidget {
               '/admin-dashboard': (context) => const AdminDashboardScreen(),
               '/home': (context) =>
                   const SimpleHomeScreen(), // 🎯 Giao diện đơn giản
-              '/new-home': (context) =>
-                  const NewHomeScreen(), // 🎮 New Gaming Hub (dự phòng)
               '/profile': (context) => const ProfileScreen(),
               '/products': (context) => const ProductsScreen(),
               '/categories': (context) => const CategoriesScreen(),

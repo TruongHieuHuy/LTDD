@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import '../models/auth_model.dart';
 import '../services/api_service.dart';
+import '../services/api_exception.dart';
+import '../models/user_profile.dart';
+import '../models/auth_response.dart';
 
 class AuthProvider with ChangeNotifier {
   static const String _boxName = 'authBox';
@@ -13,7 +16,12 @@ class AuthProvider with ChangeNotifier {
   AuthModel? _currentAuth;
   String? _savedEmail;
   UserProfile? _userProfile;
-  final ApiService _apiService = ApiService();
+  
+  // Dependency is now injected
+  final ApiService _apiService;
+
+  // Constructor with dependency injection
+  AuthProvider(this._apiService);
 
   AuthModel? get currentAuth => _currentAuth;
   bool get isLoggedIn => _currentAuth?.isLoggedIn ?? false;
@@ -44,7 +52,7 @@ class AuthProvider with ChangeNotifier {
           Map<String, dynamic>.from(profileJson),
         );
       } catch (e) {
-        debugPrint('Error loading user profile: $e');
+        debugPrint('Error loading user profile from cache: $e');
       }
     }
   }
@@ -55,21 +63,16 @@ class AuthProvider with ChangeNotifier {
       final savedAuth = _box.get(_authKey) as AuthModel?;
       if (savedAuth != null && savedAuth.isSessionValid) {
         _currentAuth = savedAuth;
-        // Restore token to API service
         _apiService.setAuthToken(savedAuth.sessionToken);
-
-        // Try to refresh user profile from server
         await _refreshUserProfile();
       } else {
-        _currentAuth = null;
-        await _box.delete(_authKey); // Clear expired session
-        _apiService.clearAuthToken();
+        await logout(); // Clear any expired or invalid session
       }
-      notifyListeners();
     } catch (e) {
       debugPrint('Error loading auth: $e');
-      _currentAuth = null;
+      await logout();
     }
+    notifyListeners();
   }
 
   /// Save authentication state to Hive
@@ -101,14 +104,18 @@ class AuthProvider with ChangeNotifier {
   /// Refresh user profile from server
   Future<void> _refreshUserProfile() async {
     try {
-      final response = await _apiService.getCurrentUser();
-      if (response.success && response.data != null) {
-        _userProfile = response.data;
-        await _saveUserProfile();
-        notifyListeners();
+      final user = await _apiService.getCurrentUser();
+      _userProfile = user;
+      await _saveUserProfile();
+      notifyListeners();
+    } on ApiException catch (e) {
+      debugPrint('Error refreshing user profile: ${e.message}');
+      // If token is invalid (e.g., 401), log the user out
+      if (e.statusCode == 401) {
+        await logout();
       }
     } catch (e) {
-      debugPrint('Error refreshing user profile: $e');
+      debugPrint('Unhandled error refreshing user profile: $e');
     }
   }
 
@@ -129,61 +136,46 @@ class AuthProvider with ChangeNotifier {
     try {
       final trimmedEmail = email.toLowerCase().trim();
 
-      // Validate email format
       if (!isValidEmail(trimmedEmail)) {
         return LoginResult(success: false, message: 'Invalid email format');
       }
 
-      // Call Backend API
-      final response = await _apiService.login(
+      final authData = await _apiService.login(
         email: trimmedEmail,
         password: password,
       );
 
-      if (response.success && response.data != null) {
-        final authData = response.data!;
+      final expiry = AuthModel.calculateExpiry(rememberMe: rememberMe);
+      _currentAuth = AuthModel(
+        email: trimmedEmail,
+        sessionToken: authData.token,
+        lastLoginTime: DateTime.now(),
+        rememberMe: rememberMe,
+        sessionExpiry: expiry,
+        role: authData.user.role,
+      );
 
-        // Create auth session with real JWT token
-        final expiry = AuthModel.calculateExpiry(rememberMe: rememberMe);
+      _userProfile = authData.user;
+      await _saveUserProfile();
 
-        _currentAuth = AuthModel(
-          email: trimmedEmail,
-          sessionToken: authData.token,
-          lastLoginTime: DateTime.now(),
-          rememberMe: rememberMe,
-          sessionExpiry: expiry,
-          role: authData.user.role, // Save role
-        );
-
-        // Save user profile
-        _userProfile = authData.user;
-        await _saveUserProfile();
-
-        // Save email if remember me
-        if (rememberMe) {
-          _savedEmail = trimmedEmail;
-          await _box.put(_savedEmailKey, trimmedEmail);
-        } else {
-          _savedEmail = null;
-          await _box.delete(_savedEmailKey);
-        }
-
-        await _saveAuth();
-        notifyListeners();
-
-        return LoginResult(success: true, message: 'Login successful');
+      if (rememberMe) {
+        _savedEmail = trimmedEmail;
+        await _box.put(_savedEmailKey, trimmedEmail);
       } else {
-        return LoginResult(
-          success: false,
-          message: response.message ?? 'Login failed',
-        );
+        _savedEmail = null;
+        await _box.delete(_savedEmailKey);
       }
+
+      await _saveAuth();
+      notifyListeners();
+
+      return LoginResult(success: true, message: 'Login successful');
+    } on ApiException catch (e) {
+      debugPrint('Login API error: ${e.message}');
+      return LoginResult(success: false, message: e.message);
     } catch (e) {
       debugPrint('Login error: $e');
-      return LoginResult(
-        success: false,
-        message: 'Network error: ${e.toString()}',
-      );
+      return LoginResult(success: false, message: 'An unexpected error occurred.');
     }
   }
 
@@ -196,65 +188,43 @@ class AuthProvider with ChangeNotifier {
     try {
       final trimmedEmail = email.toLowerCase().trim();
 
-      // Validate
       if (username.length < 3 || username.length > 20) {
-        return LoginResult(
-          success: false,
-          message: 'Username must be 3-20 characters',
-        );
+        return LoginResult(success: false, message: 'Username must be 3-20 characters');
       }
-
       if (!isValidEmail(trimmedEmail)) {
         return LoginResult(success: false, message: 'Invalid email format');
       }
-
       if (password.length < 6) {
-        return LoginResult(
-          success: false,
-          message: 'Password must be at least 6 characters',
-        );
+        return LoginResult(success: false, message: 'Password must be at least 6 characters');
       }
 
-      // Call Backend API
-      final response = await _apiService.register(
+      final authData = await _apiService.register(
         username: username,
         email: trimmedEmail,
         password: password,
       );
 
-      if (response.success && response.data != null) {
-        final authData = response.data!;
+      final expiry = AuthModel.calculateExpiry(rememberMe: false);
+      _currentAuth = AuthModel(
+        email: trimmedEmail,
+        sessionToken: authData.token,
+        lastLoginTime: DateTime.now(),
+        rememberMe: false,
+        sessionExpiry: expiry,
+      );
 
-        // Create auth session
-        final expiry = AuthModel.calculateExpiry(rememberMe: false);
+      _userProfile = authData.user;
+      await _saveUserProfile();
+      await _saveAuth();
+      notifyListeners();
 
-        _currentAuth = AuthModel(
-          email: trimmedEmail,
-          sessionToken: authData.token,
-          lastLoginTime: DateTime.now(),
-          rememberMe: false,
-          sessionExpiry: expiry,
-        );
-
-        // Save user profile
-        _userProfile = authData.user;
-        await _saveUserProfile();
-        await _saveAuth();
-        notifyListeners();
-
-        return LoginResult(success: true, message: 'Registration successful');
-      } else {
-        return LoginResult(
-          success: false,
-          message: response.message ?? 'Registration failed',
-        );
-      }
+      return LoginResult(success: true, message: 'Registration successful');
+    } on ApiException catch (e) {
+      debugPrint('Register API error: ${e.message}');
+      return LoginResult(success: false, message: e.message);
     } catch (e) {
       debugPrint('Register error: $e');
-      return LoginResult(
-        success: false,
-        message: 'Network error: ${e.toString()}',
-      );
+      return LoginResult(success: false, message: 'An unexpected error occurred.');
     }
   }
 
@@ -266,7 +236,6 @@ class AuthProvider with ChangeNotifier {
       await _box.delete(_authKey);
       await _box.delete(_userProfileKey);
       _apiService.clearAuthToken();
-      // Keep saved email for next login if it exists
       notifyListeners();
     } catch (e) {
       debugPrint('Logout error: $e');
@@ -280,11 +249,9 @@ class AuthProvider with ChangeNotifier {
     }
 
     if (_currentAuth!.isSessionValid) {
-      // Try to refresh user profile
       await _refreshUserProfile();
       return true;
     } else {
-      // Session expired - logout
       await logout();
       return false;
     }
