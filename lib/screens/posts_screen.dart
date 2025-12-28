@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import '../widgets/animations/animation_widgets.dart';
 import '../models/post_data.dart';
 import '../models/comment_data.dart';
+import '../config/gaming_theme.dart';
 
 /// Màn hình hiển thị danh sách posts (giống Facebook feed)
 class PostsScreen extends StatefulWidget {
@@ -538,6 +539,7 @@ class _PostsScreenState extends State<PostsScreen>
     final authProvider = Provider.of<AuthProvider>(context);
 
     return Scaffold(
+      backgroundColor: GamingTheme.primaryDark,
       appBar: AppBar(
         title: const Text('Bài đăng'),
         actions: [

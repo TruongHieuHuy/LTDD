@@ -49,6 +49,9 @@ dependencies:
   # State management
   provider: ^6.1.2
   
+  # Typography
+  google_fonts: ^6.1.0
+  
   # Local database
   hive: ^2.2.3
   hive_flutter: ^1.1.0

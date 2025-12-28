@@ -1,12 +1,15 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import '../../models/math_problem_model.dart';
 import '../../utils/game_utils/math_problem_generator.dart';
 import '../../widgets/game_widgets/math_answer_button.dart';
 import '../../widgets/game_widgets/math_timer_bar.dart';
 import '../../widgets/game_widgets/math_hp_display.dart';
 import '../../widgets/game_widgets/math_power_up_bar.dart';
+import '../../providers/auth_provider.dart';
+import '../../services/api_service.dart';
 
 /// Quick Math Game Screen
 /// Game giải toán nhanh với level tăng dần
@@ -220,8 +223,24 @@ class _QuickMathGameScreenState extends State<QuickMathGameScreen> {
   }
 
   /// Handle game over
-  void _onGameOver() {
+  void _onGameOver() async {
     _problemTimer?.cancel();
+    
+    // Save to backend if logged in
+    final authProvider = context.read<AuthProvider>();
+    if (authProvider.isLoggedIn) {
+      try {
+        await ApiService().saveScore(
+          gameType: 'quick_math',
+          score: _score,
+          difficulty: _level < 5 ? 'easy' : _level < 10 ? 'medium' : 'hard',
+          attempts: (_level - 1) * _questionsPerLevel + _questionsInLevel,
+          timeSpent: 0, // Quick math doesn't track total time
+        );
+      } catch (e) {
+        debugPrint('Failed to save score to backend: $e');
+      }
+    }
 
     showDialog(
       context: context,
@@ -246,6 +265,18 @@ class _QuickMathGameScreenState extends State<QuickMathGameScreen> {
               'Bạn đã trả lời sai quá nhiều!',
               style: TextStyle(color: Colors.red),
             ),
+            if (authProvider.isLoggedIn)
+              Padding(
+                padding: EdgeInsets.only(top: 8),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.cloud_done, size: 16, color: Colors.green),
+                    SizedBox(width: 4),
+                    Text('Đã lưu lên server', style: TextStyle(fontSize: 12)),
+                  ],
+                ),
+              ),
           ],
         ),
         actions: [

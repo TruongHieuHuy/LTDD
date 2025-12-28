@@ -41,6 +41,7 @@ import 'providers/chatbot_provider.dart';
 import 'providers/peer_chat_provider.dart';
 import 'providers/friend_provider.dart';
 import 'providers/group_provider.dart';
+import 'config/gaming_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -101,11 +102,11 @@ class SmartStudentApp extends StatelessWidget {
       child: Consumer2<ThemeProvider, AuthProvider>(
         builder: (context, themeProvider, authProvider, child) {
           return MaterialApp(
-            title: 'Smart Student Tools',
+            title: 'MiniGameCenter - Gaming Hub',
             debugShowCheckedModeBanner: false,
-            themeMode: themeProvider.themeMode,
-            theme: themeProvider.lightTheme,
-            darkTheme: themeProvider.darkTheme,
+            theme: GamingTheme.darkTheme, // Always use Gaming Hub theme
+            darkTheme: GamingTheme.darkTheme,
+            themeMode: ThemeMode.dark, // Force dark mode for gaming aesthetic
             // Auto-navigate based on login status and role
             initialRoute: _getInitialRoute(authProvider),
             routes: {

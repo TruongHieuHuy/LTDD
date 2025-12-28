@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/peer_chat_provider.dart';
 import '../models/peer_message_model.dart';
+import '../config/gaming_theme.dart';
 
 /// Screen for 1-1 chat with a specific user
 class PeerChatScreen extends StatefulWidget {
@@ -97,6 +98,7 @@ class _PeerChatScreenState extends State<PeerChatScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
+      backgroundColor: GamingTheme.primaryDark,
       appBar: AppBar(
         backgroundColor:
             theme.appBarTheme.backgroundColor ?? theme.scaffoldBackgroundColor,

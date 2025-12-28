@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import '../config/navigation_config.dart';
 import '../models/navigation_models.dart';
-import '../providers/theme_provider.dart';
+import '../config/gaming_theme.dart';
 
 /// Modern bottom navigation - Mobile UX optimized
 class ModularNavigation extends StatefulWidget {
@@ -37,9 +36,6 @@ class _ModularNavigationState extends State<ModularNavigation> {
   }
 
   void _showCategoryMenu(BuildContext context, NavigationCategory category) {
-    final themeProvider = context.read<ThemeProvider>();
-    final isDarkMode = themeProvider.isDarkMode;
-
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -47,7 +43,7 @@ class _ModularNavigationState extends State<ModularNavigation> {
       builder: (context) => Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+          color: GamingTheme.surfaceDark,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: SafeArea(
@@ -67,11 +63,7 @@ class _ModularNavigationState extends State<ModularNavigation> {
               // Title
               Text(
                 category.name,
-                style: TextStyle(
-                  color: isDarkMode ? Colors.white : Colors.black87,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: GamingTheme.h2.copyWith(fontSize: 20),
               ),
               const SizedBox(height: 20),
               // Menu items with constrained height
@@ -81,7 +73,7 @@ class _ModularNavigationState extends State<ModularNavigation> {
                     mainAxisSize: MainAxisSize.min,
                     children: category.items
                         .map(
-                          (item) => _buildMenuItem(context, item, isDarkMode),
+                          (item) => _buildMenuItem(context, item),
                         )
                         .toList(),
                   ),
@@ -98,7 +90,6 @@ class _ModularNavigationState extends State<ModularNavigation> {
   Widget _buildMenuItem(
     BuildContext context,
     NavigationItem item,
-    bool isDarkMode,
   ) {
     return Material(
       color: Colors.transparent,
@@ -115,9 +106,7 @@ class _ModularNavigationState extends State<ModularNavigation> {
           margin: const EdgeInsets.only(bottom: 12),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: isDarkMode
-                ? const Color(0xFF334155)
-                : const Color(0xFFF1F5F9),
+            color: GamingTheme.surfaceLight,
             borderRadius: BorderRadius.circular(16),
           ),
           child: Row(
@@ -141,9 +130,7 @@ class _ModularNavigationState extends State<ModularNavigation> {
                   children: [
                     Text(
                       item.name,
-                      style: TextStyle(
-                        color: isDarkMode ? Colors.white : Colors.black87,
-                        fontSize: 16,
+                      style: GamingTheme.bodyLarge.copyWith(
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -152,7 +139,7 @@ class _ModularNavigationState extends State<ModularNavigation> {
               ),
               Icon(
                 Icons.chevron_right,
-                color: isDarkMode ? Colors.grey.shade400 : Colors.grey.shade600,
+                color: GamingTheme.textSecondary,
               ),
             ],
           ),
@@ -166,7 +153,6 @@ class _ModularNavigationState extends State<ModularNavigation> {
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = context.watch<ThemeProvider>();
 
     // Get first item screen from current category
     final currentScreen = _currentCategory.items.isNotEmpty
@@ -205,29 +191,22 @@ class _ModularNavigationState extends State<ModularNavigation> {
         }
       },
       child: Scaffold(
+        backgroundColor: GamingTheme.primaryDark,
         body: currentScreen,
         bottomNavigationBar: Container(
           decoration: BoxDecoration(
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 10,
-                offset: const Offset(0, -2),
-              ),
-            ],
+            boxShadow: GamingTheme.cardShadow,
           ),
           child: BottomNavigationBar(
             currentIndex: _selectedCategoryIndex,
             onTap: _onCategoryTapped,
             type: BottomNavigationBarType.fixed,
-            selectedItemColor: themeProvider.primaryColor,
-            unselectedItemColor: Colors.grey.shade600,
+            selectedItemColor: GamingTheme.primaryAccent,
+            unselectedItemColor: GamingTheme.textSecondary,
             selectedFontSize: 12,
             unselectedFontSize: 12,
             elevation: 8,
-            backgroundColor: themeProvider.isDarkMode
-                ? const Color(0xFF1B263B)
-                : Colors.white,
+            backgroundColor: GamingTheme.surfaceDark,
             items: _categories.map((category) {
               return BottomNavigationBarItem(
                 icon: Icon(category.icon),

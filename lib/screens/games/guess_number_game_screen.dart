@@ -6,6 +6,8 @@ import 'dart:async';
 import '../../utils/game_utils/meme_texts.dart';
 import '../../widgets/game_widgets/firework_effect.dart';
 import '../../providers/game_provider.dart';
+import '../../providers/auth_provider.dart';
+import '../../services/api_service.dart';
 import '../../utils/game_audio_service.dart';
 
 class GuessNumberGameScreen extends StatefulWidget {
@@ -180,9 +182,11 @@ class _GuessNumberGameScreenState extends State<GuessNumberGameScreen>
       }
     });
 
-    // Save score to Hive & check achievements
-    final gameProvider = Provider.of<GameProvider>(context, listen: false);
+    // Calculate score
     final score = _calculateScore();
+    
+    // Save score to Hive (local) & check achievements
+    final gameProvider = Provider.of<GameProvider>(context, listen: false);
     final newAchievements = await gameProvider.saveGameScore(
       gameType: 'guess_number',
       score: score,
@@ -190,6 +194,53 @@ class _GuessNumberGameScreenState extends State<GuessNumberGameScreen>
       difficulty: _difficulty,
       timeSpent: _thinkingTime,
     );
+
+    // Save score to backend if logged in
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    if (authProvider.isLoggedIn && mounted) {
+      try {
+        await ApiService().saveScore(
+          gameType: 'guess_number',
+          score: score,
+          difficulty: _difficulty,
+          attempts: _currentAttempt,
+          timeSpent: _thinkingTime,
+        );
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.cloud_upload, color: Colors.white),
+                  const SizedBox(width: 8),
+                  Text('✅ Điểm đã lưu lên server! ($score điểm)'),
+                ],
+              ),
+              backgroundColor: Colors.green.shade700,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
+      } catch (e) {
+        debugPrint('Failed to save score to backend: $e');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Row(
+                children: [
+                  Icon(Icons.cloud_off, color: Colors.white),
+                  SizedBox(width: 8),
+                  Text('⚠️ Lưu offline - Kết nối lại để đồng bộ'),
+                ],
+              ),
+              backgroundColor: Colors.orange,
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+    }
 
     // Show achievement unlocked dialog if any
     if (newAchievements.isNotEmpty && mounted) {

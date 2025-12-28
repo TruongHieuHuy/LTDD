@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
-import '../providers/theme_provider.dart';
+import '../config/gaming_theme.dart';
 
 /// Admin Dashboard Screen - Chỉ dành cho ADMIN và MODERATOR
 class AdminDashboardScreen extends StatelessWidget {
@@ -10,11 +10,9 @@ class AdminDashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
-    final themeProvider = context.watch<ThemeProvider>();
-    final isDark = themeProvider.isDarkMode;
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0A0E21) : Colors.grey[50],
+      backgroundColor: GamingTheme.primaryDark,
       appBar: AppBar(
         title: Row(
           children: [
@@ -49,35 +47,31 @@ class AdminDashboardScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Welcome Header
-            _buildWelcomeHeader(authProvider, isDark),
+            _buildWelcomeHeader(authProvider),
             const SizedBox(height: 24),
 
             // Statistics Cards
-            _buildStatisticsCards(isDark),
+            _buildStatisticsCards(),
             const SizedBox(height: 24),
 
             // Quick Actions
             Text(
               'Quản lý',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: isDark ? Colors.white : Colors.black87,
-              ),
+              style: GamingTheme.h2,
             ),
             const SizedBox(height: 16),
-            _buildQuickActions(context, isDark),
+            _buildQuickActions(context),
             const SizedBox(height: 24),
 
             // Recent Activity
-            _buildRecentActivity(isDark),
+            _buildRecentActivity(),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildWelcomeHeader(AuthProvider authProvider, bool isDark) {
+  Widget _buildWelcomeHeader(AuthProvider authProvider) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -146,7 +140,7 @@ class AdminDashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStatisticsCards(bool isDark) {
+  Widget _buildStatisticsCards() {
     return Row(
       children: [
         Expanded(
@@ -154,8 +148,7 @@ class AdminDashboardScreen extends StatelessWidget {
             'Tổng User',
             '1,234',
             Icons.people,
-            Colors.blue,
-            isDark,
+            GamingTheme.primaryAccent,
           ),
         ),
         const SizedBox(width: 12),
@@ -164,8 +157,7 @@ class AdminDashboardScreen extends StatelessWidget {
             'Games',
             '4',
             Icons.sports_esports,
-            Colors.green,
-            isDark,
+            GamingTheme.easyGreen,
           ),
         ),
         const SizedBox(width: 12),
@@ -174,8 +166,7 @@ class AdminDashboardScreen extends StatelessWidget {
             'Reports',
             '23',
             Icons.report,
-            Colors.orange,
-            isDark,
+            GamingTheme.mediumOrange,
           ),
         ),
       ],
@@ -187,12 +178,11 @@ class AdminDashboardScreen extends StatelessWidget {
     String value,
     IconData icon,
     Color color,
-    bool isDark,
   ) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1D1E33) : Colors.white,
+        color: GamingTheme.surfaceDark,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: color.withOpacity(0.3), width: 2),
       ),
@@ -202,26 +192,19 @@ class AdminDashboardScreen extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             value,
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: isDark ? Colors.white : Colors.black87,
-            ),
+            style: GamingTheme.h2.copyWith(fontSize: 24),
           ),
           const SizedBox(height: 4),
           Text(
             title,
-            style: TextStyle(
-              fontSize: 12,
-              color: isDark ? Colors.grey[400] : Colors.grey[600],
-            ),
+            style: GamingTheme.bodySmall,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildQuickActions(BuildContext context, bool isDark) {
+  Widget _buildQuickActions(BuildContext context) {
     final actions = [
       {
         'title': 'Quản lý User',
@@ -278,7 +261,6 @@ class AdminDashboardScreen extends StatelessWidget {
           action['icon'] as IconData,
           action['color'] as Color,
           action['onTap'] as VoidCallback,
-          isDark,
         );
       },
     );
@@ -289,14 +271,13 @@ class AdminDashboardScreen extends StatelessWidget {
     IconData icon,
     Color color,
     VoidCallback onTap,
-    bool isDark,
   ) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Container(
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1D1E33) : Colors.white,
+          color: GamingTheme.surfaceDark,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: color.withOpacity(0.3), width: 1.5),
         ),
@@ -308,10 +289,8 @@ class AdminDashboardScreen extends StatelessWidget {
             Text(
               title,
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 12,
+              style: GamingTheme.bodyMedium.copyWith(
                 fontWeight: FontWeight.w600,
-                color: isDark ? Colors.white : Colors.black87,
               ),
             ),
           ],
@@ -320,22 +299,18 @@ class AdminDashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildRecentActivity(bool isDark) {
+  Widget _buildRecentActivity() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Hoạt động gần đây',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: isDark ? Colors.white : Colors.black87,
-          ),
+          style: GamingTheme.h2,
         ),
         const SizedBox(height: 16),
         Container(
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1D1E33) : Colors.white,
+            color: GamingTheme.surfaceDark,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Column(
@@ -344,22 +319,19 @@ class AdminDashboardScreen extends StatelessWidget {
                 'User123 đạt 1000 điểm',
                 '2 phút trước',
                 Icons.star,
-                Colors.amber,
-                isDark,
+                GamingTheme.legendaryGold,
               ),
               _buildActivityItem(
                 'Admin đã thêm game mới',
                 '15 phút trước',
                 Icons.add_circle,
-                Colors.green,
-                isDark,
+                GamingTheme.easyGreen,
               ),
               _buildActivityItem(
                 'Report mới từ User456',
                 '1 giờ trước',
                 Icons.report,
-                Colors.red,
-                isDark,
+                GamingTheme.hardRed,
               ),
             ],
           ),
@@ -373,7 +345,6 @@ class AdminDashboardScreen extends StatelessWidget {
     String time,
     IconData icon,
     Color color,
-    bool isDark,
   ) {
     return ListTile(
       leading: CircleAvatar(
@@ -382,18 +353,13 @@ class AdminDashboardScreen extends StatelessWidget {
       ),
       title: Text(
         title,
-        style: TextStyle(
-          fontSize: 14,
+        style: GamingTheme.bodyMedium.copyWith(
           fontWeight: FontWeight.w600,
-          color: isDark ? Colors.white : Colors.black87,
         ),
       ),
       subtitle: Text(
         time,
-        style: TextStyle(
-          fontSize: 12,
-          color: isDark ? Colors.grey[400] : Colors.grey[600],
-        ),
+        style: GamingTheme.bodySmall,
       ),
     );
   }
