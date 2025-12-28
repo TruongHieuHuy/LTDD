@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../providers/auth_provider.dart';
 import '../services/api_service.dart';
+import '../models/user_profile.dart';
+import '../models/friend_data.dart';
+import '../models/friend_request_data.dart';
 
 /// Màn hình tìm kiếm và kết bạn
 class SearchFriendsScreen extends StatefulWidget {
@@ -35,19 +39,20 @@ class _SearchFriendsScreenState extends State<SearchFriendsScreen> {
 
   Future<void> _loadInitialData() async {
     setState(() => _isInitializing = true);
-
-    // Load sent requests and friends list
-    final requestsResponse = await _apiService.getFriendRequests();
-    final friendsResponse = await _apiService.getFriends();
-
-    if (requestsResponse.success && requestsResponse.data != null) {
-      _sentRequests = requestsResponse.data!;
+    try {
+      // Load sent requests and friends list
+      _sentRequests = await _apiService.getFriendRequests();
+      _friends = await _apiService.getFriends();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Lỗi tải dữ liệu bạn bè: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
-
-    if (friendsResponse.success && friendsResponse.data != null) {
-      _friends = friendsResponse.data!;
-    }
-
     setState(() => _isInitializing = false);
   }
 
@@ -60,38 +65,38 @@ class _SearchFriendsScreenState extends State<SearchFriendsScreen> {
     }
 
     setState(() => _isLoading = true);
-
-    final response = await _apiService.searchUsers(query.trim());
-
-    setState(() {
-      _isLoading = false;
-      if (response.success && response.data != null) {
-        _searchResults = response.data!;
-      } else {
+    try {
+      final results = await _apiService.searchUsers(query.trim());
+      setState(() {
+        _searchResults = results;
+      });
+    } catch (e) {
+      setState(() {
         _searchResults = [];
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(response.message ?? 'Tìm kiếm thất bại'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Tìm kiếm thất bại: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
-    });
+    } finally {
+      setState(() => _isLoading = false);
+    }
   }
 
   Future<void> _sendFriendRequest(
     String receiverId,
     String receiverName,
   ) async {
-    final response = await _apiService.sendFriendRequest(
-      receiverId: receiverId,
-      message: 'Xin chào! Kết bạn nhé!',
-    );
-
-    if (mounted) {
-      if (response.success) {
+    try {
+      await _apiService.sendFriendRequest(
+        receiverId: receiverId,
+        message: 'Xin chào! Kết bạn nhé!',
+      );
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Đã gửi lời mời kết bạn đến $receiverName'),
@@ -103,10 +108,12 @@ class _SearchFriendsScreenState extends State<SearchFriendsScreen> {
         // Clear search and reload
         _searchController.clear();
         setState(() => _searchResults = []);
-      } else {
+      }
+    } catch (e) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(response.message ?? 'Gửi lời mời thất bại'),
+            content: Text('Gửi lời mời thất bại: $e'),
             backgroundColor: Colors.red,
           ),
         );

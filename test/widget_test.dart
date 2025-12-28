@@ -7,23 +7,13 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:minigamecenter/providers/theme_provider.dart';
-import 'package:minigamecenter/providers/auth_provider.dart';
+
 import 'package:minigamecenter/main.dart';
 
 void main() {
   testWidgets('App initialization test', (WidgetTester tester) async {
-    // Initialize providers for testing
-    final themeProvider = ThemeProvider();
-    await themeProvider.initialize();
-
-    final authProvider = AuthProvider();
-    await authProvider.initialize();
-
     // Build our app and trigger a frame.
-    await tester.pumpWidget(
-      SmartStudentApp(themeProvider: themeProvider, authProvider: authProvider),
-    );
+    await tester.pumpWidget(const SmartStudentApp());
 
     // Verify that the app initializes correctly
     expect(find.byType(MaterialApp), findsOneWidget);

@@ -1,0 +1,9 @@
+node_modules/
+dist/
+build/
+.git/
+ios/
+android/
+coverage/
+*.lock
+.DS_Store

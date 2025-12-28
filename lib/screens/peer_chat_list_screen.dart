@@ -5,6 +5,7 @@ import '../providers/auth_provider.dart';
 import '../utils/user_data_service.dart';
 import '../services/api_service.dart';
 import 'peer_chat_screen.dart';
+import '../models/friend_data.dart';
 
 /// Screen showing list of P2P chat conversations
 class PeerChatListScreen extends StatefulWidget {
@@ -37,25 +38,7 @@ class _PeerChatListScreenState extends State<PeerChatListScreen> {
     }
   }
 
-  Future<void> _loadFriends() async {
-    try {
-      final apiService = ApiService();
-      final response = await apiService.getFriends();
-      if (mounted) {
-        setState(() {
-          _friends = response.data ?? [];
-          _isLoadingFriends = false;
-        });
-      }
-    } catch (e) {
-      print('Error loading friends: $e');
-      if (mounted) {
-        setState(() {
-          _isLoadingFriends = false;
-        });
-      }
-    }
-  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -393,6 +376,26 @@ class _PeerChatListScreenState extends State<PeerChatListScreen> {
     );
   }
 
+  Future<void> _loadFriends() async {
+    try {
+      final apiService = ApiService();
+      final friends = await apiService.getFriends();
+      if (mounted) {
+        setState(() {
+          _friends = friends;
+          _isLoadingFriends = false;
+        });
+      }
+    } catch (e) {
+      print('Error loading friends: $e');
+      if (mounted) {
+        setState(() {
+          _isLoadingFriends = false;
+        });
+      }
+    }
+  }
+
   Future<void> _showNewChatDialog(BuildContext context) async {
     final chatProvider = context.read<PeerChatProvider>();
     final currentUserId = chatProvider.currentUserId;
@@ -413,8 +416,7 @@ class _PeerChatListScreenState extends State<PeerChatListScreen> {
 
     // Load friends from API
     try {
-      final response = await ApiService().getFriends();
-      final friends = response.data ?? [];
+      final friends = await ApiService().getFriends();
 
       if (!context.mounted) return;
       Navigator.pop(context); // Close loading
