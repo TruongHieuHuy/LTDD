@@ -1,10 +1,13 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import '../../models/memory_card_model.dart';
 import '../../utils/game_utils/memory_icon_provider.dart';
 import '../../utils/game_utils/memory_game_generator.dart';
 import '../../widgets/game_widgets/memory_card_widget.dart';
+import '../../providers/auth_provider.dart';
+import '../../services/api_service.dart';
 
 /// Memory Match Game Screen
 /// Game lật thẻ ghi nhớ với 3 độ khó
@@ -292,7 +295,7 @@ class _MemoryMatchGameScreenState extends State<MemoryMatchGameScreen> {
     });
   }
 
-  void _onGameWon() {
+  void _onGameWon() async {
     _gameTimer?.cancel();
     final baseScore = _difficulty == 'easy'
         ? 1000
@@ -318,6 +321,22 @@ class _MemoryMatchGameScreenState extends State<MemoryMatchGameScreen> {
           10000,
         );
 
+    // Save to backend if logged in
+    final authProvider = context.read<AuthProvider>();
+    if (authProvider.isLoggedIn) {
+      try {
+        await ApiService().saveScore(
+          gameType: 'memory_match',
+          score: finalScore,
+          difficulty: _difficulty,
+          attempts: _moves,
+          timeSpent: _timeElapsed,
+        );
+      } catch (e) {
+        debugPrint('Failed to save score to backend: $e');
+      }
+    }
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -336,6 +355,18 @@ class _MemoryMatchGameScreenState extends State<MemoryMatchGameScreen> {
             _buildStatRow('📊 Moves', '$_moves'),
             _buildStatRow('⏱️ Thời gian', '${_timeElapsed}s'),
             _buildStatRow('🔥 Streak', '$_maxStreak'),
+            if (authProvider.isLoggedIn)
+              Padding(
+                padding: EdgeInsets.only(top: 8),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.cloud_done, size: 16, color: Colors.green),
+                    SizedBox(width: 4),
+                    Text('Đã lưu lên server', style: TextStyle(fontSize: 12)),
+                  ],
+                ),
+              ),
           ],
         ),
         actions: [

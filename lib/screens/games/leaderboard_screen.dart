@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../utils/game_utils/game_colors.dart';
 import '../../models/game_score_model.dart';
 import '../../providers/game_provider.dart';
+import '../../config/gaming_theme.dart';
 
 class LeaderboardScreen extends StatefulWidget {
   const LeaderboardScreen({super.key});
@@ -13,8 +13,21 @@ class LeaderboardScreen extends StatefulWidget {
 
 class _LeaderboardScreenState extends State<LeaderboardScreen>
     with SingleTickerProviderStateMixin {
-  String _selectedFilter = 'all'; // 'all', 'guess_number', 'cows_bulls'
+  String _selectedFilter = 'all';
   late AnimationController _podiumController;
+
+  // 8 games mapping
+  final Map<String, Map<String, dynamic>> _gameFilters = {
+    'all': {'label': 'Tất cả', 'emoji': '🎮', 'color': GamingTheme.primaryAccent},
+    'guess_number': {'label': 'Đoán Số', 'emoji': '🎲', 'color': GamingTheme.easyGreen},
+    'cows_bulls': {'label': 'Bò & Bê', 'emoji': '🐮', 'color': GamingTheme.mediumOrange},
+    'memory_match': {'label': 'Memory', 'emoji': '🧠', 'color': GamingTheme.hardRed},
+    'quick_math': {'label': 'Quick Math', 'emoji': '⚡', 'color': GamingTheme.expertPurple},
+    'rubik': {'label': 'Rubik', 'emoji': '🎨', 'color': GamingTheme.rareBlue},
+    'sudoku': {'label': 'Sudoku', 'emoji': '🔢', 'color': GamingTheme.epicPurple},
+    'caro': {'label': 'Caro', 'emoji': '⭕', 'color': GamingTheme.easyGreen},
+    'puzzle': {'label': 'Puzzle', 'emoji': '🧩', 'color': GamingTheme.legendaryGold},
+  };
 
   @override
   void initState() {
@@ -45,32 +58,30 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
     final others = _filteredScores.skip(3).take(7).toList();
 
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(gradient: GameColors.darkGradient),
-        child: SafeArea(
-          child: Column(
-            children: [
-              _buildHeader(),
-              _buildFilterChips(),
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    children: [
-                      if (topThree.isNotEmpty) _buildPodium(topThree),
-                      const SizedBox(height: 30),
-                      ...others.asMap().entries.map((entry) {
-                        return _buildLeaderboardItem(
-                          entry.value,
-                          entry.key + 4,
-                        );
-                      }).toList(),
-                    ],
-                  ),
+      backgroundColor: GamingTheme.primaryDark,
+      body: SafeArea(
+        child: Column(
+          children: [
+            _buildHeader(),
+            _buildFilterChips(),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  children: [
+                    if (topThree.isNotEmpty)
+                      _buildPodium(topThree)
+                    else
+                      _buildEmptyState(),
+                    const SizedBox(height: 30),
+                    ...others.asMap().entries.map((entry) {
+                      return _buildLeaderboardItem(entry.value, entry.key + 4);
+                    }).toList(),
+                  ],
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -80,25 +91,19 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: GameColors.darkGray.withOpacity(0.5),
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(30),
-          bottomRight: Radius.circular(30),
-        ),
+        gradient: GamingTheme.gamingGradient,
+        boxShadow: GamingTheme.neonGlow,
       ),
       child: Row(
         children: [
           IconButton(
-            icon: const Icon(Icons.arrow_back, color: GameColors.neonCyan),
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
             onPressed: () => Navigator.pop(context),
           ),
-          const Text(
+          const SizedBox(width: 8),
+          Text(
             '🏆 BẢNG XẾP HẠNG',
-            style: TextStyle(
-              color: GameColors.neonYellow,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
+            style: GamingTheme.h2.copyWith(color: Colors.white),
           ),
         ],
       ),
@@ -106,45 +111,113 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
   }
 
   Widget _buildFilterChips() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          _buildFilterChip('Tất cả', 'all', '🎮'),
-          _buildFilterChip('Đoán Số', 'guess_number', '🎲'),
-          _buildFilterChip('Bò & Bê', 'cows_bulls', '🐮'),
-        ],
+    return Container(
+      height: 100,
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        itemCount: _gameFilters.length,
+        itemBuilder: (context, index) {
+          final key = _gameFilters.keys.elementAt(index);
+          final filter = _gameFilters[key]!;
+          final isSelected = _selectedFilter == key;
+          
+          return Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: _buildFilterChip(
+              filter['label'],
+              key,
+              filter['emoji'],
+              filter['color'],
+            ),
+          );
+        },
       ),
     );
   }
 
-  Widget _buildFilterChip(String label, String value, String emoji) {
+  Widget _buildFilterChip(String label, String value, String emoji, Color color) {
     final isSelected = _selectedFilter == value;
+    
     return GestureDetector(
       onTap: () {
         setState(() {
           _selectedFilter = value;
+          _podiumController.forward(from: 0); // Replay animation
         });
       },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: BoxDecoration(
-          color: isSelected ? GameColors.neonPink : GameColors.darkCharcoal,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isSelected ? GameColors.neonPink : GameColors.textGray,
-            width: 2,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(
+          minWidth: 70,
+          maxWidth: 120,
+        ),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: isSelected ? color.withOpacity(0.2) : GamingTheme.surfaceDark,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isSelected ? color : GamingTheme.border,
+              width: 2,
+            ),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: color.withOpacity(0.3),
+                      blurRadius: 12,
+                    ),
+                  ]
+                : null,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                emoji,
+                style: const TextStyle(fontSize: 20),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: GamingTheme.bodySmall.copyWith(
+                  color: isSelected ? color : GamingTheme.textSecondary,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  fontSize: 11,
+                ),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+                textAlign: TextAlign.center,
+              ),
+            ],
           ),
         ),
-        child: Text(
-          '$emoji $label',
-          style: TextStyle(
-            color: isSelected ? GameColors.textWhite : GameColors.textGray,
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Container(
+      padding: const EdgeInsets.all(40),
+      child: Column(
+        children: [
+          Icon(
+            Icons.emoji_events_outlined,
+            size: 80,
+            color: GamingTheme.textSecondary,
           ),
-        ),
+          const SizedBox(height: 16),
+          Text(
+            'Chưa có dữ liệu',
+            style: GamingTheme.h3.copyWith(color: GamingTheme.textSecondary),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Chơi game để lên bảng xếp hạng!',
+            style: GamingTheme.bodyMedium,
+          ),
+        ],
       ),
     );
   }
@@ -158,15 +231,9 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             if (topThree.length > 1)
-              _buildPodiumPlace(topThree[1], 2, 120, GameColors.textGray, 0.8),
+              _buildPodiumPlace(topThree[1], 2, 120, GamingTheme.commonGray, 0.3),
             if (topThree.isNotEmpty)
-              _buildPodiumPlace(
-                topThree[0],
-                1,
-                150,
-                GameColors.neonYellow,
-                1.0,
-              ),
+              _buildPodiumPlace(topThree[0], 1, 150, GamingTheme.legendaryGold, 0.0),
             if (topThree.length > 2)
               _buildPodiumPlace(topThree[2], 3, 100, Color(0xFFCD7F32), 0.6),
           ],
@@ -185,7 +252,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
     final animation = Tween<double>(begin: 0, end: 1).animate(
       CurvedAnimation(
         parent: _podiumController,
-        curve: Interval(animationDelay * 0.3, 1.0, curve: Curves.elasticOut),
+        curve: Interval(animationDelay, 1.0, curve: Curves.elasticOut),
       ),
     );
 
@@ -210,13 +277,9 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
             ),
             child: CircleAvatar(
               radius: rank == 1 ? 35 : 30,
-              backgroundColor: GameColors.darkGray,
+              backgroundColor: GamingTheme.surfaceDark,
               child: Text(
-                rank == 1
-                    ? '👑'
-                    : rank == 2
-                    ? '🥈'
-                    : '🥉',
+                rank == 1 ? '👑' : rank == 2 ? '🥈' : '🥉',
                 style: const TextStyle(fontSize: 30),
               ),
             ),
@@ -226,7 +289,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
             width: 80,
             child: Text(
               score.playerName,
-              style: TextStyle(
+              style: GamingTheme.bodyMedium.copyWith(
                 color: color,
                 fontSize: rank == 1 ? 14 : 12,
                 fontWeight: FontWeight.bold,
@@ -239,10 +302,9 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
           // Score
           Text(
             '${score.score} pts',
-            style: TextStyle(
-              color: GameColors.textWhite,
+            style: GamingTheme.scoreDisplay.copyWith(
               fontSize: rank == 1 ? 16 : 14,
-              fontWeight: FontWeight.bold,
+              color: Colors.white,
             ),
           ),
           const SizedBox(height: 5),
@@ -263,11 +325,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
             child: Center(
               child: Text(
                 '#$rank',
-                style: const TextStyle(
-                  color: GameColors.textWhite,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: GamingTheme.h2.copyWith(color: Colors.white),
               ),
             ),
           ),
@@ -277,14 +335,17 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
   }
 
   Widget _buildLeaderboardItem(GameScoreModel score, int rank) {
+    final gameInfo = _gameFilters[score.gameType];
+    final gameColor = gameInfo?['color'] ?? GamingTheme.primaryAccent;
+    
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: GameColors.darkGray.withOpacity(0.7),
-        borderRadius: BorderRadius.circular(15),
+        color: GamingTheme.surfaceDark,
+        borderRadius: BorderRadius.circular(GamingTheme.radiusMedium),
         border: Border.all(
-          color: GameColors.neonCyan.withOpacity(0.3),
+          color: GamingTheme.border,
           width: 1,
         ),
       ),
@@ -295,15 +356,15 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: GameColors.darkCharcoal,
+              color: gameColor.withOpacity(0.2),
               shape: BoxShape.circle,
+              border: Border.all(color: gameColor, width: 2),
             ),
             child: Center(
               child: Text(
                 '#$rank',
-                style: const TextStyle(
-                  color: GameColors.neonCyan,
-                  fontSize: 16,
+                style: GamingTheme.bodyMedium.copyWith(
+                  color: gameColor,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -317,9 +378,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
               children: [
                 Text(
                   score.playerName,
-                  style: const TextStyle(
-                    color: GameColors.textWhite,
-                    fontSize: 16,
+                  style: GamingTheme.bodyLarge.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -327,20 +386,16 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
                 Row(
                   children: [
                     Text(
-                      score.gameType == 'guess_number'
-                          ? '🎲 Đoán Số'
-                          : '🐮 Bò Bê',
-                      style: const TextStyle(
-                        color: GameColors.textGray,
-                        fontSize: 12,
+                      '${gameInfo?['emoji'] ?? '🎮'} ${gameInfo?['label'] ?? score.gameType}',
+                      style: GamingTheme.bodySmall.copyWith(
+                        color: GamingTheme.textSecondary,
                       ),
                     ),
                     const SizedBox(width: 10),
                     Text(
                       '${score.attempts} lượt',
-                      style: const TextStyle(
-                        color: GameColors.textGray,
-                        fontSize: 12,
+                      style: GamingTheme.bodySmall.copyWith(
+                        color: GamingTheme.textSecondary,
                       ),
                     ),
                   ],
@@ -351,10 +406,9 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
           // Score
           Text(
             '${score.score}',
-            style: const TextStyle(
-              color: GameColors.neonYellow,
+            style: GamingTheme.scoreDisplay.copyWith(
               fontSize: 20,
-              fontWeight: FontWeight.bold,
+              color: gameColor,
             ),
           ),
         ],

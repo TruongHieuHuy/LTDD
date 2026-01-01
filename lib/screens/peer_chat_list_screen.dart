@@ -6,6 +6,7 @@ import '../utils/user_data_service.dart';
 import '../services/api_service.dart';
 import 'peer_chat_screen.dart';
 import '../models/friend_data.dart';
+import '../config/gaming_theme.dart';
 
 /// Screen showing list of P2P chat conversations
 class PeerChatListScreen extends StatefulWidget {
@@ -45,6 +46,7 @@ class _PeerChatListScreenState extends State<PeerChatListScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
+      backgroundColor: GamingTheme.primaryDark,
       appBar: AppBar(
         backgroundColor:
             theme.appBarTheme.backgroundColor ?? theme.scaffoldBackgroundColor,

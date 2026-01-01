@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/settings_provider.dart';
 import '../providers/theme_provider.dart';
 import '../providers/auth_provider.dart';
+import '../config/gaming_theme.dart';
 
 // Chuyển sang StatefulWidget để quản lý trạng thái các nút bật/tắt
 class SettingsScreen extends StatefulWidget {
@@ -27,14 +28,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Consumer2<SettingsProvider, ThemeProvider>(
       builder: (context, settingsProvider, themeProvider, child) {
         final isDarkMode = themeProvider.isDarkMode;
-        final bgColor = isDarkMode
-            ? const Color(0xFF0D1B2A)
-            : const Color(0xFFF0F2F5);
-        final cardColor = isDarkMode ? const Color(0xFF1B263B) : Colors.white;
-        final textColor = isDarkMode ? Colors.white : Colors.black87;
-        final subtitleColor = isDarkMode
-            ? const Color(0xFF778DA9)
-            : Colors.grey[600];
+        final bgColor = GamingTheme.primaryDark;
+        final cardColor = GamingTheme.surfaceDark;
+        final textColor = GamingTheme.textPrimary;
+        final subtitleColor = GamingTheme.textSecondary;
 
         return Scaffold(
           backgroundColor: bgColor,
@@ -114,14 +111,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     },
                   ),
                   _buildDivider(),
-                  _buildSwitchTile(
-                    icon: Icons.dark_mode_outlined,
-                    title: 'Chế độ tối (Dark Mode)',
-                    value: isDarkMode,
+                  _buildInfoTile(
+                    icon: Icons.dark_mode,
+                    title: 'Chế độ Gaming Hub',
+                    subtitle: 'App sử dụng chế độ tối tối ưu cho game',
                     textColor: textColor,
-                    onChanged: (value) {
-                      themeProvider.toggleTheme();
-                    },
+                    subtitleColor: subtitleColor,
                   ),
                   _buildDivider(),
                   _buildNavTile(
@@ -368,12 +363,40 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
       value: value,
       onChanged: onChanged,
-      activeColor: Colors.green,
+activeColor: Colors.green,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     );
   }
 
-  // 4.5. Volume slider tile
+  // 4.5. Info tile (non-interactive)
+  Widget _buildInfoTile({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color textColor,
+    required Color subtitleColor,
+  }) {
+    return ListTile(
+      leading: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: const Color(0xFF00D9FF).withOpacity(0.1),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(icon, color: const Color(0xFF00D9FF)),
+      ),
+      title: Text(
+        title,
+        style: TextStyle(fontWeight: FontWeight.w500, color: textColor),
+      ),
+      subtitle: Text(
+        subtitle,
+        style: TextStyle(fontSize: 12, color: subtitleColor),
+      ),
+    );
+  }
+
+  // 5. Volume slider tile
   Widget _buildVolumeTile({
     required SettingsProvider settingsProvider,
     required Color textColor,

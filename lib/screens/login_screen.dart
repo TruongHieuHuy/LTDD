@@ -181,7 +181,7 @@ class _LoginScreenState extends State<LoginScreen>
                   'Rubik • Sudoku • Caro • Puzzle',
                   style: TextStyle(
                     fontSize: 16,
-                    color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+                    color: isDarkMode ? Colors.grey[300] : Colors.grey[600], // Changed from grey[400]
                   ),
                 ),
                 const SizedBox(height: 40),
@@ -223,10 +223,23 @@ class _LoginScreenState extends State<LoginScreen>
                         TextFormField(
                           controller: _usernameController,
                           textInputAction: TextInputAction.next,
+                          style: TextStyle(
+                            color: isDarkMode ? Colors.white : Colors.black87,
+                            fontSize: 16,
+                          ),
                           decoration: InputDecoration(
                             labelText: 'Username',
+                            labelStyle: TextStyle(
+                              color: isDarkMode ? Colors.grey[300] : Colors.grey[700],
+                            ),
                             hintText: 'Tên người dùng (3-20 ký tự)',
-                            prefixIcon: const Icon(Icons.person_outline),
+                            hintStyle: TextStyle(
+                              color: isDarkMode ? Colors.grey[500] : Colors.grey[600],
+                            ),
+                            prefixIcon: Icon(
+                              Icons.person_outline,
+                              color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+                            ),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -254,10 +267,23 @@ class _LoginScreenState extends State<LoginScreen>
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
                         textInputAction: TextInputAction.next,
+                        style: TextStyle(
+                          color: isDarkMode ? Colors.white : Colors.black87,
+                          fontSize: 16,
+                        ),
                         decoration: InputDecoration(
                           labelText: 'Email',
+                          labelStyle: TextStyle(
+                            color: isDarkMode ? Colors.grey[300] : Colors.grey[700],
+                          ),
                           hintText: 'example@email.com',
-                          prefixIcon: const Icon(Icons.email_outlined),
+                          hintStyle: TextStyle(
+                            color: isDarkMode ? Colors.grey[500] : Colors.grey[600],
+                          ),
+                          prefixIcon: Icon(
+                            Icons.email_outlined,
+                            color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+                          ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -288,17 +314,31 @@ class _LoginScreenState extends State<LoginScreen>
                             _handleSubmit();
                           }
                         },
+                        style: TextStyle(
+                          color: isDarkMode ? Colors.white : Colors.black87,
+                          fontSize: 16,
+                        ),
                         decoration: InputDecoration(
                           labelText: 'Password',
+                          labelStyle: TextStyle(
+                            color: isDarkMode ? Colors.grey[300] : Colors.grey[700],
+                          ),
                           hintText: _isLoginMode
                               ? 'Nhập mật khẩu'
                               : 'Tối thiểu 6 ký tự',
-                          prefixIcon: const Icon(Icons.lock_outline),
+                          hintStyle: TextStyle(
+                            color: isDarkMode ? Colors.grey[500] : Colors.grey[600],
+                          ),
+                          prefixIcon: Icon(
+                            Icons.lock_outline,
+                            color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+                          ),
                           suffixIcon: IconButton(
                             icon: Icon(
                               _obscurePassword
                                   ? Icons.visibility_off
                                   : Icons.visibility,
+                              color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
                             ),
                             onPressed: () {
                               setState(() {
@@ -333,15 +373,29 @@ class _LoginScreenState extends State<LoginScreen>
                           obscureText: _obscureConfirmPassword,
                           textInputAction: TextInputAction.done,
                           onFieldSubmitted: (_) => _handleSubmit(),
+                          style: TextStyle(
+                            color: isDarkMode ? Colors.white : Colors.black87,
+                            fontSize: 16,
+                          ),
                           decoration: InputDecoration(
                             labelText: 'Xác nhận Password',
+                            labelStyle: TextStyle(
+                              color: isDarkMode ? Colors.grey[300] : Colors.grey[700],
+                            ),
                             hintText: 'Nhập lại mật khẩu',
-                            prefixIcon: const Icon(Icons.lock_outline),
+                            hintStyle: TextStyle(
+                              color: isDarkMode ? Colors.grey[500] : Colors.grey[600],
+                            ),
+                            prefixIcon: Icon(
+                              Icons.lock_outline,
+                              color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+                            ),
                             suffixIcon: IconButton(
                               icon: Icon(
                                 _obscureConfirmPassword
                                     ? Icons.visibility_off
                                     : Icons.visibility,
+                                color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
                               ),
                               onPressed: () {
                                 setState(() {
