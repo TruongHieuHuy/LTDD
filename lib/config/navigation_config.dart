@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/navigation_models.dart';
 import '../screens/home_screen.dart';
-import '../screens/new_home_screen.dart';
 import '../screens/simple_home_screen.dart';
 import '../screens/translate_screen.dart';
 import '../screens/alarm_screen.dart';
@@ -26,107 +25,23 @@ import '../screens/categories_screen.dart';
 class NavigationConfig {
   static List<NavigationCategory> getCategories() {
     return [
-      // Category 1: Tools (Công cụ)
+      // Category 1: Home (Trang chủ)
       NavigationCategory(
-        id: 'tools',
-        name: 'Công cụ',
-        icon: Icons.build_outlined,
+        id: 'home',
+        name: 'Trang chủ',
+        icon: Icons.home,
         items: [
           NavigationItem(
             id: 'home',
             name: 'Trang chủ',
             icon: Icons.home,
-            screen: const SimpleHomeScreen(), // 🎯 Giao diện đơn giản
+            screen: const SimpleHomeScreen(),
             route: '/home',
           ),
-          NavigationItem(
-            id: 'products',
-            name: 'Sản phẩm',
-            icon: Icons.shopping_bag,
-            screen: const ProductsScreen(),
-            enabled: true,
-          ),
-          NavigationItem(
-            id: 'categories',
-            name: 'Danh mục',
-            icon: Icons.category,
-            screen: const CategoriesScreen(),
-            enabled: true,
-          ),
-          NavigationItem(
-            id: 'group',
-            name: 'Nhóm',
-            icon: Icons.group,
-            screen: const GroupScreen(),
-          ),
-          NavigationItem(
-            id: 'translate',
-            name: 'Dịch thuật',
-            icon: Icons.translate,
-            screen: const TranslateScreen(),
-            route: '/translate',
-          ),
-          NavigationItem(
-            id: 'alarm',
-            name: 'Báo thức',
-            icon: Icons.alarm,
-            screen: const AlarmScreen(),
-          ),
-          NavigationItem(
-            id: 'youtube',
-            name: 'Xem video',
-            icon: Icons.play_circle_filled,
-            screen: const YouTubeScreen(),
-            route: '/youtube',
-          ),
-          NavigationItem(
-            id: 'chatbot',
-            name: 'Kajima AI',
-            icon: Icons.smart_toy,
-            screen: const ChatbotScreen(),
-            route: '/chatbot',
-          ),
         ],
       ),
 
-      // Category 2: Entertainment (Giải trí)
-      NavigationCategory(
-        id: 'entertainment',
-        name: 'Giải trí',
-        icon: Icons.sports_esports_outlined,
-        items: [
-          NavigationItem(
-            id: 'games',
-            name: 'Trò chơi',
-            icon: Icons.games,
-            screen: const GamesHub(),
-          ),
-          NavigationItem(
-            id: 'posts',
-            name: '📝 Bài đăng',
-            icon: Icons.article,
-            screen: const PostsScreen(),
-            route: '/posts',
-            enabled: true,
-          ),
-          NavigationItem(
-            id: 'peer_chat',
-            name: 'Chat với bạn bè',
-            icon: Icons.chat_bubble_outline,
-            screen: const PeerChatListScreen(),
-            enabled: true,
-          ),
-          NavigationItem(
-            id: 'social_test',
-            name: '🌐 Social Features',
-            icon: Icons.people,
-            screen: const SocialTestScreen(),
-            enabled: true,
-          ),
-        ],
-      ),
-
-      // Category 3: Profile (Hồ sơ)
+      // Category 2: Profile (Hồ sơ)
       NavigationCategory(
         id: 'profile',
         name: 'Hồ sơ',
@@ -138,21 +53,6 @@ class NavigationConfig {
             icon: Icons.account_circle,
             screen: const ProfileScreen(),
             route: '/profile',
-          ),
-        ],
-      ),
-
-      // Category 4: Settings (Cài đặt)
-      NavigationCategory(
-        id: 'settings',
-        name: 'Cài đặt',
-        icon: Icons.settings_outlined,
-        items: [
-          NavigationItem(
-            id: 'settings',
-            name: 'Cài đặt',
-            icon: Icons.settings,
-            screen: const SettingsScreen(),
           ),
         ],
       ),

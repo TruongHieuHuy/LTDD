@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
-import '../providers/theme_provider.dart';
+import '../config/gaming_theme.dart';
+import '../widgets/gaming/gaming_button.dart';
+import '../widgets/gaming/gaming_text_field.dart';
+import '../widgets/gaming/gaming_dialog.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -102,24 +105,20 @@ class _LoginScreenState extends State<LoginScreen>
           ).pushNamedAndRemoveUntil('/modular', (route) => false);
         }
       } else if (mounted) {
-        // Show error
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(result.message),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-          ),
+        // Show error using gaming dialog
+        await GamingDialog.showError(
+          context,
+          title: 'Error',
+          message: result.message,
         );
       }
     } catch (e) {
       setState(() => _isLoading = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: ${e.toString()}'),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-          ),
+        await GamingDialog.showError(
+          context,
+          title: 'Error',
+          message: e.toString(),
         );
       }
     }
@@ -127,15 +126,12 @@ class _LoginScreenState extends State<LoginScreen>
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = context.watch<ThemeProvider>();
-    final isDarkMode = themeProvider.isDarkMode;
-
     return Scaffold(
-      backgroundColor: isDarkMode ? const Color(0xFF0D1B2A) : Colors.white,
+      backgroundColor: GamingTheme.primaryDark,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
+            padding: const EdgeInsets.all(GamingTheme.l),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -144,74 +140,55 @@ class _LoginScreenState extends State<LoginScreen>
                   width: 120,
                   height: 120,
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        themeProvider.primaryColor,
-                        themeProvider.primaryColor.withValues(alpha: 0.6),
-                      ],
-                    ),
+                    gradient: GamingTheme.gamingGradient,
                     borderRadius: BorderRadius.circular(30),
-                    boxShadow: [
-                      BoxShadow(
-                        color: themeProvider.primaryColor.withValues(
-                          alpha: 0.3,
-                        ),
-                        blurRadius: 20,
-                        spreadRadius: 2,
-                      ),
-                    ],
+                    boxShadow: GamingTheme.neonGlow,
                   ),
                   child: const Icon(Icons.games, size: 64, color: Colors.white),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: GamingTheme.xl),
 
                 // Title
                 Text(
-                  'Game Mobile',
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: isDarkMode ? Colors.white : Colors.black87,
-                  ),
+                  'GAMING HUB',
+                  style: GamingTheme.h1,
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: GamingTheme.xs),
                 Text(
-                  'Rubik • Sudoku • Caro • Puzzle',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: isDarkMode ? Colors.grey[300] : Colors.grey[600], // Changed from grey[400]
+                  'Play • Compete • Conquer',
+                  style: GamingTheme.bodyMedium.copyWith(
+                    color: GamingTheme.primaryAccent,
+                    letterSpacing: 2,
                   ),
                 ),
-                const SizedBox(height: 40),
+                const SizedBox(height: GamingTheme.xl),
 
-                // Tab Bar
+                // Tab Bar with Gaming Style
                 Container(
                   decoration: BoxDecoration(
-                    color: isDarkMode
-                        ? const Color(0xFF1B263B)
-                        : Colors.grey[200],
-                    borderRadius: BorderRadius.circular(12),
+                    color: GamingTheme.surfaceDark,
+                    borderRadius: BorderRadius.circular(GamingTheme.radiusMedium),
+                    border: Border.all(color: GamingTheme.border),
                   ),
                   child: TabBar(
                     controller: _tabController,
                     indicator: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      color: themeProvider.primaryColor,
+                      borderRadius: BorderRadius.circular(GamingTheme.radiusMedium),
+                      gradient: GamingTheme.primaryGradient,
                     ),
                     labelColor: Colors.white,
-                    unselectedLabelColor: isDarkMode
-                        ? Colors.grey[400]
-                        : Colors.grey[700],
+                    labelStyle: GamingTheme.bodyLarge.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                    unselectedLabelColor: GamingTheme.textSecondary,
                     dividerColor: Colors.transparent,
                     tabs: const [
-                      Tab(text: 'Đăng nhập'),
-                      Tab(text: 'Đăng ký'),
+                      Tab(text: 'ĐĂNG NHẬP'),
+                      Tab(text: 'ĐĂNG KÝ'),
                     ],
                   ),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: GamingTheme.xl),
 
                 // Form
                 Form(
@@ -220,34 +197,12 @@ class _LoginScreenState extends State<LoginScreen>
                     children: [
                       // Username field (Register only)
                       if (!_isLoginMode) ...[
-                        TextFormField(
+                        GamingTextField(
                           controller: _usernameController,
-                          textInputAction: TextInputAction.next,
-                          style: TextStyle(
-                            color: isDarkMode ? Colors.white : Colors.black87,
-                            fontSize: 16,
-                          ),
-                          decoration: InputDecoration(
-                            labelText: 'Username',
-                            labelStyle: TextStyle(
-                              color: isDarkMode ? Colors.grey[300] : Colors.grey[700],
-                            ),
-                            hintText: 'Tên người dùng (3-20 ký tự)',
-                            hintStyle: TextStyle(
-                              color: isDarkMode ? Colors.grey[500] : Colors.grey[600],
-                            ),
-                            prefixIcon: Icon(
-                              Icons.person_outline,
-                              color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
-                            ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            filled: true,
-                            fillColor: isDarkMode
-                                ? const Color(0xFF1B263B)
-                                : Colors.grey[100],
-                          ),
+                          hintText: 'Tên người dùng (3-20 ký tự)',
+                          labelText: 'Username',
+                          prefixIcon: Icons.person_outline,
+                          keyboardType: TextInputType.text,
                           validator: (value) {
                             if (value == null || value.trim().isEmpty) {
                               return 'Vui lòng nhập username';
@@ -259,39 +214,16 @@ class _LoginScreenState extends State<LoginScreen>
                             return null;
                           },
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: GamingTheme.m),
                       ],
 
                       // Email Field
-                      TextFormField(
+                      GamingTextField(
                         controller: _emailController,
+                        hintText: 'example@email.com',
+                        labelText: 'Email',
+                        prefixIcon: Icons.email_outlined,
                         keyboardType: TextInputType.emailAddress,
-                        textInputAction: TextInputAction.next,
-                        style: TextStyle(
-                          color: isDarkMode ? Colors.white : Colors.black87,
-                          fontSize: 16,
-                        ),
-                        decoration: InputDecoration(
-                          labelText: 'Email',
-                          labelStyle: TextStyle(
-                            color: isDarkMode ? Colors.grey[300] : Colors.grey[700],
-                          ),
-                          hintText: 'example@email.com',
-                          hintStyle: TextStyle(
-                            color: isDarkMode ? Colors.grey[500] : Colors.grey[600],
-                          ),
-                          prefixIcon: Icon(
-                            Icons.email_outlined,
-                            color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          filled: true,
-                          fillColor: isDarkMode
-                              ? const Color(0xFF1B263B)
-                              : Colors.grey[100],
-                        ),
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
                             return 'Vui lòng nhập email';
@@ -303,57 +235,25 @@ class _LoginScreenState extends State<LoginScreen>
                           return null;
                         },
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: GamingTheme.m),
 
                       // Password Field
-                      TextFormField(
+                      GamingTextField(
                         controller: _passwordController,
+                        hintText: _isLoginMode
+                            ? 'Nhập mật khẩu'
+                            : 'Tối thiểu 6 ký tự',
+                        labelText: 'Password',
+                        prefixIcon: Icons.lock_outline,
                         obscureText: _obscurePassword,
-                        onFieldSubmitted: (_) {
-                          if (_isLoginMode) {
-                            _handleSubmit();
-                          }
+                        suffixIcon: _obscurePassword
+                            ? Icons.visibility_off
+                            : Icons.visibility,
+                        onSuffixIconTap: () {
+                          setState(() {
+                            _obscurePassword = !_obscurePassword;
+                          });
                         },
-                        style: TextStyle(
-                          color: isDarkMode ? Colors.white : Colors.black87,
-                          fontSize: 16,
-                        ),
-                        decoration: InputDecoration(
-                          labelText: 'Password',
-                          labelStyle: TextStyle(
-                            color: isDarkMode ? Colors.grey[300] : Colors.grey[700],
-                          ),
-                          hintText: _isLoginMode
-                              ? 'Nhập mật khẩu'
-                              : 'Tối thiểu 6 ký tự',
-                          hintStyle: TextStyle(
-                            color: isDarkMode ? Colors.grey[500] : Colors.grey[600],
-                          ),
-                          prefixIcon: Icon(
-                            Icons.lock_outline,
-                            color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
-                          ),
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              _obscurePassword
-                                  ? Icons.visibility_off
-                                  : Icons.visibility,
-                              color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
-                            ),
-                            onPressed: () {
-                              setState(() {
-                                _obscurePassword = !_obscurePassword;
-                              });
-                            },
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          filled: true,
-                          fillColor: isDarkMode
-                              ? const Color(0xFF1B263B)
-                              : Colors.grey[100],
-                        ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return 'Vui lòng nhập password';
@@ -364,54 +264,24 @@ class _LoginScreenState extends State<LoginScreen>
                           return null;
                         },
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: GamingTheme.m),
 
                       // Confirm Password Field (Register only)
                       if (!_isLoginMode) ...[
-                        TextFormField(
+                        GamingTextField(
                           controller: _confirmPasswordController,
+                          hintText: 'Nhập lại mật khẩu',
+                          labelText: 'Xác nhận Password',
+                          prefixIcon: Icons.lock_outline,
                           obscureText: _obscureConfirmPassword,
-                          textInputAction: TextInputAction.done,
-                          onFieldSubmitted: (_) => _handleSubmit(),
-                          style: TextStyle(
-                            color: isDarkMode ? Colors.white : Colors.black87,
-                            fontSize: 16,
-                          ),
-                          decoration: InputDecoration(
-                            labelText: 'Xác nhận Password',
-                            labelStyle: TextStyle(
-                              color: isDarkMode ? Colors.grey[300] : Colors.grey[700],
-                            ),
-                            hintText: 'Nhập lại mật khẩu',
-                            hintStyle: TextStyle(
-                              color: isDarkMode ? Colors.grey[500] : Colors.grey[600],
-                            ),
-                            prefixIcon: Icon(
-                              Icons.lock_outline,
-                              color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
-                            ),
-                            suffixIcon: IconButton(
-                              icon: Icon(
-                                _obscureConfirmPassword
-                                    ? Icons.visibility_off
-                                    : Icons.visibility,
-                                color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
-                              ),
-                              onPressed: () {
-                                setState(() {
-                                  _obscureConfirmPassword =
-                                      !_obscureConfirmPassword;
-                                });
-                              },
-                            ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            filled: true,
-                            fillColor: isDarkMode
-                                ? const Color(0xFF1B263B)
-                                : Colors.grey[100],
-                          ),
+                          suffixIcon: _obscureConfirmPassword
+                              ? Icons.visibility_off
+                              : Icons.visibility,
+                          onSuffixIconTap: () {
+                            setState(() {
+                              _obscureConfirmPassword = !_obscureConfirmPassword;
+                            });
+                          },
                           validator: (value) {
                             if (value == null || value.isEmpty) {
                               return 'Vui lòng xác nhận password';
@@ -422,10 +292,10 @@ class _LoginScreenState extends State<LoginScreen>
                             return null;
                           },
                         ),
+                        const SizedBox(height: GamingTheme.m),
                       ],
-                      const SizedBox(height: 16),
 
-                      // Remember Me (Login only)
+                      // Remember Me & Forgot Password (Login only)
                       if (_isLoginMode)
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -439,15 +309,12 @@ class _LoginScreenState extends State<LoginScreen>
                                       _rememberMe = value ?? false;
                                     });
                                   },
-                                  activeColor: themeProvider.primaryColor,
+                                  activeColor: GamingTheme.primaryAccent,
+                                  checkColor: GamingTheme.primaryDark,
                                 ),
                                 Text(
                                   'Ghi nhớ',
-                                  style: TextStyle(
-                                    color: isDarkMode
-                                        ? Colors.grey[400]
-                                        : Colors.grey[700],
-                                  ),
+                                  style: GamingTheme.bodyMedium,
                                 ),
                               ],
                             ),
@@ -460,82 +327,52 @@ class _LoginScreenState extends State<LoginScreen>
                               },
                               child: Text(
                                 'Quên mật khẩu?',
-                                style: TextStyle(
-                                  color: themeProvider.primaryColor,
-                                  fontWeight: FontWeight.w500,
+                                style: GamingTheme.bodyMedium.copyWith(
+                                  color: GamingTheme.primaryAccent,
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
                             ),
                           ],
                         ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: GamingTheme.l),
 
                       // Submit Button
-                      SizedBox(
+                      GamingButton(
+                        text: _isLoginMode ? 'ĐĂNG NHẬP' : 'ĐĂNG KÝ',
+                        style: GamingButtonStyle.primary,
+                        onPressed: _isLoading ? null : _handleSubmit,
+                        isLoading: _isLoading,
                         width: double.infinity,
-                        height: 54,
-                        child: ElevatedButton(
-                          onPressed: _isLoading ? null : _handleSubmit,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: themeProvider.primaryColor,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            elevation: 4,
-                          ),
-                          child: _isLoading
-                              ? const SizedBox(
-                                  width: 24,
-                                  height: 24,
-                                  child: CircularProgressIndicator(
-                                    color: Colors.white,
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : Text(
-                                  _isLoginMode ? 'Đăng nhập' : 'Đăng ký',
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                        ),
+                        icon: _isLoginMode ? Icons.login : Icons.app_registration,
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: GamingTheme.l),
 
-                      // Info Text
+                      // Info Box
                       Container(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(GamingTheme.m),
                         decoration: BoxDecoration(
-                          color: themeProvider.primaryColor.withValues(
-                            alpha: 0.1,
-                          ),
-                          borderRadius: BorderRadius.circular(12),
+                          color: GamingTheme.primaryAccent.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(GamingTheme.radiusMedium),
                           border: Border.all(
-                            color: themeProvider.primaryColor.withValues(
-                              alpha: 0.3,
-                            ),
+                            color: GamingTheme.primaryAccent.withOpacity(0.3),
                           ),
                         ),
                         child: Row(
                           children: [
                             Icon(
                               Icons.info_outline,
-                              color: themeProvider.primaryColor,
+                              color: GamingTheme.primaryAccent,
                               size: 20,
                             ),
-                            const SizedBox(width: 12),
+                            const SizedBox(width: GamingTheme.s),
                             Expanded(
                               child: Text(
                                 _isLoginMode
-                                    ? 'Kết nối với Backend API tại localhost:3000'
-                                    : 'Tạo tài khoản mới để bắt đầu chơi game',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: isDarkMode
-                                      ? Colors.grey[300]
-                                      : Colors.grey[800],
+                                    ? 'Backend API: localhost:3000'
+                                    : 'Tạo tài khoản để chinh phục các thử thách',
+                                style: GamingTheme.bodySmall.copyWith(
+                                  color: GamingTheme.textSecondary,
                                 ),
                               ),
                             ),

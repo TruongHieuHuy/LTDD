@@ -65,12 +65,13 @@ class AuthProvider with ChangeNotifier {
         _currentAuth = savedAuth;
         _apiService.setAuthToken(savedAuth.sessionToken);
         await _refreshUserProfile();
-      } else {
-        await logout(); // Clear any expired or invalid session
+      } else if (savedAuth != null) {
+        // Session expired - clear auth but keep saved email for "remember me"
+        await _clearSession();
       }
     } catch (e) {
       debugPrint('Error loading auth: $e');
-      await logout();
+      await _clearSession();
     }
     notifyListeners();
   }
@@ -110,9 +111,9 @@ class AuthProvider with ChangeNotifier {
       notifyListeners();
     } on ApiException catch (e) {
       debugPrint('Error refreshing user profile: ${e.message}');
-      // If token is invalid (e.g., 401), log the user out
+      // If token is invalid (e.g., 401), clear session but keep saved email
       if (e.statusCode == 401) {
-        await logout();
+        await _clearSession();
       }
     } catch (e) {
       debugPrint('Unhandled error refreshing user profile: $e');
@@ -228,13 +229,35 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  /// Logout and clear session
-  Future<void> logout() async {
+  /// Clear session without removing saved credentials (for expired sessions)
+  Future<void> _clearSession() async {
     try {
       _currentAuth = null;
       _userProfile = null;
       await _box.delete(_authKey);
       await _box.delete(_userProfileKey);
+      _apiService.clearAuthToken();
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Clear session error: $e');
+    }
+  }
+
+  /// Logout and clear session
+  /// Set clearSavedCredentials to true when user manually logs out
+  Future<void> logout({bool clearSavedCredentials = true}) async {
+    try {
+      _currentAuth = null;
+      _userProfile = null;
+      await _box.delete(_authKey);
+      await _box.delete(_userProfileKey);
+      
+      // Only clear saved email if user explicitly logs out
+      if (clearSavedCredentials) {
+        _savedEmail = null;
+        await _box.delete(_savedEmailKey);
+      }
+      
       _apiService.clearAuthToken();
       notifyListeners();
     } catch (e) {
@@ -252,7 +275,7 @@ class AuthProvider with ChangeNotifier {
       await _refreshUserProfile();
       return true;
     } else {
-      await logout();
+      await _clearSession();
       return false;
     }
   }

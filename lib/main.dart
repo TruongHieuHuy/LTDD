@@ -8,7 +8,6 @@ import 'screens/modular_navigation_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/forgot_password_screen.dart';
 import 'screens/achievements_screen.dart';
-import 'screens/new_home_screen.dart';
 import 'screens/simple_home_screen.dart';
 import 'screens/admin_dashboard_screen.dart';
 import 'screens/games/guess_number_game_screen.dart';
@@ -21,6 +20,7 @@ import 'screens/chatbot_screen.dart';
 import 'screens/posts_screen.dart';
 import 'screens/search_friends_screen.dart';
 import 'screens/friend_requests_screen.dart';
+import 'screens/peer_chat_list_screen.dart';
 import 'screens/user_profile_screen.dart';
 import 'screens/saved_posts_screen.dart';
 import 'screens/create_post_screen.dart';
@@ -131,6 +131,7 @@ class SmartStudentApp extends StatelessWidget {
               '/search-friends': (context) => const SearchFriendsScreen(),
               '/friend-requests': (context) => const FriendRequestsScreen(),
               '/posts': (context) => const PostsScreen(), // Posts feed
+              '/peer-chat': (context) => const PeerChatListScreen(),
               '/saved-posts': (context) => const SavedPostsScreen(),
             },
             onGenerateRoute: (settings) {
