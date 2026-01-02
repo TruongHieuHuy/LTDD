@@ -133,7 +133,7 @@ class SimpleHomeScreen extends StatelessWidget {
                   children: [
                     Icon(Icons.dashboard, color: GamingTheme.secondaryAccent, size: 24),
                     const SizedBox(width: 8),
-                    Text('UTILITIES', style: GamingTheme.h2),
+                    Text('TIỆN ÍCH', style: GamingTheme.h2),
                   ],
                 ),
               ),
@@ -149,17 +149,26 @@ class SimpleHomeScreen extends StatelessWidget {
                   _buildUtilityCard(
                     context,
                     icon: Icons.leaderboard,
-                    title: 'Leaderboard',
-                    subtitle: 'Top players ranking',
+                    title: 'Bảng xếp hạng',
+                    subtitle: 'Xếp hạng người chơi hàng đầu',
                     color: GamingTheme.legendaryGold,
                     route: '/leaderboard',
                   ),
                   const SizedBox(height: 12),
                   _buildUtilityCard(
                     context,
+                    icon: Icons.emoji_events,
+                    title: 'Thành tích',
+                    subtitle: 'Xem thành tích của bạn',
+                    color: GamingTheme.epicPurple,
+                    route: '/achievements',
+                  ),
+                  const SizedBox(height: 12),
+                  _buildUtilityCard(
+                    context,
                     icon: Icons.chat_bubble_outline,
-                    title: 'AI Chatbot',
-                    subtitle: 'Chat with Gemini',
+                    title: 'Chatbot AI',
+                    subtitle: 'Trò chuyện với Gemini',
                     color: GamingTheme.primaryAccent,
                     route: '/chatbot',
                   ),
@@ -167,61 +176,53 @@ class SimpleHomeScreen extends StatelessWidget {
                   _buildUtilityCard(
                     context,
                     icon: Icons.forum,
-                    title: 'Forum',
-                    subtitle: 'Community posts',
+                    title: 'Diễn đàn',
+                    subtitle: 'Bài đăng cộng đồng',
                     color: GamingTheme.secondaryAccent,
                     route: '/posts',
                   ),
                   const SizedBox(height: 12),
-                  GestureDetector(
-                    onTap: () {
-                      // Navigate to modular screen with chat tab selected
-                      Navigator.pushNamed(context, '/modular').then((_) {
-                        // After navigation, we need modular screen to handle tab selection
-                        // This will be handled by modular_navigation_screen accepting arguments
-                      });
-                    },
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: GamingTheme.surfaceDark,
+                  Container(
+                    decoration: BoxDecoration(
+                      color: GamingTheme.surfaceDark,
+                      borderRadius: BorderRadius.circular(GamingTheme.radiusMedium),
+                      border: Border.all(color: GamingTheme.border),
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () {
+                          // Navigate directly to chat screen
+                          Navigator.pushNamed(context, '/peer-chat');
+                        },
                         borderRadius: BorderRadius.circular(GamingTheme.radiusMedium),
-                        border: Border.all(color: GamingTheme.border),
-                      ),
-                      child: Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          onTap: () {
-                            Navigator.pushNamed(context, '/modular');
-                          },
-                          borderRadius: BorderRadius.circular(GamingTheme.radiusMedium),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 48,
-                                  height: 48,
-                                  decoration: BoxDecoration(
-                                    color: GamingTheme.tertiaryAccent.withOpacity(0.2),
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(color: GamingTheme.tertiaryAccent, width: 1.5),
-                                  ),
-                                  child: Icon(Icons.chat, color: GamingTheme.tertiaryAccent, size: 24),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 48,
+                                height: 48,
+                                decoration: BoxDecoration(
+                                  color: GamingTheme.tertiaryAccent.withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: GamingTheme.tertiaryAccent, width: 1.5),
                                 ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text('Chat', style: GamingTheme.h3.copyWith(fontSize: 16)),
-                                      const SizedBox(height: 2),
-                                      Text('Message friends', style: GamingTheme.bodyMedium),
-                                    ],
-                                  ),
+                                child: Icon(Icons.chat, color: GamingTheme.tertiaryAccent, size: 24),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text('Trò chuyện', style: GamingTheme.h3.copyWith(fontSize: 16)),
+                                    const SizedBox(height: 2),
+                                    Text('Nhắn tin với bạn bè', style: GamingTheme.bodyMedium),
+                                  ],
                                 ),
-                                Icon(Icons.arrow_forward_ios, size: 16, color: GamingTheme.textSecondary),
-                              ],
-                            ),
+                              ),
+                              Icon(Icons.arrow_forward_ios, size: 16, color: GamingTheme.textSecondary),
+                            ],
                           ),
                         ),
                       ),
@@ -322,7 +323,7 @@ class SimpleHomeScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'WELCOME BACK',
+                  'CHÀO MỪNG TRỞ LẠI',
                   style: GamingTheme.bodySmall.copyWith(
                     color: Colors.white70,
                     letterSpacing: 1.5,

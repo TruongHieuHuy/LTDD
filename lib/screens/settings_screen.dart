@@ -4,8 +4,10 @@ import '../providers/settings_provider.dart';
 import '../providers/theme_provider.dart';
 import '../providers/auth_provider.dart';
 import '../config/gaming_theme.dart';
+import '../widgets/gaming/gaming_app_bar.dart';
+import '../widgets/gaming/gaming_card.dart';
+import '../widgets/gaming/gaming_dialog.dart';
 
-// Chuyển sang StatefulWidget để quản lý trạng thái các nút bật/tắt
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
@@ -25,147 +27,110 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer2<SettingsProvider, ThemeProvider>(
-      builder: (context, settingsProvider, themeProvider, child) {
-        final isDarkMode = themeProvider.isDarkMode;
-        final bgColor = GamingTheme.primaryDark;
-        final cardColor = GamingTheme.surfaceDark;
-        final textColor = GamingTheme.textPrimary;
-        final subtitleColor = GamingTheme.textSecondary;
-
+    return Consumer<SettingsProvider>(
+      builder: (context, settingsProvider, child) {
         return Scaffold(
-          backgroundColor: bgColor,
-          appBar: AppBar(
-            title: Text(
-              'Cài đặt',
-              style: TextStyle(color: textColor, fontWeight: FontWeight.w600),
-            ),
+          backgroundColor: GamingTheme.primaryDark,
+          appBar: const GamingAppBar(
+            title: 'CÀI ĐẶT',
             centerTitle: true,
-            backgroundColor: bgColor,
-            elevation: 0,
-            leading: IconButton(
-              icon: Icon(Icons.arrow_back_ios_new, color: textColor),
-              onPressed: () {
-                // Quay về màn hình trước đó hoặc về ModularNavigation nếu không có
-                if (Navigator.canPop(context)) {
-                  Navigator.pop(context);
-                } else {
-                  Navigator.pushReplacementNamed(context, '/modular');
-                }
-              },
-            ),
           ),
           body: ListView(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.all(GamingTheme.m),
             children: [
               // --- Nhóm 1: Tài khoản ---
-              _buildSectionTitle('Tài khoản & Bảo mật', subtitleColor!),
-              _buildSettingsContainer(
-                cardColor: cardColor,
-                children: [
-                  _buildNavTile(
-                    icon: Icons.person_outline,
-                    title: 'Thông tin cá nhân',
-                    subtitle: 'Chỉnh sửa hồ sơ, email',
-                    textColor: textColor,
-                    subtitleColor: subtitleColor,
-                    onTap: () {
-                      // Điều hướng đến trang thông tin
-                    },
-                  ),
-                  _buildDivider(),
-                  _buildSwitchTile(
-                    icon: Icons.fingerprint,
-                    title: 'Đăng nhập vân tay/FaceID',
-                    value: false, // TODO: Implement biometric
-                    textColor: textColor,
-                    onChanged: (value) {
-                      // TODO: Save biometric preference
-                    },
-                  ),
-                  _buildDivider(),
-                  _buildNavTile(
-                    icon: Icons.lock_outline,
-                    title: 'Đổi mật khẩu',
-                    textColor: textColor,
-                    subtitleColor: subtitleColor,
-                    onTap: () {},
-                  ),
-                ],
+              _buildSectionTitle('TÀI KHOẢN & BẢO MẬT'),
+              GamingCard(
+                hasBorder: true,
+                child: Column(
+                  children: [
+                    _buildNavTile(
+                      icon: Icons.person_outline,
+                      title: 'Thông tin cá nhân',
+                      subtitle: 'Chỉnh sửa hồ sơ, email',
+                      onTap: () {},
+                    ),
+                    _buildDivider(),
+                    _buildSwitchTile(
+                      icon: Icons.fingerprint,
+                      title: 'Đăng nhập vân tay/FaceID',
+                      value: false,
+                      onChanged: (value) {},
+                    ),
+                    _buildDivider(),
+                    _buildNavTile(
+                      icon: Icons.lock_outline,
+                      title: 'Đổi mật khẩu',
+                      onTap: () {},
+                    ),
+                  ],
+                ),
               ),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: GamingTheme.l),
 
               // --- Nhóm 2: Ứng dụng ---
-              _buildSectionTitle('Cài đặt chung', subtitleColor),
-              _buildSettingsContainer(
-                cardColor: cardColor,
-                children: [
-                  _buildSwitchTile(
-                    icon: Icons.notifications_none_outlined,
-                    title: 'Thông báo đẩy',
-                    value: settingsProvider.settings.notificationsEnabled,
-                    textColor: textColor,
-                    onChanged: (value) {
-                      settingsProvider.updateNotifications(value);
-                    },
-                  ),
-                  _buildDivider(),
-                  _buildInfoTile(
-                    icon: Icons.dark_mode,
-                    title: 'Chế độ Gaming Hub',
-                    subtitle: 'App sử dụng chế độ tối tối ưu cho game',
-                    textColor: textColor,
-                    subtitleColor: subtitleColor,
-                  ),
-                  _buildDivider(),
-                  _buildNavTile(
-                    icon: Icons.language_outlined,
-                    title: 'Ngôn ngữ',
-                    trailingText: _getLanguageName(
-                      settingsProvider.settings.selectedLanguage,
+              _buildSectionTitle('CÀI ĐẶT CHUNG'),
+              GamingCard(
+                hasBorder: true,
+                child: Column(
+                  children: [
+                    _buildSwitchTile(
+                      icon: Icons.notifications_none_outlined,
+                      title: 'Thông báo đẩy',
+                      value: settingsProvider.settings.notificationsEnabled,
+                      onChanged: (value) {
+                        settingsProvider.updateNotifications(value);
+                      },
                     ),
-                    textColor: textColor,
-                    subtitleColor: subtitleColor,
-                    onTap: () => _showLanguagePicker(context, settingsProvider),
-                  ),
-                  _buildDivider(),
-                  _buildVolumeTile(
-                    settingsProvider: settingsProvider,
-                    textColor: textColor,
-                  ),
-                ],
+                    _buildDivider(),
+                    _buildInfoTile(
+                      icon: Icons.dark_mode,
+                      title: 'Chế độ Gaming Hub',
+                      subtitle: 'App sử dụng chế độ tối tối ưu cho game',
+                    ),
+                    _buildDivider(),
+                    _buildNavTile(
+                      icon: Icons.language_outlined,
+                      title: 'Ngôn ngữ',
+                      trailingText: _getLanguageName(
+                        settingsProvider.settings.selectedLanguage,
+                      ),
+                      onTap: () => _showLanguagePicker(context, settingsProvider),
+                    ),
+                    _buildDivider(),
+                    _buildVolumeTile(settingsProvider: settingsProvider),
+                  ],
+                ),
               ),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: GamingTheme.l),
 
               // --- Nhóm 3: Khác ---
-              _buildSectionTitle('Thông tin & Hỗ trợ', subtitleColor),
-              _buildSettingsContainer(
-                cardColor: cardColor,
-                children: [
-                  _buildNavTile(
-                    icon: Icons.help_outline,
-                    title: 'Trợ giúp & Phản hồi',
-                    textColor: textColor,
-                    subtitleColor: subtitleColor,
-                    onTap: () {},
-                  ),
-                  _buildDivider(),
-                  _buildNavTile(
-                    icon: Icons.info_outline,
-                    title: 'Về ứng dụng',
-                    trailingText: 'v1.0.2',
-                    textColor: textColor,
-                    subtitleColor: subtitleColor,
-                    onTap: () {},
-                  ),
-                ],
+              _buildSectionTitle('THÔNG TIN & HỖ TRỢ'),
+              GamingCard(
+                hasBorder: true,
+                child: Column(
+                  children: [
+                    _buildNavTile(
+                      icon: Icons.help_outline,
+                      title: 'Trợ giúp & Phản hồi',
+                      onTap: () {},
+                    ),
+                    _buildDivider(),
+                    _buildNavTile(
+                      icon: Icons.info_outline,
+                      title: 'Về ứng dụng',
+                      trailingText: 'v1.0.2',
+                      onTap: () {},
+                    ),
+                  ],
+                ),
               ),
 
-              const SizedBox(height: 32),
-              // Nút đăng xuất tách biệt
-              _buildLogOutButton(cardColor),
+              const SizedBox(height: GamingTheme.xl),
+              // Nút đăng xuất
+              _buildLogOutButton(),
             ],
           ),
         );
@@ -185,20 +150,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   void _showLanguagePicker(BuildContext context, SettingsProvider provider) {
-    final themeProvider = context.read<ThemeProvider>();
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) {
-        final isDarkMode = themeProvider.isDarkMode;
-        final bgColor = isDarkMode ? const Color(0xFF1B263B) : Colors.white;
-        final textColor = isDarkMode ? Colors.white : Colors.black87;
-
         return Container(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(GamingTheme.l),
           decoration: BoxDecoration(
-            color: bgColor,
+            color: GamingTheme.surfaceDark,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            border: Border.all(color: GamingTheme.border),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -207,20 +168,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF415A77),
+                  color: GamingTheme.textSecondary,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: GamingTheme.l),
               Text(
-                'Chọn ngôn ngữ',
-                style: TextStyle(
-                  color: textColor,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                ),
+                'CHỌN NGÔN NGỮ',
+                style: GamingTheme.h3,
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: GamingTheme.l),
               ...[
                 {'code': 'vi', 'name': 'Tiếng Việt'},
                 {'code': 'en', 'name': 'English'},
@@ -233,15 +190,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 return ListTile(
                   title: Text(
                     lang['name']!,
-                    style: TextStyle(
-                      color: isSelected ? const Color(0xFF4A9FFF) : textColor,
+                    style: GamingTheme.bodyLarge.copyWith(
+                      color: isSelected 
+                          ? GamingTheme.primaryAccent 
+                          : GamingTheme.textPrimary,
                       fontWeight: isSelected
                           ? FontWeight.w600
                           : FontWeight.normal,
                     ),
                   ),
                   trailing: isSelected
-                      ? const Icon(Icons.check, color: Color(0xFF4A9FFF))
+                      ? Icon(Icons.check, color: GamingTheme.primaryAccent)
                       : null,
                   onTap: () {
                     provider.updateLanguage(lang['code']!);
@@ -249,7 +208,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   },
                 );
               }).toList(),
-              const SizedBox(height: 20),
+              const SizedBox(height: GamingTheme.l),
             ],
           ),
         );
@@ -257,69 +216,51 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // --- Các Widget tiện ích (Helper Widgets) để tái sử dụng code ---
+  // --- Các Widget tiện ích ---
 
-  // 1. Tiêu đề section
-  Widget _buildSectionTitle(String title, Color color) {
+  Widget _buildSectionTitle(String title) {
     return Padding(
-      padding: const EdgeInsets.only(left: 16.0, bottom: 8.0),
+      padding: const EdgeInsets.only(left: GamingTheme.m, bottom: GamingTheme.xs),
       child: Text(
         title,
-        style: TextStyle(
-          color: color,
-          fontSize: 14,
-          fontWeight: FontWeight.bold,
+        style: GamingTheme.h3.copyWith(
+          color: GamingTheme.primaryAccent,
+          letterSpacing: 1.5,
         ),
       ),
     );
   }
 
-  // 2. Container bo góc chứa các mục cài đặt
-  Widget _buildSettingsContainer({
-    required List<Widget> children,
-    required Color cardColor,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 5,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(children: children),
-    );
-  }
-
-  // 3. Mục cài đặt dạng điều hướng (có mũi tên)
   Widget _buildNavTile({
     required IconData icon,
     required String title,
     String? subtitle,
     String? trailingText,
     required VoidCallback onTap,
-    required Color textColor,
-    required Color subtitleColor,
   }) {
     return ListTile(
       leading: Container(
-        padding: const EdgeInsets.all(8),
+        padding: const EdgeInsets.all(GamingTheme.xs),
         decoration: BoxDecoration(
-          color: const Color(0xFF4A9FFF).withOpacity(0.1),
+          color: GamingTheme.primaryAccent.withOpacity(0.2),
           shape: BoxShape.circle,
+          border: Border.all(
+            color: GamingTheme.primaryAccent.withOpacity(0.5),
+          ),
         ),
-        child: Icon(icon, color: const Color(0xFF4A9FFF)),
+        child: Icon(icon, color: GamingTheme.primaryAccent, size: 20),
       ),
       title: Text(
         title,
-        style: TextStyle(fontWeight: FontWeight.w500, color: textColor),
+        style: GamingTheme.bodyMedium.copyWith(fontWeight: FontWeight.w500),
       ),
       subtitle: subtitle != null
-          ? Text(subtitle, style: TextStyle(fontSize: 12, color: subtitleColor))
+          ? Text(
+              subtitle, 
+              style: GamingTheme.bodySmall.copyWith(
+                color: GamingTheme.textSecondary,
+              ),
+            )
           : null,
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
@@ -327,171 +268,183 @@ class _SettingsScreenState extends State<SettingsScreen> {
           if (trailingText != null)
             Text(
               trailingText,
-              style: TextStyle(color: subtitleColor, fontSize: 13),
+              style: GamingTheme.bodySmall,
             ),
-          const SizedBox(width: 4),
-          Icon(Icons.chevron_right, color: subtitleColor),
+          const SizedBox(width: GamingTheme.xxs),
+          Icon(Icons.chevron_right, color: GamingTheme.textSecondary),
         ],
       ),
       onTap: onTap,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     );
   }
 
-  // 4. Mục cài đặt dạng bật/tắt (Switch)
   Widget _buildSwitchTile({
     required IconData icon,
     required String title,
     required bool value,
     required ValueChanged<bool> onChanged,
-    required Color textColor,
   }) {
     return SwitchListTile.adaptive(
       secondary: Container(
-        padding: const EdgeInsets.all(8),
+        padding: const EdgeInsets.all(GamingTheme.xs),
         decoration: BoxDecoration(
           color: value
-              ? Colors.green.withOpacity(0.1)
-              : Colors.grey.withOpacity(0.1),
+              ? GamingTheme.easyGreen.withOpacity(0.2)
+              : GamingTheme.textDisabled.withOpacity(0.2),
           shape: BoxShape.circle,
+          border: Border.all(
+            color: value 
+                ? GamingTheme.easyGreen.withOpacity(0.5)
+                : GamingTheme.textDisabled.withOpacity(0.5),
+          ),
         ),
-        child: Icon(icon, color: value ? Colors.green : Colors.grey),
+        child: Icon(
+          icon, 
+          color: value ? GamingTheme.easyGreen : GamingTheme.textDisabled,
+          size: 20,
+        ),
       ),
       title: Text(
         title,
-        style: TextStyle(fontWeight: FontWeight.w500, color: textColor),
+        style: GamingTheme.bodyMedium.copyWith(fontWeight: FontWeight.w500),
       ),
       value: value,
       onChanged: onChanged,
-activeColor: Colors.green,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      activeColor: GamingTheme.easyGreen,
     );
   }
 
-  // 4.5. Info tile (non-interactive)
   Widget _buildInfoTile({
     required IconData icon,
     required String title,
     required String subtitle,
-    required Color textColor,
-    required Color subtitleColor,
   }) {
     return ListTile(
       leading: Container(
-        padding: const EdgeInsets.all(8),
+        padding: const EdgeInsets.all(GamingTheme.xs),
         decoration: BoxDecoration(
-          color: const Color(0xFF00D9FF).withOpacity(0.1),
+          color: GamingTheme.primaryAccent.withOpacity(0.2),
           shape: BoxShape.circle,
+          border: Border.all(
+            color: GamingTheme.primaryAccent.withOpacity(0.5),
+          ),
         ),
-        child: Icon(icon, color: const Color(0xFF00D9FF)),
+        child: Icon(icon, color: GamingTheme.primaryAccent, size: 20),
       ),
       title: Text(
         title,
-        style: TextStyle(fontWeight: FontWeight.w500, color: textColor),
+        style: GamingTheme.bodyMedium.copyWith(fontWeight: FontWeight.w500),
       ),
       subtitle: Text(
         subtitle,
-        style: TextStyle(fontSize: 12, color: subtitleColor),
+        style: GamingTheme.bodySmall,
       ),
     );
   }
 
-  // 5. Volume slider tile
   Widget _buildVolumeTile({
     required SettingsProvider settingsProvider,
-    required Color textColor,
   }) {
-    return ListTile(
-      leading: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: const Color(0xFF4A9FFF).withOpacity(0.1),
-          shape: BoxShape.circle,
+    return Column(
+      children: [
+        ListTile(
+          leading: Container(
+            padding: const EdgeInsets.all(GamingTheme.xs),
+            decoration: BoxDecoration(
+              color: GamingTheme.primaryAccent.withOpacity(0.2),
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: GamingTheme.primaryAccent.withOpacity(0.5),
+              ),
+            ),
+            child: Icon(Icons.volume_up, color: GamingTheme.primaryAccent, size: 20),
+          ),
+          title: Text(
+            'Âm lượng báo thức',
+            style: GamingTheme.bodyMedium.copyWith(fontWeight: FontWeight.w500),
+          ),
         ),
-        child: const Icon(Icons.volume_up, color: Color(0xFF4A9FFF)),
-      ),
-      title: Text(
-        'Âm lượng báo thức',
-        style: TextStyle(fontWeight: FontWeight.w500, color: textColor),
-      ),
-      subtitle: Slider(
-        value: settingsProvider.settings.alarmVolume,
-        min: 0.0,
-        max: 1.0,
-        divisions: 10,
-        activeColor: const Color(0xFF4A9FFF),
-        inactiveColor: const Color(0xFF415A77),
-        label: '${(settingsProvider.settings.alarmVolume * 100).round()}%',
-        onChanged: (value) {
-          settingsProvider.updateVolume(value);
-        },
-      ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: GamingTheme.l),
+          child: SliderTheme(
+            data: SliderThemeData(
+              activeTrackColor: GamingTheme.primaryAccent,
+              inactiveTrackColor: GamingTheme.surfaceLight,
+              thumbColor: GamingTheme.primaryAccent,
+              overlayColor: GamingTheme.primaryAccent.withOpacity(0.2),
+              valueIndicatorColor: GamingTheme.primaryAccent,
+              valueIndicatorTextStyle: GamingTheme.bodySmall.copyWith(
+                color: GamingTheme.primaryDark,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            child: Slider(
+              value: settingsProvider.settings.alarmVolume,
+              min: 0.0,
+              max: 1.0,
+              divisions: 10,
+              label: '${(settingsProvider.settings.alarmVolume * 100).round()}%',
+              onChanged: (value) {
+                settingsProvider.updateVolume(value);
+              },
+            ),
+          ),
+        ),
+      ],
     );
   }
 
-  // 5. Đường kẻ phân cách
   Widget _buildDivider() {
-    return const Divider(height: 1, thickness: 0.5, indent: 60, endIndent: 16);
+    return Divider(
+      height: 1,
+      thickness: 0.5,
+      indent: 60,
+      endIndent: GamingTheme.m,
+      color: GamingTheme.border.withOpacity(0.3),
+    );
   }
 
-  // 6. Nút đăng xuất
-  Widget _buildLogOutButton(Color cardColor) {
-    return Container(
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.redAccent.withOpacity(0.2)),
-      ),
+  Widget _buildLogOutButton() {
+    return GamingCard(
+      hasBorder: true,
+      backgroundColor: GamingTheme.surfaceDark,
+      onTap: () async {
+        // Show confirmation dialog
+        final confirmed = await GamingDialog.showConfirm(
+          context,
+          title: 'Đăng xuất',
+          message: 'Bạn có chắc chắn muốn đăng xuất?',
+          confirmText: 'Đăng xuất',
+          cancelText: 'Hủy',
+        );
+
+        if (confirmed && context.mounted) {
+          await context.read<AuthProvider>().logout();
+          if (context.mounted) {
+            Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+          }
+        }
+      },
       child: ListTile(
         leading: Container(
-          padding: const EdgeInsets.all(8),
+          padding: const EdgeInsets.all(GamingTheme.xs),
           decoration: BoxDecoration(
-            color: Colors.redAccent.withOpacity(0.1),
+            color: GamingTheme.hardRed.withOpacity(0.2),
             shape: BoxShape.circle,
-          ),
-          child: const Icon(Icons.logout, color: Colors.redAccent),
-        ),
-        title: const Text(
-          'Đăng xuất',
-          style: TextStyle(
-            color: Colors.redAccent,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        onTap: () async {
-          // Show confirmation dialog
-          final confirmed = await showDialog<bool>(
-            context: context,
-            builder: (context) => AlertDialog(
-              title: const Text('Đăng xuất'),
-              content: const Text('Bạn có chắc chắn muốn đăng xuất?'),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context, false),
-                  child: const Text('Hủy'),
-                ),
-                TextButton(
-                  onPressed: () => Navigator.pop(context, true),
-                  child: const Text(
-                    'Đăng xuất',
-                    style: TextStyle(color: Colors.red),
-                  ),
-                ),
-              ],
+            border: Border.all(
+              color: GamingTheme.hardRed.withOpacity(0.5),
             ),
-          );
-
-          if (confirmed == true && context.mounted) {
-            await context.read<AuthProvider>().logout();
-            if (context.mounted) {
-              // Đăng xuất - về trang login và xóa hết navigation stack
-              Navigator.of(
-                context,
-              ).pushNamedAndRemoveUntil('/login', (route) => false);
-            }
-          }
-        },
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+          child: Icon(Icons.logout, color: GamingTheme.hardRed, size: 20),
+        ),
+        title: Text(
+          'ĐĂNG XUẤT',
+          style: GamingTheme.bodyLarge.copyWith(
+            color: GamingTheme.hardRed,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 1.2,
+          ),
+        ),
       ),
     );
   }

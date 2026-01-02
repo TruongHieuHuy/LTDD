@@ -5,6 +5,11 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import '../providers/auth_provider.dart';
 import '../config/gaming_theme.dart';
+import '../widgets/gaming/gaming_card.dart';
+import '../widgets/gaming/gaming_avatar.dart';
+import '../widgets/gaming/gaming_button.dart';
+import '../widgets/gaming/gaming_text_field.dart';
+import '../widgets/gaming/gaming_dialog.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -40,7 +45,6 @@ class _ProfileScreenState extends State<ProfileScreen>
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
-    final theme = Theme.of(context);
     final size = MediaQuery.of(context).size;
 
     // Get user data
@@ -71,28 +75,10 @@ class _ProfileScreenState extends State<ProfileScreen>
                 background: Stack(
                   fit: StackFit.expand,
                   children: [
-                    // Animated gradient background
+                    // Gaming gradient background
                     Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            const Color(0xFF667eea),
-                            const Color(0xFF764ba2),
-                            const Color(0xFFf093fb),
-                          ],
-                        ),
-                      ),
-                    ),
-                    // Gaming pattern overlay
-                    Opacity(
-                      opacity: 0.1,
-                      child: Image.asset(
-                        'lib/assets/images/Huy Đẹp Trai 1 0 2.jpg',
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) =>
-                            Container(),
+                      decoration: const BoxDecoration(
+                        gradient: GamingTheme.gamingGradient,
                       ),
                     ),
                     // Dark overlay
@@ -119,50 +105,12 @@ class _ProfileScreenState extends State<ProfileScreen>
                           Stack(
                             alignment: Alignment.center,
                             children: [
-                              // Glowing effect
-                              Container(
-                                width: 110,
-                                height: 110,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: const Color(
-                                        0xFF667eea,
-                                      ).withOpacity(0.5),
-                                      blurRadius: 20,
-                                      spreadRadius: 5,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              // Avatar
-                              Container(
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: Colors.white,
-                                    width: 4,
-                                  ),
-                                  gradient: LinearGradient(
-                                    colors: [
-                                      Colors.blue.shade400,
-                                      Colors.purple.shade400,
-                                    ],
-                                  ),
-                                ),
-                                child: CircleAvatar(
-                                  radius: 50,
-                                  backgroundColor: Colors.transparent,
-                                  child: Text(
-                                    username.substring(0, 1).toUpperCase(),
-                                    style: const TextStyle(
-                                      fontSize: 40,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ),
+                              // Avatar with neon glow
+                              GamingAvatar(
+                                username: username,
+                                size: 100,
+                                hasGlow: true,
+                                glowColor: GamingTheme.primaryAccent,
                               ),
                               // Level badge
                               Positioned(
@@ -173,25 +121,15 @@ class _ProfileScreenState extends State<ProfileScreen>
                                     horizontal: 10,
                                     vertical: 4,
                                   ),
-                                  decoration: BoxDecoration(
-                                    gradient: const LinearGradient(
+                                  decoration: GamingTheme.neonBorder(
+                                    color: GamingTheme.legendaryGold,
+                                  ).copyWith(
+                                    gradient: LinearGradient(
                                       colors: [
-                                        Color(0xFFFFD700),
-                                        Color(0xFFFFA500),
+                                        GamingTheme.legendaryGold,
+                                        GamingTheme.primaryAccent,
                                       ],
                                     ),
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(
-                                      color: Colors.white,
-                                      width: 2,
-                                    ),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withOpacity(0.3),
-                                        blurRadius: 4,
-                                        offset: const Offset(0, 2),
-                                      ),
-                                    ],
                                   ),
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
@@ -204,8 +142,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                                       const SizedBox(width: 2),
                                       Text(
                                         '$level',
-                                        style: const TextStyle(
-                                          color: Colors.white,
+                                        style: GamingTheme.bodyLarge.copyWith(
                                           fontWeight: FontWeight.bold,
                                           fontSize: 14,
                                         ),
@@ -217,15 +154,12 @@ class _ProfileScreenState extends State<ProfileScreen>
                             ],
                           ),
                           const SizedBox(height: 12),
-                          // Username with gaming font style
+                          // Username
                           Text(
                             username,
-                            style: const TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
+                            style: GamingTheme.h2.copyWith(
                               shadows: [
-                                Shadow(
+                                const Shadow(
                                   color: Colors.black54,
                                   blurRadius: 4,
                                   offset: Offset(0, 2),
@@ -243,14 +177,13 @@ class _ProfileScreenState extends State<ProfileScreen>
                               color: Colors.white.withOpacity(0.2),
                               borderRadius: BorderRadius.circular(20),
                               border: Border.all(
-                                color: Colors.white.withOpacity(0.3),
+                                color: GamingTheme.primaryAccent.withOpacity(0.3),
                               ),
                             ),
                             child: Text(
                               'ID: $userId',
-                              style: const TextStyle(
+                              style: GamingTheme.bodySmall.copyWith(
                                 color: Colors.white,
-                                fontSize: 12,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -270,7 +203,6 @@ class _ProfileScreenState extends State<ProfileScreen>
                     },
                     tooltip: 'Chuyển sang giao diện Admin',
                   ),
-
                 IconButton(
                   icon: const Icon(Icons.edit, color: Colors.white),
                   onPressed: () => _showEditProfileDialog(context),
@@ -283,32 +215,32 @@ class _ProfileScreenState extends State<ProfileScreen>
             SliverToBoxAdapter(
               child: Column(
                 children: [
-                  const SizedBox(height: 20),
+                  const SizedBox(height: GamingTheme.l),
 
                   // Level Progress Bar
                   _buildLevelProgress(level, levelProgress, totalScore),
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: GamingTheme.l),
 
                   // Game Stats Cards
                   _buildGameStats(gamesPlayed, totalScore, level),
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: GamingTheme.l),
 
                   // Achievements Section
                   _buildAchievementsSection(),
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: GamingTheme.l),
 
                   // Contact Info
                   _buildContactInfo(email),
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: GamingTheme.l),
 
                   // Quick Actions
                   _buildQuickActions(context),
 
-                  const SizedBox(height: 40),
+                  const SizedBox(height: GamingTheme.xxl),
                 ],
               ),
             ),
@@ -320,22 +252,9 @@ class _ProfileScreenState extends State<ProfileScreen>
 
   Widget _buildLevelProgress(int level, double progress, int totalScore) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              const Color(0xFF667eea).withOpacity(0.1),
-              const Color(0xFF764ba2).withOpacity(0.1),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: const Color(0xFF667eea).withOpacity(0.3),
-            width: 2,
-          ),
-        ),
+      padding: const EdgeInsets.symmetric(horizontal: GamingTheme.l),
+      child: GamingNeonCard(
+        accentColor: GamingTheme.primaryAccent,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -344,25 +263,23 @@ class _ProfileScreenState extends State<ProfileScreen>
               children: [
                 Text(
                   'Cấp độ $level',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF667eea),
+                  style: GamingTheme.h3.copyWith(
+                    color: GamingTheme.primaryAccent,
                   ),
                 ),
                 Text(
                   'Cấp ${level + 1}',
-                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                  style: GamingTheme.bodyMedium,
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: GamingTheme.s),
             Stack(
               children: [
                 Container(
                   height: 12,
                   decoration: BoxDecoration(
-                    color: Colors.grey[300],
+                    color: GamingTheme.surfaceLight,
                     borderRadius: BorderRadius.circular(6),
                   ),
                 ),
@@ -371,26 +288,18 @@ class _ProfileScreenState extends State<ProfileScreen>
                   child: Container(
                     height: 12,
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF667eea), Color(0xFF764ba2)],
-                      ),
+                      gradient: GamingTheme.primaryGradient,
                       borderRadius: BorderRadius.circular(6),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF667eea).withOpacity(0.5),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
+                      boxShadow: GamingTheme.neonGlow,
                     ),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: GamingTheme.xs),
             Text(
               '${(progress * 100).toInt()}% - ${totalScore % 1000}/1000 XP',
-              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+              style: GamingTheme.bodySmall,
             ),
           ],
         ),
@@ -400,15 +309,15 @@ class _ProfileScreenState extends State<ProfileScreen>
 
   Widget _buildGameStats(int gamesPlayed, int totalScore, int level) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: GamingTheme.l),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Thống kê Game',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          Text(
+            'THỐNG KÊ GAME',
+            style: GamingTheme.h3,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: GamingTheme.m),
           Row(
             children: [
               Expanded(
@@ -416,25 +325,21 @@ class _ProfileScreenState extends State<ProfileScreen>
                   icon: Icons.games,
                   value: '$gamesPlayed',
                   label: 'Trận đã chơi',
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF11998e), Color(0xFF38ef7d)],
-                  ),
+                  color: GamingTheme.easyGreen,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: GamingTheme.s),
               Expanded(
                 child: _buildStatCard(
                   icon: Icons.emoji_events,
                   value: '$totalScore',
                   label: 'Tổng điểm',
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
-                  ),
+                  color: GamingTheme.legendaryGold,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: GamingTheme.s),
           Row(
             children: [
               Expanded(
@@ -442,20 +347,16 @@ class _ProfileScreenState extends State<ProfileScreen>
                   icon: Icons.star,
                   value: '$level',
                   label: 'Cấp độ',
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF667eea), Color(0xFF764ba2)],
-                  ),
+                  color: GamingTheme.primaryAccent,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: GamingTheme.s),
               Expanded(
                 child: _buildStatCard(
                   icon: Icons.trending_up,
                   value: '${(gamesPlayed > 0 ? totalScore ~/ gamesPlayed : 0)}',
                   label: 'Điểm TB',
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFFf093fb), Color(0xFFf5576c)],
-                  ),
+                  color: GamingTheme.secondaryAccent,
                 ),
               ),
             ],
@@ -469,40 +370,26 @@ class _ProfileScreenState extends State<ProfileScreen>
     required IconData icon,
     required String value,
     required String label,
-    required Gradient gradient,
+    required Color color,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: gradient,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+    return GamingNeonCard(
+      accentColor: color,
       child: Column(
         children: [
-          Icon(icon, size: 32, color: Colors.white),
-          const SizedBox(height: 8),
+          Icon(icon, size: 32, color: color),
+          const SizedBox(height: GamingTheme.xs),
           Text(
             value,
-            style: const TextStyle(
+            style: GamingTheme.scoreDisplay.copyWith(
               fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
+              color: color,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: GamingTheme.xxs),
           Text(
             label,
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.white.withOpacity(0.9),
-            ),
+            style: GamingTheme.bodySmall,
+            textAlign: TextAlign.center,
           ),
         ],
       ),
@@ -519,26 +406,31 @@ class _ProfileScreenState extends State<ProfileScreen>
     ];
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: GamingTheme.l),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Thành tựu',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              Text(
+                'THÀNH TỰU',
+                style: GamingTheme.h3,
               ),
               TextButton(
                 onPressed: () {
                   Navigator.pushNamed(context, '/achievements');
                 },
-                child: const Text('Xem tất cả'),
+                child: Text(
+                  'Xem tất cả',
+                  style: GamingTheme.bodyMedium.copyWith(
+                    color: GamingTheme.primaryAccent,
+                  ),
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: GamingTheme.s),
           SizedBox(
             height: 120,
             child: ListView.builder(
@@ -551,7 +443,7 @@ class _ProfileScreenState extends State<ProfileScreen>
 
                 return Container(
                   width: 100,
-                  margin: const EdgeInsets.only(right: 12),
+                  margin: const EdgeInsets.only(right: GamingTheme.s),
                   child: Column(
                     children: [
                       Container(
@@ -560,25 +452,23 @@ class _ProfileScreenState extends State<ProfileScreen>
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           gradient: isUnlocked
-                              ? const LinearGradient(
+                              ? LinearGradient(
                                   colors: [
-                                    Color(0xFFFFD700),
-                                    Color(0xFFFFA500),
+                                    GamingTheme.legendaryGold,
+                                    GamingTheme.primaryAccent,
                                   ],
                                 )
                               : LinearGradient(
                                   colors: [
-                                    Colors.grey[300]!,
-                                    Colors.grey[400]!,
+                                    GamingTheme.surfaceLight,
+                                    GamingTheme.surfaceDark,
                                   ],
                                 ),
                           boxShadow: isUnlocked
                               ? [
                                   BoxShadow(
-                                    color: const Color(
-                                      0xFFFFD700,
-                                    ).withOpacity(0.5),
-                                    blurRadius: 8,
+                                    color: GamingTheme.legendaryGold.withOpacity(0.5),
+                                    blurRadius: 12,
                                     spreadRadius: 2,
                                   ),
                                 ]
@@ -589,20 +479,22 @@ class _ProfileScreenState extends State<ProfileScreen>
                             achievement['icon'] as String,
                             style: TextStyle(
                               fontSize: 32,
-                              color: isUnlocked ? null : Colors.grey[600],
+                              color: isUnlocked ? null : Colors.white.withOpacity(0.3),
                             ),
                           ),
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: GamingTheme.xs),
                       Text(
                         achievement['title'] as String,
                         textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 12,
+                        style: GamingTheme.bodySmall.copyWith(
                           fontWeight: isUnlocked
                               ? FontWeight.bold
                               : FontWeight.normal,
+                          color: isUnlocked
+                              ? GamingTheme.textPrimary
+                              : GamingTheme.textDisabled,
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
@@ -620,28 +512,17 @@ class _ProfileScreenState extends State<ProfileScreen>
 
   Widget _buildContactInfo(String email) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
+      padding: const EdgeInsets.symmetric(horizontal: GamingTheme.l),
+      child: GamingCard(
+        hasBorder: true,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Thông tin liên hệ',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            Text(
+              'THÔNG TIN LIÊN HỆ',
+              style: GamingTheme.h3,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: GamingTheme.m),
             _buildInfoRow(Icons.email_outlined, 'Email', email),
           ],
         ),
@@ -651,31 +532,33 @@ class _ProfileScreenState extends State<ProfileScreen>
 
   Widget _buildInfoRow(IconData icon, String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: GamingTheme.xs),
       child: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.all(8),
+ Container(
+            padding: const EdgeInsets.all(GamingTheme.xs),
             decoration: BoxDecoration(
-              color: const Color(0xFF667eea).withOpacity(0.1),
+              color: GamingTheme.primaryAccent.withOpacity(0.2),
               shape: BoxShape.circle,
+              border: Border.all(
+                color: GamingTheme.primaryAccent.withOpacity(0.5),
+              ),
             ),
-            child: Icon(icon, color: const Color(0xFF667eea), size: 20),
+            child: Icon(icon, color: GamingTheme.primaryAccent, size: 20),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: GamingTheme.s),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   label,
-                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                  style: GamingTheme.bodySmall,
                 ),
                 Text(
                   value,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
+                  style: GamingTheme.bodyMedium.copyWith(
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ],
@@ -688,126 +571,61 @@ class _ProfileScreenState extends State<ProfileScreen>
 
   Widget _buildQuickActions(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: GamingTheme.l),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Tiện ích nhanh',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          Text(
+            'TIỆN ÍCH NHANH',
+            style: GamingTheme.h3,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: GamingTheme.m),
           Row(
             children: [
               Expanded(
-                child: _buildActionButton(
-                  context: context,
+                child: GamingButton(
+                  text: 'Kajima AI',
                   icon: Icons.smart_toy,
-                  label: 'Kajima AI',
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF667eea), Color(0xFF764ba2)],
-                  ),
-                  onTap: () => Navigator.pushNamed(context, '/chatbot'),
+                  style: GamingButtonStyle.secondary,
+                  onPressed: () => Navigator.pushNamed(context, '/chatbot'),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: GamingTheme.s),
               Expanded(
-                child: _buildActionButton(
-                  context: context,
+                child: GamingButton(
+                  text: 'Cài đặt',
                   icon: Icons.settings,
-                  label: 'Cài đặt',
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF11998e), Color(0xFF38ef7d)],
-                  ),
-                  onTap: () => Navigator.pushNamed(context, '/settings'),
+                  style: GamingButtonStyle.secondary,
+                  onPressed: () => Navigator.pushNamed(context, '/settings'),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: GamingTheme.s),
           // Logout Button
-          _buildActionButton(
-            context: context,
+          GamingButton(
+            text: 'ĐĂNG XUẤT',
             icon: Icons.logout,
-            label: 'Đăng xuất',
-            gradient: const LinearGradient(
-              colors: [Color(0xFFeb3349), Color(0xFFf45c43)],
-            ),
-            onTap: () => _handleLogout(context),
+            style: GamingButtonStyle.outline,
+            width: double.infinity,
+            onPressed: () => _handleLogout(context),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildActionButton({
-    required BuildContext context,
-    required IconData icon,
-    required String label,
-    required Gradient gradient,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(
-          gradient: gradient,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            Icon(icon, size: 32, color: Colors.white),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
 
   Future<void> _handleLogout(BuildContext context) async {
     // Show confirmation dialog
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Row(
-          children: [
-            const Icon(Icons.logout, color: Colors.red),
-            const SizedBox(width: 8),
-            const Text('Xác nhận đăng xuất'),
-          ],
-        ),
-        content: const Text('Bạn có chắc muốn đăng xuất?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Hủy'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Đăng xuất'),
-          ),
-        ],
-      ),
+    final confirmed = await GamingDialog.showConfirm(
+      context,
+      title: 'Xác nhận đăng xuất',
+      message: 'Bạn có chắc muốn đăng xuất?',
+      confirmText: 'Đăng xuất',
+      cancelText: 'Hủy',
     );
 
-    if (confirmed == true && context.mounted) {
+    if (confirmed && context.mounted) {
       final authProvider = context.read<AuthProvider>();
       await authProvider.logout();
 
@@ -876,11 +694,10 @@ class _EditProfileDialogState extends State<_EditProfileDialog> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Lỗi chọn ảnh: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
+        await GamingDialog.showError(
+          context,
+          title: 'Lỗi',
+          message: 'Lỗi chọn ảnh: ${e.toString()}',
         );
       }
     }
@@ -891,10 +708,11 @@ class _EditProfileDialogState extends State<_EditProfileDialog> {
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
-        padding: const EdgeInsets.all(20),
-        decoration: const BoxDecoration(
-          color: Color(0xFF1D1E33),
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        padding: const EdgeInsets.all(GamingTheme.l),
+        decoration: BoxDecoration(
+          color: GamingTheme.surfaceDark,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        border: Border.all(color: GamingTheme.border),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -903,32 +721,29 @@ class _EditProfileDialogState extends State<_EditProfileDialog> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.grey[600],
+                color: GamingTheme.textSecondary,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
-            const SizedBox(height: 20),
-            const Text(
+            const SizedBox(height: GamingTheme.l),
+            Text(
               'Chọn nguồn ảnh',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+              style: GamingTheme.h3,
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: GamingTheme.l),
             ListTile(
               leading: Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.blue.withOpacity(0.2),
+                  color: GamingTheme.primaryAccent.withOpacity(0.2),
                   shape: BoxShape.circle,
+                  border: Border.all(color: GamingTheme.primaryAccent),
                 ),
-                child: const Icon(Icons.camera_alt, color: Colors.blue),
+                child: Icon(Icons.camera_alt, color: GamingTheme.primaryAccent),
               ),
-              title: const Text(
+              title: Text(
                 'Camera',
-                style: TextStyle(color: Colors.white),
+                style: GamingTheme.bodyLarge,
               ),
               onTap: () {
                 Navigator.pop(context);
@@ -939,21 +754,22 @@ class _EditProfileDialogState extends State<_EditProfileDialog> {
               leading: Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.purple.withOpacity(0.2),
+                  color: GamingTheme.secondaryAccent.withOpacity(0.2),
                   shape: BoxShape.circle,
+                  border: Border.all(color: GamingTheme.secondaryAccent),
                 ),
-                child: const Icon(Icons.photo_library, color: Colors.purple),
+                child: Icon(Icons.photo_library, color: GamingTheme.secondaryAccent),
               ),
-              title: const Text(
+              title: Text(
                 'Thư viện',
-                style: TextStyle(color: Colors.white),
+                style: GamingTheme.bodyLarge,
               ),
               onTap: () {
                 Navigator.pop(context);
                 _pickImage(ImageSource.gallery);
               },
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: GamingTheme.m),
           ],
         ),
       ),
@@ -963,11 +779,10 @@ class _EditProfileDialogState extends State<_EditProfileDialog> {
   Future<void> _saveProfile() async {
     if (widget.nameController.text.isEmpty || 
         widget.emailController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Vui lòng điền đầy đủ thông tin'),
-          backgroundColor: Colors.orange,
-        ),
+      await GamingDialog.showError(
+        context,
+        title: 'Lỗi',
+        message: 'Vui lòng điền đầy đủ thông tin',
       );
       return;
     }
@@ -976,32 +791,22 @@ class _EditProfileDialogState extends State<_EditProfileDialog> {
 
     try {
       // TODO: Implement actual API call to update profile
-      // Example:
-      // final authProvider = context.read<AuthProvider>();
-      // await authProvider.updateProfile(
-      //   username: widget.nameController.text,
-      //   email: widget.emailController.text,
-      //   avatarFile: _selectedImage,
-      // );
-
       await Future.delayed(const Duration(milliseconds: 500)); // Simulate API call
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('✅ Đã cập nhật profile thành công!'),
-            backgroundColor: Colors.green,
-          ),
+        await GamingDialog.showSuccess(
+          context,
+          title: 'Thành công',
+          message: 'Đã cập nhật profile thành công!',
         );
         Navigator.pop(context);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('❌ Lỗi: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
+        await GamingDialog.showError(
+          context,
+          title: 'Lỗi',
+          message: e.toString(),
         );
       }
     } finally {
@@ -1020,205 +825,133 @@ class _EditProfileDialogState extends State<_EditProfileDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      backgroundColor: const Color(0xFF1D1E33),
+    return Dialog(
+      backgroundColor: GamingTheme.surfaceDark,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(GamingTheme.radiusLarge),
+        side: BorderSide(color: GamingTheme.primaryAccent, width: 2),
       ),
-      title: const Text(
-        'Chỉnh sửa Profile',
-        style: TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Avatar Section
-            GestureDetector(
-              onTap: _showImageSourceDialog,
-              child: Stack(
-                children: [
-                  Container(
-                    width: 100,
-                    height: 100,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: _selectedImage == null
-                          ? const LinearGradient(
-                              colors: [Color(0xFF667eea), Color(0xFF764ba2)],
-                            )
-                          : null,
-                      image: _selectedImage != null
-                          ? DecorationImage(
-                              image: FileImage(_selectedImage!),
-                              fit: BoxFit.cover,
-                            )
-                          : null,
-                      border: Border.all(
-                        color: Colors.white,
-                        width: 3,
-                      ),
-                    ),
-                    child: _selectedImage == null
-                        ? Center(
-                            child: Text(
-                              widget.initialUsername.substring(0, 1).toUpperCase(),
-                              style: const TextStyle(
-                                fontSize: 40,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                          )
-                        : null,
-                  ),
-                  Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF00D9FF),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.camera_alt,
-                        size: 18,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ],
+      child: Padding(
+        padding: const EdgeInsets.all(GamingTheme.l),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'CHỈNH SỬA PROFILE',
+                style: GamingTheme.h3,
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Nhấn để đổi ảnh đại diện',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[400],
-              ),
-            ),
-            const SizedBox(height: 24),
+              const SizedBox(height: GamingTheme.l),
 
-            // Name Field
-            TextField(
-              controller: widget.nameController,
-              style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
+              // Avatar Section
+              GestureDetector(
+                onTap: _showImageSourceDialog,
+                child: Stack(
+                  children: [
+                    GamingAvatar(
+                      username: widget.initialUsername,
+                      imageUrl: _selectedImage != null ? _selectedImage!.path : null,
+                      size: 100,
+                      hasGlow: true,
+                    ),
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: GamingTheme.primaryAccent,
+                          shape: BoxShape.circle,
+                          boxShadow: GamingTheme.neonGlow,
+                        ),
+                        child: const Icon(
+                          Icons.camera_alt,
+                          size: 18,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: GamingTheme.xs),
+              Text(
+                'Nhấn để đổi ảnh đại diện',
+                style: GamingTheme.bodySmall,
+              ),
+              const SizedBox(height: GamingTheme.l),
+
+              // Name Field
+              GamingTextField(
+                controller: widget.nameController,
                 labelText: 'Tên người dùng',
-                labelStyle: TextStyle(color: Colors.grey[400]),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.grey[700]!),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.grey[700]!),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Color(0xFF00D9FF), width: 2),
-                ),
-                prefixIcon: const Icon(Icons.person, color: Color(0xFF00D9FF)),
+                prefixIcon: Icons.person,
               ),
-            ),
-            const SizedBox(height: 16),
+              const SizedBox(height: GamingTheme.m),
 
-            // Email Field
-            TextField(
-              controller: widget.emailController,
-              style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
+              // Email Field
+              GamingTextField(
+                controller: widget.emailController,
                 labelText: 'Email',
-                labelStyle: TextStyle(color: Colors.grey[400]),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.grey[700]!),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.grey[700]!),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Color(0xFF00D9FF), width: 2),
-                ),
-                prefixIcon: const Icon(Icons.email, color: Color(0xFF00D9FF)),
+                prefixIcon: Icons.email,
+                keyboardType: TextInputType.emailAddress,
               ),
-              keyboardType: TextInputType.emailAddress,
-            ),
-            const SizedBox(height: 20),
+              const SizedBox(height: GamingTheme.l),
 
-            // Info Banner
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: const Color(0xFF00D9FF).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: const Color(0xFF00D9FF).withOpacity(0.3),
+              // Info Banner
+              Container(
+                padding: const EdgeInsets.all(GamingTheme.s),
+                decoration: BoxDecoration(
+                  color: GamingTheme.primaryAccent.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(GamingTheme.radiusMedium),
+                  border: Border.all(
+                    color: GamingTheme.primaryAccent.withOpacity(0.3),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.info_outline,
+                      color: GamingTheme.primaryAccent,
+                      size: 20,
+                    ),
+                    const SizedBox(width: GamingTheme.xs),
+                    Expanded(
+                      child: Text(
+                        'Thay đổi sẽ được lưu ngay lập tức',
+                        style: GamingTheme.bodySmall,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              child: Row(
+              const SizedBox(height: GamingTheme.l),
+
+              // Buttons
+              Row(
                 children: [
-                  const Icon(
-                    Icons.info_outline,
-                    color: Color(0xFF00D9FF),
-                    size: 20,
-                  ),
-                  const SizedBox(width: 8),
                   Expanded(
-                    child: Text(
-                      'Thay đổi sẽ được lưu ngay lập tức',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[300],
-                      ),
+                    child: GamingButton(
+                      text: 'Hủy',
+                      style: GamingButtonStyle.outline,
+                      onPressed: _isLoading ? null : () => Navigator.pop(context),
+                    ),
+                  ),
+                  const SizedBox(width: GamingTheme.s),
+                  Expanded(
+                    child: GamingButton(
+                      text: 'Lưu',
+                      style: GamingButtonStyle.primary,
+                      onPressed: _isLoading ? null : _saveProfile,
+                      isLoading: _isLoading,
                     ),
                   ),
                 ],
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: _isLoading ? null : () => Navigator.pop(context),
-          child: Text(
-            'Hủy',
-            style: TextStyle(
-              color: _isLoading ? Colors.grey : Colors.white70,
-            ),
-          ),
-        ),
-        ElevatedButton(
-          onPressed: _isLoading ? null : _saveProfile,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF00D9FF),
-            foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          ),
-          child: _isLoading
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                  ),
-                )
-              : const Text('Lưu'),
-        ),
-      ],
     );
   }
 }
-
