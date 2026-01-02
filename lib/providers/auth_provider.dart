@@ -40,9 +40,14 @@ class AuthProvider with ChangeNotifier {
 
   /// Initialize Hive box and load auth state
   Future<void> initialize() async {
+    debugPrint('[AuthProvider] === INITIALIZING ===');
     _box = await Hive.openBox(_boxName);
+    debugPrint('[AuthProvider] Hive box opened');
+    
     await _loadAuth();
+    
     _savedEmail = _box.get(_savedEmailKey) as String?;
+    debugPrint('[AuthProvider] Saved email: $_savedEmail');
 
     // Load user profile from cache
     final profileJson = _box.get(_userProfileKey) as Map?;
@@ -51,26 +56,43 @@ class AuthProvider with ChangeNotifier {
         _userProfile = UserProfile.fromJson(
           Map<String, dynamic>.from(profileJson),
         );
+        debugPrint('[AuthProvider] User profile loaded from cache: ${_userProfile?.username}');
       } catch (e) {
-        debugPrint('Error loading user profile from cache: $e');
+        debugPrint('[AuthProvider] Error loading user profile from cache: $e');
       }
     }
+    
+    debugPrint('[AuthProvider] === INITIALIZATION COMPLETE === isLoggedIn: $isLoggedIn');
   }
 
   /// Load authentication state from Hive
   Future<void> _loadAuth() async {
     try {
+      debugPrint('[AuthProvider] Loading auth from Hive...');
       final savedAuth = _box.get(_authKey) as AuthModel?;
-      if (savedAuth != null && savedAuth.isSessionValid) {
+      
+      if (savedAuth == null) {
+        debugPrint('[AuthProvider] No saved auth found');
+        return;
+      }
+      
+      debugPrint('[AuthProvider] Found saved auth - Email: ${savedAuth.email}, RememberMe: ${savedAuth.rememberMe}');
+      debugPrint('[AuthProvider] Session expiry: ${savedAuth.sessionExpiry}, Is valid: ${savedAuth.isSessionValid}');
+      
+      if (savedAuth.isSessionValid) {
+        debugPrint('[AuthProvider] Session is valid! Restoring...');
         _currentAuth = savedAuth;
         _apiService.setAuthToken(savedAuth.sessionToken);
+        debugPrint('[AuthProvider] Token set to ApiService');
         await _refreshUserProfile();
-      } else if (savedAuth != null) {
+        debugPrint('[AuthProvider] ✅ Session restored successfully!');
+      } else {
         // Session expired - clear auth but keep saved email for "remember me"
+        debugPrint('[AuthProvider] ❌ Session expired. Clearing...');
         await _clearSession();
       }
     } catch (e) {
-      debugPrint('Error loading auth: $e');
+      debugPrint('[AuthProvider] ❌ Error loading auth: $e');
       await _clearSession();
     }
     notifyListeners();
