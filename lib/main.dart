@@ -102,8 +102,8 @@ class SmartStudentApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => GroupProvider()),
         
         // ChallengeProvider depends on ApiService and SocketService
-        ProxyProvider<SocketService>(
-          update: (context, _, __) => SocketService(),
+        Provider<SocketService>(
+          create: (_) => SocketService(),
         ),
         ChangeNotifierProxyProvider2<ApiService, SocketService, ChallengeProvider>(
           create: (context) => ChallengeProvider(
