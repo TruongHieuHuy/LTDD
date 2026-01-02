@@ -41,6 +41,8 @@ import 'providers/chatbot_provider.dart';
 import 'providers/peer_chat_provider.dart';
 import 'providers/friend_provider.dart';
 import 'providers/group_provider.dart';
+import 'providers/challenge_provider.dart';
+import 'services/socket_service.dart';
 import 'config/gaming_theme.dart';
 
 void main() async {
@@ -98,6 +100,19 @@ class SmartStudentApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => PeerChatProvider()),
         ChangeNotifierProvider(create: (_) => FriendProvider()),
         ChangeNotifierProvider(create: (_) => GroupProvider()),
+        
+        // ChallengeProvider depends on ApiService and SocketService
+        ProxyProvider<SocketService>(
+          update: (context, _, __) => SocketService(),
+        ),
+        ChangeNotifierProxyProvider2<ApiService, SocketService, ChallengeProvider>(
+          create: (context) => ChallengeProvider(
+            context.read<ApiService>(),
+            context.read<SocketService>(),
+          ),
+          update: (context, apiService, socketService, previous) =>
+              previous ?? ChallengeProvider(apiService, socketService),
+        ),
       ],
       child: Consumer2<ThemeProvider, AuthProvider>(
         builder: (context, themeProvider, authProvider, child) {
