@@ -12,7 +12,14 @@ import '../../services/api_service.dart';
 /// Memory Match Game Screen
 /// Game lật thẻ ghi nhớ với 3 độ khó
 class MemoryMatchGameScreen extends StatefulWidget {
-  const MemoryMatchGameScreen({Key? key}) : super(key: key);
+  final String? challengeId;
+  final int? challengeGameNumber;
+  
+  const MemoryMatchGameScreen({
+    super.key,
+    this.challengeId,
+    this.challengeGameNumber,
+  });
 
   @override
   State<MemoryMatchGameScreen> createState() => _MemoryMatchGameScreenState();
