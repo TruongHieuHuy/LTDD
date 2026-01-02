@@ -89,25 +89,21 @@ class SmartStudentApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => GameProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProxyProvider<ApiService, AuthProvider>(
-          create: (context) => AuthProvider(context.read<ApiService>()),
-          update: (context, apiService, previous) =>
-              previous ?? AuthProvider(apiService),
+          create: (context) {
+            final provider = AuthProvider(context.read<ApiService>());
+            provider.initialize(); // Initialize async
+            return provider;
+          },
+          update: (context, apiService, previous) {
+            if (previous != null) return previous;
+            final provider = AuthProvider(apiService);
+            provider.initialize(); // Initialize async
+            return provider;
+          },
         ),
-        ChangeNotifierProxyProvider<ApiService, ChatbotProvider>(
-          create: (context) => ChatbotProvider(context.read<ApiService>()),
-          update: (context, apiService, previous) =>
-              previous ?? ChatbotProvider(apiService),
-        ),
-        ChangeNotifierProxyProvider<ApiService, PeerChatProvider>(
-          create: (context) => PeerChatProvider(context.read<ApiService>()),
-          update: (context, apiService, previous) =>
-              previous ?? PeerChatProvider(apiService),
-        ),
-        ChangeNotifierProxyProvider<ApiService, FriendProvider>(
-          create: (context) => FriendProvider(context.read<ApiService>()),
-          update: (context, apiService, previous) =>
-              previous ?? FriendProvider(apiService),
-        ),
+        ChangeNotifierProvider(create: (_) => ChatbotProvider()),
+        ChangeNotifierProvider(create: (_) => PeerChatProvider()),
+        ChangeNotifierProvider(create: (_) => FriendProvider()),
         ChangeNotifierProvider(create: (_) => GroupProvider()),
         
         // ChallengeProvider depends on ApiService and SocketService
@@ -123,8 +119,14 @@ class SmartStudentApp extends StatelessWidget {
               previous ?? ChallengeProvider(apiService, socketService),
         ),
       ],
-            themeMode: ThemeMode.dark, // Force dark mode for gaming aesthetic
-            // Auto-navigate based on login status and role
+      child: Consumer<AuthProvider>(
+        builder: (context, authProvider, _) {
+          return MaterialApp(
+            title: 'MiniGameCenter - Gaming Hub',
+            debugShowCheckedModeBanner: false,
+            theme: GamingTheme.darkTheme,
+            darkTheme: GamingTheme.darkTheme,
+            themeMode: ThemeMode.dark,
             initialRoute: _getInitialRoute(authProvider),
             routes: {
               '/login': (context) => const LoginScreen(),

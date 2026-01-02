@@ -40,7 +40,7 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
     return Scaffold(
       backgroundColor: GamingTheme.primaryDark,
       appBar: AppBar(
-        title: const Text('Challenge Match'),
+        title: const Text('Chi Tiết Trận Đấu'),
         backgroundColor: GamingTheme.primaryDark,
       ),
       body: Consumer2<ChallengeProvider, AuthProvider>(
@@ -141,7 +141,7 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
                   const Icon(Icons.monetization_on, color: Colors.amber, size: 20),
                   const SizedBox(width: 8),
                   Text(
-                    'Prize Pool: ${challenge.betAmount * 2} coins',
+                    'Giải thưởng: ${challenge.betAmount * 2} xu',
                     style: const TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                 ],
@@ -165,7 +165,7 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
         ),
         const SizedBox(height: 8),
         Text(
-          isYou ? 'You' : player.username,
+          isYou ? 'Bạn' : player.username,
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
@@ -180,7 +180,7 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
             borderRadius: BorderRadius.circular(12),
           ),
           child: Text(
-            '$wins ${wins == 1 ? "win" : "wins"}',
+            '$wins ${wins == 1 ? "thắng" : "thắng"}',
             style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold),
           ),
         ),
@@ -197,7 +197,7 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Match Progress',
+              'Tiến Độ Trận Đấu',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
             ),
             const SizedBox(height: 16),
@@ -243,7 +243,7 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
         child: Column(
           children: [
             Text(
-              'Game $gameNumber',
+              'Ván $gameNumber',
               style: TextStyle(
                 fontSize: 12,
                 color: isCompleted || isCurrent ? Colors.white : Colors.grey,
@@ -304,7 +304,7 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
                   Icon(Icons.how_to_vote, color: GamingTheme.primaryAccent),
                   const SizedBox(width: 12),
                   Text(
-                    'Vote for Game $currentGame',
+                    'Bầu Chọn Game Ván $currentGame',
                     style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
                   ),
                 ],
@@ -323,7 +323,7 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          'You voted for ${_getGameName(_votedGameType ?? userVote!)}. Waiting for opponent...',
+                          'Bạn đã bầu cho ${_getGameName(_votedGameType ?? userVote!)}. Chờ đối thủ...',
                           style: TextStyle(color: GamingTheme.primaryAccent),
                         ),
                       ),
@@ -347,11 +347,11 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
               Icon(Icons.videogame_asset, size: 48, color: GamingTheme.primaryAccent),
               const SizedBox(height: 16),
               Text(
-                'Game $currentGame: ${_getGameName(gameType)}',
+                'Ván $currentGame: ${_getGameName(gameType)}',
                 style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
               ),
               const SizedBox(height: 8),
-              const Text('Ready to play!', style: TextStyle(color: Colors.grey)),
+              const Text('Sẵn sàng chưa!', style: TextStyle(color: Colors.grey)),
               const SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,
@@ -361,7 +361,7 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
                     backgroundColor: GamingTheme.primaryAccent,
                     padding: const EdgeInsets.all(16),
                   ),
-                  child: const Text('Play Now', style: TextStyle(fontSize: 16)),
+                  child: const Text('Chơi Ngay', style: TextStyle(fontSize: 16)),
                 ),
               ),
             ],
@@ -373,10 +373,10 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
 
   Widget _buildGameVotingOptions(Challenge challenge, int gameNumber) {
     final games = [
-      {'type': 'GUESS_NUMBER', 'name': 'Guess Number', 'icon': Icons.dialpad},
-      {'type': 'COWS_BULLS', 'name': 'Cows & Bulls', 'icon': Icons.pets},
-      {'type': 'MEMORY_MATCH', 'name': 'Memory Match', 'icon': Icons.grid_on},
-      {'type': 'QUICK_MATH', 'name': 'Quick Math', 'icon': Icons.calculate},
+      {'type': 'GUESS_NUMBER', 'name': 'Đoán Số', 'icon': Icons.dialpad},
+      {'type': 'COWS_BULLS', 'name': 'Bò & Bê', 'icon': Icons.pets},
+      {'type': 'MEMORY_MATCH', 'name': 'Lật Hình', 'icon': Icons.grid_on},
+      {'type': 'QUICK_MATH', 'name': 'Toán Nhanh', 'icon': Icons.calculate},
     ];
 
     return GridView.count(
@@ -428,7 +428,7 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              isDraw ? 'Match Drawn!' : isWinner ? '🎉 Victory! 🎉' : 'Defeat',
+              isDraw ? 'Hòa!' : isWinner ? '🎉 Thắng! 🎉' : 'Thua Cuộc',
               style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
@@ -438,16 +438,16 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
             const SizedBox(height: 12),
             Text(
               isDraw
-                  ? 'All games tied! Coins refunded.'
+                  ? 'Hòa tất cả! Xu được hoàn.'
                   : isWinner
-                      ? 'You won ${challenge.betAmount * 2} coins!'
-                      : 'You lost ${challenge.betAmount} coins.',
+                      ? 'Bạn đã thắng ${challenge.betAmount * 2} xu!'
+                      : 'Bạn đã thua ${challenge.betAmount} xu.',
               style: const TextStyle(fontSize: 16, color: Colors.white),
             ),
             if (!isDraw) ...[
               const SizedBox(height: 24),
               Text(
-                'Winner: ${challenge.winner?.username}',
+                'Người thắng: ${challenge.winner?.username}',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: GamingTheme.primaryAccent),
               ),
             ],
@@ -460,13 +460,13 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
   String _getGameName(String gameType) {
     switch (gameType) {
       case 'GUESS_NUMBER':
-        return 'Guess Number';
+        return 'Đoán Số';
       case 'COWS_BULLS':
-        return 'Cows & Bulls';
+        return 'Bò & Bê';
       case 'MEMORY_MATCH':
-        return 'Memory Match';
+        return 'Lật Hình';
       case 'QUICK_MATH':
-        return 'Quick Math';
+        return 'Toán Nhanh';
       default:
         return gameType;
     }
@@ -489,7 +489,7 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Voted for ${_getGameName(gameType)}!'),
+            content: Text('Đã bầu cho ${_getGameName(gameType)}!'),
             backgroundColor: Colors.green,
           ),
         );
@@ -500,7 +500,7 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
           _votedGameType = null;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('Lỗi: $e'), backgroundColor: Colors.red),
         );
       }
     } finally {
