@@ -41,9 +41,8 @@ import 'providers/chatbot_provider.dart';
 import 'providers/peer_chat_provider.dart';
 import 'providers/friend_provider.dart';
 import 'providers/group_provider.dart';
-import 'providers/challenge_provider.dart';
-import 'services/socket_service.dart';
 import 'config/gaming_theme.dart';
+import 'screens/games/sudoku_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -89,6 +88,8 @@ class SmartStudentApp extends StatelessWidget {
               ..initialize();
           },
         ),
+        
+
 
         // Independent providers
         ChangeNotifierProvider(create: (_) => ThemeProvider()..initialize()),
@@ -100,19 +101,6 @@ class SmartStudentApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => PeerChatProvider()),
         ChangeNotifierProvider(create: (_) => FriendProvider()),
         ChangeNotifierProvider(create: (_) => GroupProvider()),
-        
-        // ChallengeProvider depends on ApiService and SocketService
-        ProxyProvider<SocketService>(
-          update: (context, _, __) => SocketService(),
-        ),
-        ChangeNotifierProxyProvider2<ApiService, SocketService, ChallengeProvider>(
-          create: (context) => ChallengeProvider(
-            context.read<ApiService>(),
-            context.read<SocketService>(),
-          ),
-          update: (context, apiService, socketService, previous) =>
-              previous ?? ChallengeProvider(apiService, socketService),
-        ),
       ],
       child: Consumer2<ThemeProvider, AuthProvider>(
         builder: (context, themeProvider, authProvider, child) {
@@ -148,6 +136,7 @@ class SmartStudentApp extends StatelessWidget {
               '/posts': (context) => const PostsScreen(), // Posts feed
               '/peer-chat': (context) => const PeerChatListScreen(),
               '/saved-posts': (context) => const SavedPostsScreen(),
+              '/sudoku_game': (context) => const SudokuScreen(),
             },
             onGenerateRoute: (settings) {
               // Handle user profile route with userId parameter
@@ -171,6 +160,7 @@ class SmartStudentApp extends StatelessWidget {
       ),
     );
   }
+
 
   /// Determine initial route based on login status and user role
   String _getInitialRoute(AuthProvider authProvider) {
