@@ -14,14 +14,7 @@ import '../../services/api_service.dart';
 /// Quick Math Game Screen
 /// Game giải toán nhanh với level tăng dần
 class QuickMathGameScreen extends StatefulWidget {
-  final String? challengeId;
-  final int? challengeGameNumber;
-  
-  const QuickMathGameScreen({
-    super.key,
-    this.challengeId,
-    this.challengeGameNumber,
-  });
+  const QuickMathGameScreen({Key? key}) : super(key: key);
 
   @override
   State<QuickMathGameScreen> createState() => _QuickMathGameScreenState();

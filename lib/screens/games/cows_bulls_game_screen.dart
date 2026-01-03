@@ -11,14 +11,7 @@ import '../../services/api_service.dart';
 import '../../utils/game_audio_service.dart';
 
 class CowsBullsGameScreen extends StatefulWidget {
-  final String? challengeId;
-  final int? challengeGameNumber;
-  
-  const CowsBullsGameScreen({
-    super.key,
-    this.challengeId,
-    this.challengeGameNumber,
-  });
+  const CowsBullsGameScreen({super.key});
 
   @override
   State<CowsBullsGameScreen> createState() => _CowsBullsGameScreenState();
@@ -223,40 +216,7 @@ class _CowsBullsGameScreenState extends State<CowsBullsGameScreen>
     // Calculate score
     final score = _calculateScore();
     
-    // Challenge mode - submit score to PK system
-    if (widget.challengeId != null && widget.challengeGameNumber != null) {
-      try {
-        await ApiService().submitChallengeScore(
-          challengeId: widget.challengeId!,
-          gameNumber: widget.challengeGameNumber!,
-          score: score,
-        );
-        
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Score $score submitted!'),
-              backgroundColor: Colors.green,
-              duration: const Duration(seconds: 1),
-            ),
-          );
-          await Future.delayed(const Duration(seconds: 2));
-          if (mounted) Navigator.pop(context);
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error: $e'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      }
-      return;
-    }
-    
-    // Normal mode
+    // Save score to Hive (local)
     final gameProvider = Provider.of<GameProvider>(context, listen: false);
     final newAchievements = await gameProvider.saveGameScore(
       gameType: 'cows_bulls',
