@@ -26,6 +26,8 @@ import 'screens/saved_posts_screen.dart';
 import 'screens/create_post_screen.dart';
 import 'screens/products_screen.dart';
 import 'screens/categories_screen.dart';
+import 'screens/challenge_list_screen.dart';
+import 'screens/create_challenge_screen.dart';
 import 'utils/database_service.dart';
 import 'services/api_service.dart';
 import 'services/api_client.dart';
@@ -80,30 +82,37 @@ class SmartStudentApp extends StatelessWidget {
               previous ?? PostProvider(postService),
         ),
 
-        // Providers that depend on other providers (e.g., AuthProvider depends on ApiService)
-        ChangeNotifierProxyProvider<ApiService, AuthProvider>(
-          create: (context) =>
-              AuthProvider(context.read<ApiService>())..initialize(),
-          update: (context, apiService, previousAuthProvider) {
-            return previousAuthProvider ?? AuthProvider(apiService)
-              ..initialize();
-          },
-        ),
-
-        // Independent providers
-        ChangeNotifierProvider(create: (_) => ThemeProvider()..initialize()),
+        // Providers
         ChangeNotifierProvider(create: (_) => AlarmProvider()),
         ChangeNotifierProvider(create: (_) => TranslationProvider()),
         ChangeNotifierProvider(create: (_) => SettingsProvider()),
-        ChangeNotifierProvider(create: (_) => GameProvider()..initialize()),
-        ChangeNotifierProvider(create: (_) => ChatbotProvider()),
-        ChangeNotifierProvider(create: (_) => PeerChatProvider()),
-        ChangeNotifierProvider(create: (_) => FriendProvider()),
+        ChangeNotifierProvider(create: (_) => GameProvider()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProxyProvider<ApiService, AuthProvider>(
+          create: (context) => AuthProvider(context.read<ApiService>()),
+          update: (context, apiService, previous) =>
+              previous ?? AuthProvider(apiService),
+        ),
+        ChangeNotifierProxyProvider<ApiService, ChatbotProvider>(
+          create: (context) => ChatbotProvider(context.read<ApiService>()),
+          update: (context, apiService, previous) =>
+              previous ?? ChatbotProvider(apiService),
+        ),
+        ChangeNotifierProxyProvider<ApiService, PeerChatProvider>(
+          create: (context) => PeerChatProvider(context.read<ApiService>()),
+          update: (context, apiService, previous) =>
+              previous ?? PeerChatProvider(apiService),
+        ),
+        ChangeNotifierProxyProvider<ApiService, FriendProvider>(
+          create: (context) => FriendProvider(context.read<ApiService>()),
+          update: (context, apiService, previous) =>
+              previous ?? FriendProvider(apiService),
+        ),
         ChangeNotifierProvider(create: (_) => GroupProvider()),
         
         // ChallengeProvider depends on ApiService and SocketService
-        ProxyProvider<SocketService>(
-          update: (context, _, __) => SocketService(),
+        Provider<SocketService>(
+          create: (_) => SocketService(),
         ),
         ChangeNotifierProxyProvider2<ApiService, SocketService, ChallengeProvider>(
           create: (context) => ChallengeProvider(
@@ -114,13 +123,6 @@ class SmartStudentApp extends StatelessWidget {
               previous ?? ChallengeProvider(apiService, socketService),
         ),
       ],
-      child: Consumer2<ThemeProvider, AuthProvider>(
-        builder: (context, themeProvider, authProvider, child) {
-          return MaterialApp(
-            title: 'MiniGameCenter - Gaming Hub',
-            debugShowCheckedModeBanner: false,
-            theme: GamingTheme.darkTheme, // Always use Gaming Hub theme
-            darkTheme: GamingTheme.darkTheme,
             themeMode: ThemeMode.dark, // Force dark mode for gaming aesthetic
             // Auto-navigate based on login status and role
             initialRoute: _getInitialRoute(authProvider),
@@ -143,6 +145,8 @@ class SmartStudentApp extends StatelessWidget {
               '/leaderboard': (context) => const LeaderboardScreen(),
               '/achievements': (context) => const AchievementScreen(),
               '/chatbot': (context) => const ChatbotScreen(),
+              '/challenge_list': (context) => const ChallengeListScreen(),
+              '/create_challenge': (context) => const CreateChallengeScreen(),
               '/search-friends': (context) => const SearchFriendsScreen(),
               '/friend-requests': (context) => const FriendRequestsScreen(),
               '/posts': (context) => const PostsScreen(), // Posts feed

@@ -237,7 +237,6 @@ class _GuessNumberGameScreenState extends State<GuessNumberGameScreen>
     final newAchievements = await gameProvider.saveGameScore(
       gameType: 'guess_number',
       score: score,
-      userId: authProvider.isLoggedIn ? authProvider.userId : null, // Pass userId if logged in
       attempts: _currentAttempt,
       difficulty: _difficulty,
       timeSpent: _thinkingTime,

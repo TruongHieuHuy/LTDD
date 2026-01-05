@@ -728,7 +728,7 @@ extension PostsAPI on ApiService {
     return _request(
       'createChallenge',
       request: () => http.post(
-        Uri.parse('$baseUrl/challenges'),
+        Uri.parse('${ApiService.baseUrl}/challenges'),
         headers: _headers,
         body: jsonEncode({
           'opponentId': opponentId,
@@ -745,7 +745,7 @@ extension PostsAPI on ApiService {
     return _request(
       'getPendingChallenges',
       request: () => http.get(
-        Uri.parse('$baseUrl/challenges/pending'),
+        Uri.parse('${ApiService.baseUrl}/challenges/pending'),
         headers: _headers,
       ),
       onSuccess: (data) => data['data'] as List,
@@ -758,7 +758,7 @@ extension PostsAPI on ApiService {
     return _request(
       'acceptChallenge',
       request: () => http.post(
-        Uri.parse('$baseUrl/challenges/$challengeId/accept'),
+        Uri.parse('${ApiService.baseUrl}/challenges/$challengeId/accept'),
         headers: _headers,
       ),
       onSuccess: (data) => data['data'],
@@ -771,7 +771,7 @@ extension PostsAPI on ApiService {
     return _request(
       'rejectChallenge',
       request: () => http.post(
-        Uri.parse('$baseUrl/challenges/$challengeId/reject'),
+        Uri.parse('${ApiService.baseUrl}/challenges/$challengeId/reject'),
         headers: _headers,
       ),
       onSuccess: (data) => data['data'],
@@ -788,7 +788,7 @@ extension PostsAPI on ApiService {
     return _request(
       'voteForGame',
       request: () => http.post(
-        Uri.parse('$baseUrl/challenges/$challengeId/vote'),
+        Uri.parse('${ApiService.baseUrl}/challenges/$challengeId/vote'),
         headers: _headers,
         body: jsonEncode({
           'gameNumber': gameNumber,
@@ -809,7 +809,7 @@ extension PostsAPI on ApiService {
     return _request(
       'submitChallengeScore',
       request: () => http.post(
-        Uri.parse('$baseUrl/challenges/$challengeId/submit-score'),
+        Uri.parse('${ApiService.baseUrl}/challenges/$challengeId/submit-score'),
         headers: _headers,
         body: jsonEncode({
           'gameNumber': gameNumber,
@@ -826,7 +826,7 @@ extension PostsAPI on ApiService {
     return _request(
       'getChallengeDetails',
       request: () => http.get(
-        Uri.parse('$baseUrl/challenges/$challengeId'),
+        Uri.parse('${ApiService.baseUrl}/challenges/$challengeId'),
         headers: _headers,
       ),
       onSuccess: (data) => data['data'],
@@ -839,7 +839,7 @@ extension PostsAPI on ApiService {
     return _request(
       'getActiveChallenges',
       request: () => http.get(
-        Uri.parse('$baseUrl/challenges/active'),
+        Uri.parse('${ApiService.baseUrl}/challenges/active'),
         headers: _headers,
       ),
       onSuccess: (data) => data['data'] as List,
@@ -855,7 +855,7 @@ extension PostsAPI on ApiService {
     return _request(
       'getChallengeHistory',
       request: () => http.get(
-        Uri.parse('$baseUrl/challenges/history?limit=$limit&offset=$offset'),
+        Uri.parse('${ApiService.baseUrl}/challenges/history?limit=$limit&offset=$offset'),
         headers: _headers,
       ),
       onSuccess: (data) => data['data'],
