@@ -11,14 +11,7 @@ import '../../services/api_service.dart';
 import '../../utils/game_audio_service.dart';
 
 class GuessNumberGameScreen extends StatefulWidget {
-  final String? challengeId;
-  final int? challengeGameNumber;
-  
-  const GuessNumberGameScreen({
-    super.key,
-    this.challengeId,
-    this.challengeGameNumber,
-  });
+  const GuessNumberGameScreen({super.key});
 
   @override
   State<GuessNumberGameScreen> createState() => _GuessNumberGameScreenState();
@@ -192,48 +185,8 @@ class _GuessNumberGameScreenState extends State<GuessNumberGameScreen>
     // Calculate score
     final score = _calculateScore();
     
-    // Challenge mode - submit score to PK system
-    if (widget.challengeId != null && widget.challengeGameNumber != null) {
-      try {
-        await ApiService().submitChallengeScore(
-          challengeId: widget.challengeId!,
-          gameNumber: widget.challengeGameNumber!,
-          score: score,
-        );
-        
-        if (mounted) {
-          // Show brief success message then navigate back
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Score $score submitted to challenge!'),
-              backgroundColor: Colors.green,
-              duration: const Duration(seconds: 1),
-            ),
-          );
-          
-          // Wait a moment then go back to challenge detail
-          await Future.delayed(const Duration(seconds: 2));
-          if (mounted) {
-            Navigator.pop(context);
-          }
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error submitting score: $e'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      }
-      return; // Don't save to normal leaderboard in challenge mode
-    }
-
-    // Normal mode - save to leaderboard and check achievements
-    final gameProvider = context.read<GameProvider>();
-    final authProvider = context.read<AuthProvider>();
-
+    // Save score to Hive (local) & check achievements
+    final gameProvider = Provider.of<GameProvider>(context, listen: false);
     final newAchievements = await gameProvider.saveGameScore(
       gameType: 'guess_number',
       score: score,
@@ -243,6 +196,7 @@ class _GuessNumberGameScreenState extends State<GuessNumberGameScreen>
     );
 
     // Save score to backend if logged in
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
     if (authProvider.isLoggedIn && mounted) {
       try {
         await ApiService().saveScore(

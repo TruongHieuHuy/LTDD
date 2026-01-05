@@ -95,13 +95,13 @@ class SimpleHomeScreen extends StatelessWidget {
                     route: null,
                     comingSoon: true,
                   ),
-                  _buildGameCard(
+  _buildGameCard(
                     context,
                     title: 'Sudoku',
                     icon: '🔢',
                     color: GamingTheme.epicPurple,
-                    route: null,
-                    comingSoon: true,
+                    route: '/sudoku_game', 
+                    isNew: true, 
                   ),
                   _buildGameCard(
                     context,

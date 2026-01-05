@@ -16,6 +16,7 @@ import '../models/message_data.dart';
 import '../models/conversation_data.dart';
 import '../models/post_data.dart';
 import '../models/comment_data.dart';
+import '../models/sudoku_model.dart';
 
 /// API Service để giao tiếp với Backend
 class ApiService {
@@ -456,6 +457,95 @@ extension MessageAPI on ApiService {
 }
 
 
+extension SudokuAPI on ApiService {
+  Future<SudokuGame> generateSudoku({
+    required String difficulty, // 'easy', 'medium', 'hard'
+  }) =>
+      _request(
+        'GenerateSudoku',
+        request: () => http.post(
+          Uri.parse('${ApiService.baseUrl}/api/sudoku/generate'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          }, 
+          body: jsonEncode({'difficulty': difficulty}),
+        ),
+        onSuccess: (data) => SudokuGame.fromJson(data['data']),
+        defaultErrorMessage: 'Failed to generate Sudoku',
+      );
+
+  /// Validate Sudoku solution
+  Future<Map<String, dynamic>> validateSudoku({
+    required List<int> currentState,
+    required List<int> solution,
+  }) =>
+      _request(
+        'ValidateSudoku',
+        request: () => http.post(
+          Uri.parse('${ApiService.baseUrl}/api/sudoku/validate'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: jsonEncode({
+            'currentState': currentState,
+            'solution': solution,
+          }),
+        ),
+        onSuccess: (data) => data['data'] as Map<String, dynamic>,
+        defaultErrorMessage: 'Failed to validate Sudoku',
+      );
+
+  /// Get hint for next move
+  Future<Map<String, dynamic>> getSudokuHint({
+    required List<int> currentState,
+    required List<int> solution,
+  }) =>
+      _request(
+        'GetSudokuHint',
+        request: () => http.post(
+          Uri.parse('${ApiService.baseUrl}/api/sudoku/hint'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: jsonEncode({
+            'currentState': currentState,
+            'solution': solution,
+          }),
+        ),
+        onSuccess: (data) => data['data'] as Map<String, dynamic>,
+        defaultErrorMessage: 'Failed to get hint',
+      );
+
+  /// Calculate score (optional - có thể tính ở FE hoặc BE)
+  Future<int> calculateSudokuScore({
+    required String difficulty,
+    required int timeInSeconds,
+    required int hintsUsed,
+    required int mistakes,
+  }) =>
+      _request(
+        'CalculateSudokuScore',
+        request: () => http.post(
+          Uri.parse('${ApiService.baseUrl}/api/sudoku/calculate-score'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: jsonEncode({
+            'difficulty': difficulty,
+            'timeInSeconds': timeInSeconds,
+            'hintsUsed': hintsUsed,
+            'mistakes': mistakes,
+          }),
+        ),
+        onSuccess: (data) => data['data']['score'] as int,
+        defaultErrorMessage: 'Failed to calculate score',
+      );
+}
+
 // ============ POSTS API EXTENSION ============
 
 extension PostsAPI on ApiService {
@@ -718,7 +808,6 @@ extension PostsAPI on ApiService {
       );
   }
 
-  // ==================== CHALLENGE (PK) APIS ====================
   
   /// Create a new challenge
   Future<Map<String, dynamic>> createChallenge({
@@ -863,3 +952,4 @@ extension PostsAPI on ApiService {
     );
   }
 }
+

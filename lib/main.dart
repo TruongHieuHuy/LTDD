@@ -43,9 +43,8 @@ import 'providers/chatbot_provider.dart';
 import 'providers/peer_chat_provider.dart';
 import 'providers/friend_provider.dart';
 import 'providers/group_provider.dart';
-import 'providers/challenge_provider.dart';
-import 'services/socket_service.dart';
 import 'config/gaming_theme.dart';
+import 'screens/games/sudoku_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -82,6 +81,20 @@ class SmartStudentApp extends StatelessWidget {
               previous ?? PostProvider(postService),
         ),
 
+        // Providers that depend on other providers (e.g., AuthProvider depends on ApiService)
+        ChangeNotifierProxyProvider<ApiService, AuthProvider>(
+          create: (context) =>
+              AuthProvider(context.read<ApiService>())..initialize(),
+          update: (context, apiService, previousAuthProvider) {
+            return previousAuthProvider ?? AuthProvider(apiService)
+              ..initialize();
+          },
+        ),
+        
+
+
+        // Independent providers
+        ChangeNotifierProvider(create: (_) => ThemeProvider()..initialize()),
         // Providers
         ChangeNotifierProvider(create: (_) => AlarmProvider()),
         ChangeNotifierProvider(create: (_) => TranslationProvider()),
@@ -152,6 +165,7 @@ class SmartStudentApp extends StatelessWidget {
               '/posts': (context) => const PostsScreen(), // Posts feed
               '/peer-chat': (context) => const PeerChatListScreen(),
               '/saved-posts': (context) => const SavedPostsScreen(),
+              '/sudoku_game': (context) => const SudokuScreen(),
             },
             onGenerateRoute: (settings) {
               // Handle user profile route with userId parameter
@@ -175,6 +189,7 @@ class SmartStudentApp extends StatelessWidget {
       ),
     );
   }
+
 
   /// Determine initial route based on login status and user role
   String _getInitialRoute(AuthProvider authProvider) {
