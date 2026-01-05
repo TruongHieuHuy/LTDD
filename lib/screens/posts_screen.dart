@@ -53,14 +53,10 @@ class _PostsScreenState extends State<PostsScreen>
   ];
 
   final List<Map<String, String>> _categories = [
-    {'value': 'guess_number', 'label': '\u0110o\u00e1n S\u1ed1'},
-    {'value': 'cows_bulls', 'label': 'B\u00f2 \u0026 B\u00ea'},
-    {'value': 'memory_match', 'label': 'Memory'},
-    {'value': 'quick_math', 'label': 'Quick Math'},
     {'value': 'rubik', 'label': 'Rubik'},
     {'value': 'sudoku', 'label': 'Sudoku'},
-    {'value': 'puzzle', 'label': 'X\u1ebfp h\u00ecnh'},
-    {'value': 'caro', 'label': 'C\u1edd Caro'},
+    {'value': 'puzzle', 'label': 'Xếp hình'},
+    {'value': 'caro', 'label': 'Cờ Caro'},
   ];
 
   @override
@@ -431,7 +427,6 @@ class _PostsScreenState extends State<PostsScreen>
     }
   }
 
-  // Reaction picker removed - backend only supports like/unlike
   void _showReactionPicker(PostData post, BuildContext context) {
     showDialog(
       context: context,
@@ -753,9 +748,10 @@ class _PostsScreenState extends State<PostsScreen>
                                   _showEditPostDialog(_allPosts[index]),
                               onFollow: () => _handleFollow(_allPosts[index]),
                               onShare: () => _handleShare(_allPosts[index]),
-                              onLongPressLike: () => _handleLike(
+                              onLongPressLike: () => _showReactionPicker(
                                 _allPosts[index],
-                              ), // Changed to _handleLike
+                                context,
+                              ),
                               onAvatarTap: () {
                                 Navigator.pushNamed(
                                   context,
@@ -801,7 +797,7 @@ class _PostsScreenState extends State<PostsScreen>
                         onFollow: () => _handleFollow(_myPosts[index]),
                         onShare: () => _handleShare(_myPosts[index]),
                         onLongPressLike: () =>
-                            _handleLike(_myPosts[index]), // Changed to _handleLike
+                            _showReactionPicker(_myPosts[index], context),
                         onAvatarTap: () {
                           Navigator.pushNamed(
                             context,
@@ -939,7 +935,7 @@ class _PostCard extends StatelessWidget {
                                 vertical: 2,
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.blue.withOpacity(0.1),
+                                color: Colors.blue.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(10),
                                 border: Border.all(
                                   color: Colors.blue,
@@ -1247,14 +1243,10 @@ class _CreatePostDialogState extends State<_CreatePostDialog> {
   File? _selectedImage;
 
   final List<Map<String, String>> _categories = [
-    {'value': 'guess_number', 'label': '\u0110o\u00e1n S\u1ed1'},
-    {'value': 'cows_bulls', 'label': 'B\u00f2 \u0026 B\u00ea'},
-    {'value': 'memory_match', 'label': 'Memory'},
-    {'value': 'quick_math', 'label': 'Quick Math'},
     {'value': 'rubik', 'label': 'Rubik'},
     {'value': 'sudoku', 'label': 'Sudoku'},
-    {'value': 'puzzle', 'label': 'X\u1ebfp h\u00ecnh'},
-    {'value': 'caro', 'label': 'C\u1edd Caro'},
+    {'value': 'puzzle', 'label': 'Xếp hình'},
+    {'value': 'caro', 'label': 'Cờ Caro'},
   ];
 
   @override
@@ -2141,7 +2133,16 @@ class _ShareDialogState extends State<_ShareDialog> {
     setState(() => _isLoading = true);
 
     try {
-      // Only increment share count - don't create new post to avoid rate limit
+      // Create a new post that references the original
+      await ApiService().createPost(
+        content: _contentController.text.trim().isEmpty
+            ? 'Đã chia sẻ bài viết của ${widget.post.user.username}'
+            : _contentController.text.trim(),
+        visibility: _visibility,
+        imageUrl: widget.post.imageUrl,
+      );
+
+      // Increment share count on original post
       await ApiService().sharePost(widget.post.id);
 
       if (mounted) {
