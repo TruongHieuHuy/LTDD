@@ -148,6 +148,15 @@ class SimpleHomeScreen extends StatelessWidget {
                 delegate: SliverChildListDelegate([
                   _buildUtilityCard(
                     context,
+                    icon: Icons.sports_esports,
+                    title: 'PK Challenge',
+                    subtitle: 'Thách đấu bạn bè 1v1 🔥',
+                    color: Colors.red,
+                    route: '/challenge_list',
+                  ),
+                  const SizedBox(height: 12),
+                  _buildUtilityCard(
+                    context,
                     icon: Icons.leaderboard,
                     title: 'Bảng xếp hạng',
                     subtitle: 'Xếp hạng người chơi hàng đầu',

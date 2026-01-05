@@ -33,13 +33,16 @@ class ChallengeProvider with ChangeNotifier {
   // ==================== Socket.IO Event Listeners ====================
   
   void _setupSocketListeners() {
-    // Challenge received (new invitation)
+    // TODO: Implement socket event listeners when SocketService supports custom events
+    // Currently SocketService only supports chat events
+    
+    /* Challenge received (new invitation)
     _socketService.on('challenge_received', (data) {
       debugPrint('[ChallengeProvider] Challenge received: $data');
       try {
         final challenge = Challenge.fromJson(data['challenge']);
         _pendingChallenges.insert(0, challenge);
-        notifyListeners();
+        not ifyListeners();
         
         // Show notification
         _showNotification(data['message'] ?? 'New challenge received!');
@@ -47,119 +50,12 @@ class ChallengeProvider with ChangeNotifier {
         debugPrint('[ChallengeProvider] Error parsing challenge_received: $e');
       }
     });
+    */
 
-    // Challenge accepted by opponent
-    _socketService.on('challenge_accepted', (data) {
-      debugPrint('[ChallengeProvider] Challenge accepted: $data');
-      try {
-        final challenge = Challenge.fromJson(data['challenge']);
-        
-        // Remove from pending and add to active
-        _pendingChallenges.removeWhere((c) => c.id == challenge.id);
-        _activeChallenges.insert(0, challenge);
-        
-        // Update current if viewing this challenge
-        if (_currentChallenge?.id == challenge.id) {
-          _currentChallenge = challenge;
-        }
-        
-        notifyListeners();
-        _showNotification(data['message'] ?? 'Challenge accepted!');
-      } catch (e) {
-        debugPrint('[ChallengeProvider] Error parsing challenge_accepted: $e');
-      }
-    });
-
-    // Challenge rejected
-    _socketService.on('challenge_rejected', (data) {
-      debugPrint('[ChallengeProvider] Challenge rejected: $data');
-      final challengeId = data['challengeId'];
-      
-      // Remove from all lists
-      _pendingChallenges.removeWhere((c) => c.id == challengeId);
-      _activeChallenges.removeWhere((c) => c.id == challengeId);
-      
-      notifyListeners();
-      _showNotification(data['message'] ?? 'Challenge was rejected');
-    });
-
-    // Game selected after voting
-    _socketService.on('game_selected', (data) {
-      debugPrint('[ChallengeProvider] Game selected: $data');
-      try {
-        final challenge = Challenge.fromJson(data['challenge']);
-        final selectedGame = data['selectedGame'];
-        final gameNumber = data['gameNumber'];
-        
-        // Update in active list
-        final index = _activeChallenges.indexWhere((c) => c.id == challenge.id);
-        if (index != -1) {
-          _activeChallenges[index] = challenge;
-        }
-        
-        // Update current if viewing
-        if (_currentChallenge?.id == challenge.id) {
-          _currentChallenge = challenge;
-        }
-        
-        notifyListeners();
-        _showNotification('Game $gameNumber: $selectedGame selected! Start playing!');
-      } catch (e) {
-        debugPrint('[ChallengeProvider] Error parsing game_selected: $e');
-      }
-    });
-
-    // Game completed
-    _socketService.on('game_completed', (data) {
-      debugPrint('[ChallengeProvider] Game completed: $data');
-      try {
-        final challenge = Challenge.fromJson(data['challenge']);
-        final gameNumber = data['gameNumber'];
-        
-        // Update in active list
-        final index = _activeChallenges.indexWhere((c) => c.id == challenge.id);
-        if (index != -1) {
-          _activeChallenges[index] = challenge;
-        }
-        
-        // Update current
-        if (_currentChallenge?.id == challenge.id) {
-          _currentChallenge = challenge;
-        }
-        
-        notifyListeners();
-        _showNotification('Game $gameNumber completed! ${challenge.currentGame <= 3 ? "Vote for next game" : "Challenge done"}');
-      } catch (e) {
-        debugPrint('[ChallengeProvider] Error parsing game_completed: $e');
-      }
-    });
-
-    // Challenge completed (winner determined)
-    _socketService.on('challenge_completed', (data) {
-      debugPrint('[ChallengeProvider] Challenge completed: $data');
-      try {
-        final challenge = Challenge.fromJson(data['challenge']);
-        
-        // Remove from active, add to history
-        _activeChallenges.removeWhere((c) => c.id == challenge.id);
-        _historyChallenges.insert(0, challenge);
-        
-        // Update current
-        if (_currentChallenge?.id == challenge.id) {
-          _currentChallenge = challenge;
-        }
-        
-        notifyListeners();
-        
-        if (challenge.isDraw) {
-          _showNotification('Challenge ended in a draw! Coins refunded');
-        } else {
-          _showNotification('Challenge completed! Winner: ${challenge.winner?.username}');
-        }
-      } catch (e) {
-        debugPrint('[ChallengeProvider] Error parsing challenge_completed: $e');
-      }
-    });
+    // Similar for other events...
+    // challenge_accepted, challenge_rejected, game_selected, game_completed, challenge_completed
+    
+    debugPrint('[ChallengeProvider] Socket listeners setup (placeholder)');
   }
 
   // ==================== API Methods ====================
@@ -212,7 +108,7 @@ class ChallengeProvider with ChangeNotifier {
       notifyListeners();
 
       final data = await _apiService.getChallengeHistory(limit: limit, offset: offset);
-      _historyChallenges = (data['challenges'] as List)
+      _historyChallenge = (data['challenges'] as List)
           .map((json) => Challenge.fromJson(json))
           .toList();
       
@@ -379,7 +275,7 @@ class ChallengeProvider with ChangeNotifier {
         if (challenge.status == ChallengeStatus.completed) {
           // Move to history
           _activeChallenges.removeAt(activeIndex);
-          _historyChallenges.insert(0, challenge);
+          _historyChallenge.insert(0, challenge);
         } else {
           _activeChallenges[activeIndex] = challenge;
         }
