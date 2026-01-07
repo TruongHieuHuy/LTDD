@@ -95,7 +95,7 @@ class SimpleHomeScreen extends StatelessWidget {
                     route: null,
                     comingSoon: true,
                   ),
-  _buildGameCard(
+                  _buildGameCard(
                     context,
                     title: 'Sudoku',
                     icon: '🔢',
@@ -116,8 +116,8 @@ class SimpleHomeScreen extends StatelessWidget {
                     title: 'Puzzle',
                     icon: '🧩',
                     color: GamingTheme.mediumOrange,
-                    route: null,
-                    comingSoon: true,
+                    route: '/puzzle_game', // ← MỞ KHÓA PUZZLE
+                    isNew: true, // ← THÊM BADGE NEW
                   ),
                 ]),
               ),
@@ -146,15 +146,6 @@ class SimpleHomeScreen extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 20),
               sliver: SliverList(
                 delegate: SliverChildListDelegate([
-                  _buildUtilityCard(
-                    context,
-                    icon: Icons.sports_esports,
-                    title: 'PK Challenge',
-                    subtitle: 'Thách đấu bạn bè 1v1 🔥',
-                    color: Colors.red,
-                    route: '/challenge_list',
-                  ),
-                  const SizedBox(height: 12),
                   _buildUtilityCard(
                     context,
                     icon: Icons.leaderboard,
