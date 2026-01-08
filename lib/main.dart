@@ -23,7 +23,6 @@ import 'screens/friend_requests_screen.dart';
 import 'screens/peer_chat_list_screen.dart';
 import 'screens/user_profile_screen.dart';
 import 'screens/saved_posts_screen.dart';
-import 'screens/create_post_screen.dart';
 import 'screens/products_screen.dart';
 import 'screens/categories_screen.dart';
 import 'screens/challenge_list_screen.dart';
@@ -43,8 +42,11 @@ import 'providers/chatbot_provider.dart';
 import 'providers/peer_chat_provider.dart';
 import 'providers/friend_provider.dart';
 import 'providers/group_provider.dart';
+import 'providers/challenge_provider.dart';
+import 'services/socket_service.dart';
 import 'config/gaming_theme.dart';
 import 'screens/games/sudoku_screen.dart';
+import 'screens/games/rubik_cube_game_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -90,8 +92,6 @@ class SmartStudentApp extends StatelessWidget {
               ..initialize();
           },
         ),
-        
-
 
         // Independent providers
         ChangeNotifierProvider(create: (_) => ThemeProvider()..initialize()),
@@ -106,28 +106,18 @@ class SmartStudentApp extends StatelessWidget {
           update: (context, apiService, previous) =>
               previous ?? AuthProvider(apiService),
         ),
-        ChangeNotifierProxyProvider<ApiService, ChatbotProvider>(
-          create: (context) => ChatbotProvider(context.read<ApiService>()),
-          update: (context, apiService, previous) =>
-              previous ?? ChatbotProvider(apiService),
-        ),
-        ChangeNotifierProxyProvider<ApiService, PeerChatProvider>(
-          create: (context) => PeerChatProvider(context.read<ApiService>()),
-          update: (context, apiService, previous) =>
-              previous ?? PeerChatProvider(apiService),
-        ),
-        ChangeNotifierProxyProvider<ApiService, FriendProvider>(
-          create: (context) => FriendProvider(context.read<ApiService>()),
-          update: (context, apiService, previous) =>
-              previous ?? FriendProvider(apiService),
-        ),
+        ChangeNotifierProvider(create: (_) => ChatbotProvider()),
+        ChangeNotifierProvider(create: (_) => PeerChatProvider()),
+        ChangeNotifierProvider(create: (_) => FriendProvider()),
         ChangeNotifierProvider(create: (_) => GroupProvider()),
-        
+
         // ChallengeProvider depends on ApiService and SocketService
-        Provider<SocketService>(
-          create: (_) => SocketService(),
-        ),
-        ChangeNotifierProxyProvider2<ApiService, SocketService, ChallengeProvider>(
+        Provider<SocketService>(create: (_) => SocketService()),
+        ChangeNotifierProxyProvider2<
+          ApiService,
+          SocketService,
+          ChallengeProvider
+        >(
           create: (context) => ChallengeProvider(
             context.read<ApiService>(),
             context.read<SocketService>(),
@@ -136,6 +126,10 @@ class SmartStudentApp extends StatelessWidget {
               previous ?? ChallengeProvider(apiService, socketService),
         ),
       ],
+      child: Consumer<AuthProvider>(
+        builder: (context, authProvider, _) {
+          return MaterialApp(
+            darkTheme: GamingTheme.darkTheme,
             themeMode: ThemeMode.dark, // Force dark mode for gaming aesthetic
             // Auto-navigate based on login status and role
             initialRoute: _getInitialRoute(authProvider),
@@ -166,6 +160,7 @@ class SmartStudentApp extends StatelessWidget {
               '/peer-chat': (context) => const PeerChatListScreen(),
               '/saved-posts': (context) => const SavedPostsScreen(),
               '/sudoku_game': (context) => const SudokuScreen(),
+              '/rubik_cube_game': (context) => const RubikCubeGameScreen(),
             },
             onGenerateRoute: (settings) {
               // Handle user profile route with userId parameter
@@ -190,12 +185,12 @@ class SmartStudentApp extends StatelessWidget {
     );
   }
 
-
   /// Determine initial route based on login status and user role
   String _getInitialRoute(AuthProvider authProvider) {
-    if (!authProvider.isLoggedIn) {
-      return '/login';
-    }
+    // BYPASS LOGIN - Always go to modular screen
+    // if (!authProvider.isLoggedIn) {
+    //   return '/login';
+    // }
 
     // Check user role - CRITICAL: Must check role from both sources
     final role = authProvider.userRole;
