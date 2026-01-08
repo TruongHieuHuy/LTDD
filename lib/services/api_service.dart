@@ -16,6 +16,7 @@ import '../models/message_data.dart';
 import '../models/conversation_data.dart';
 import '../models/post_data.dart';
 import '../models/comment_data.dart';
+import '../models/sudoku_model.dart';
 
 /// API Service để giao tiếp với Backend
 class ApiService {
@@ -456,6 +457,95 @@ extension MessageAPI on ApiService {
 }
 
 
+extension SudokuAPI on ApiService {
+  Future<SudokuGame> generateSudoku({
+    required String difficulty, // 'easy', 'medium', 'hard'
+  }) =>
+      _request(
+        'GenerateSudoku',
+        request: () => http.post(
+          Uri.parse('${ApiService.baseUrl}/api/sudoku/generate'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          }, 
+          body: jsonEncode({'difficulty': difficulty}),
+        ),
+        onSuccess: (data) => SudokuGame.fromJson(data['data']),
+        defaultErrorMessage: 'Failed to generate Sudoku',
+      );
+
+  /// Validate Sudoku solution
+  Future<Map<String, dynamic>> validateSudoku({
+    required List<int> currentState,
+    required List<int> solution,
+  }) =>
+      _request(
+        'ValidateSudoku',
+        request: () => http.post(
+          Uri.parse('${ApiService.baseUrl}/api/sudoku/validate'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: jsonEncode({
+            'currentState': currentState,
+            'solution': solution,
+          }),
+        ),
+        onSuccess: (data) => data['data'] as Map<String, dynamic>,
+        defaultErrorMessage: 'Failed to validate Sudoku',
+      );
+
+  /// Get hint for next move
+  Future<Map<String, dynamic>> getSudokuHint({
+    required List<int> currentState,
+    required List<int> solution,
+  }) =>
+      _request(
+        'GetSudokuHint',
+        request: () => http.post(
+          Uri.parse('${ApiService.baseUrl}/api/sudoku/hint'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: jsonEncode({
+            'currentState': currentState,
+            'solution': solution,
+          }),
+        ),
+        onSuccess: (data) => data['data'] as Map<String, dynamic>,
+        defaultErrorMessage: 'Failed to get hint',
+      );
+
+  /// Calculate score (optional - có thể tính ở FE hoặc BE)
+  Future<int> calculateSudokuScore({
+    required String difficulty,
+    required int timeInSeconds,
+    required int hintsUsed,
+    required int mistakes,
+  }) =>
+      _request(
+        'CalculateSudokuScore',
+        request: () => http.post(
+          Uri.parse('${ApiService.baseUrl}/api/sudoku/calculate-score'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: jsonEncode({
+            'difficulty': difficulty,
+            'timeInSeconds': timeInSeconds,
+            'hintsUsed': hintsUsed,
+            'mistakes': mistakes,
+          }),
+        ),
+        onSuccess: (data) => data['data']['score'] as int,
+        defaultErrorMessage: 'Failed to calculate score',
+      );
+}
+
 // ============ POSTS API EXTENSION ============
 
 extension PostsAPI on ApiService {
@@ -717,4 +807,149 @@ extension PostsAPI on ApiService {
         defaultErrorMessage: 'Failed to get achievements',
       );
   }
+
+  
+  /// Create a new challenge
+  Future<Map<String, dynamic>> createChallenge({
+    required String opponentId,
+    int betAmount = 100,
+  }) async {
+    return _request(
+      'createChallenge',
+      request: () => http.post(
+        Uri.parse('${ApiService.baseUrl}/challenges'),
+        headers: _headers,
+        body: jsonEncode({
+          'opponentId': opponentId,
+          'betAmount': betAmount,
+        }),
+      ),
+      onSuccess: (data) => data['data'],
+      defaultErrorMessage: 'Failed to create challenge',
+    );
+  }
+
+  /// Get pending challenge invitations
+  Future<List<dynamic>> getPendingChallenges() async {
+    return _request(
+      'getPendingChallenges',
+      request: () => http.get(
+        Uri.parse('${ApiService.baseUrl}/challenges/pending'),
+        headers: _headers,
+      ),
+      onSuccess: (data) => data['data'] as List,
+      defaultErrorMessage: 'Failed to get pending challenges',
+    );
+  }
+
+  /// Accept a challenge
+  Future<Map<String, dynamic>> acceptChallenge(String challengeId) async {
+    return _request(
+      'acceptChallenge',
+      request: () => http.post(
+        Uri.parse('${ApiService.baseUrl}/challenges/$challengeId/accept'),
+        headers: _headers,
+      ),
+      onSuccess: (data) => data['data'],
+      defaultErrorMessage: 'Failed to accept challenge',
+    );
+  }
+
+  /// Reject a challenge
+  Future<Map<String, dynamic>> rejectChallenge(String challengeId) async {
+    return _request(
+      'rejectChallenge',
+      request: () => http.post(
+        Uri.parse('${ApiService.baseUrl}/challenges/$challengeId/reject'),
+        headers: _headers,
+      ),
+      onSuccess: (data) => data['data'],
+      defaultErrorMessage: 'Failed to reject challenge',
+    );
+  }
+
+  /// Vote for a game
+  Future<Map<String, dynamic>> voteForGame({
+    required String challengeId,
+    required int gameNumber,
+    required String gameType,
+  }) async {
+    return _request(
+      'voteForGame',
+      request: () => http.post(
+        Uri.parse('${ApiService.baseUrl}/challenges/$challengeId/vote'),
+        headers: _headers,
+        body: jsonEncode({
+          'gameNumber': gameNumber,
+          'gameType': gameType,
+        }),
+      ),
+      onSuccess: (data) => data['data'],
+      defaultErrorMessage: 'Failed to vote for game',
+    );
+  }
+
+  /// Submit score for a game
+  Future<Map<String, dynamic>> submitChallengeScore({
+    required String challengeId,
+    required int gameNumber,
+    required int score,
+  }) async {
+    return _request(
+      'submitChallengeScore',
+      request: () => http.post(
+        Uri.parse('${ApiService.baseUrl}/challenges/$challengeId/submit-score'),
+        headers: _headers,
+        body: jsonEncode({
+          'gameNumber': gameNumber,
+          'score': score,
+        }),
+      ),
+      onSuccess: (data) => data['data'],
+      defaultErrorMessage: 'Failed to submit score',
+    );
+  }
+
+  /// Get challenge details
+  Future<Map<String, dynamic>> getChallengeDetails(String challengeId) async {
+    return _request(
+      'getChallengeDetails',
+      request: () => http.get(
+        Uri.parse('${ApiService.baseUrl}/challenges/$challengeId'),
+        headers: _headers,
+      ),
+      onSuccess: (data) => data['data'],
+      defaultErrorMessage: 'Failed to get challenge details',
+    );
+  }
+
+  /// Get active challenges
+  Future<List<dynamic>> getActiveChallenges() async {
+    return _request(
+      'getActiveChallenges',
+      request: () => http.get(
+        Uri.parse('${ApiService.baseUrl}/challenges/active'),
+        headers: _headers,
+      ),
+      onSuccess: (data) => data['data'] as List,
+      defaultErrorMessage: 'Failed to get active challenges',
+    );
+  }
+
+  /// Get challenge history
+  Future<Map<String, dynamic>> getChallengeHistory({
+    int limit = 20,
+    int offset = 0,
+  }) async {
+    return _request(
+      'getChallengeHistory',
+      request: () => http.get(
+        Uri.parse('${ApiService.baseUrl}/challenges/history?limit=$limit&offset=$offset'),
+        headers: _headers,
+      ),
+      onSuccess: (data) => data['data'],
+      defaultErrorMessage: 'Failed to get challenge history',
+    );
+  }
 }
+

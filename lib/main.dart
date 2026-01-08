@@ -23,7 +23,7 @@ import 'screens/friend_requests_screen.dart';
 import 'screens/peer_chat_list_screen.dart';
 import 'screens/user_profile_screen.dart';
 import 'screens/saved_posts_screen.dart';
-`import 'screens/products_screen.dart';
+import 'screens/products_screen.dart';
 import 'screens/categories_screen.dart';
 import 'screens/challenge_list_screen.dart';
 import 'screens/create_challenge_screen.dart';
@@ -92,8 +92,6 @@ class SmartStudentApp extends StatelessWidget {
               ..initialize();
           },
         ),
-        
-
 
         // Independent providers
         ChangeNotifierProvider(create: (_) => ThemeProvider()..initialize()),
@@ -112,12 +110,14 @@ class SmartStudentApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => PeerChatProvider()),
         ChangeNotifierProvider(create: (_) => FriendProvider()),
         ChangeNotifierProvider(create: (_) => GroupProvider()),
-        
+
         // ChallengeProvider depends on ApiService and SocketService
-        Provider<SocketService>(
-          create: (_) => SocketService(),
-        ),
-        ChangeNotifierProxyProvider2<ApiService, SocketService, ChallengeProvider>(
+        Provider<SocketService>(create: (_) => SocketService()),
+        ChangeNotifierProxyProvider2<
+          ApiService,
+          SocketService,
+          ChallengeProvider
+        >(
           create: (context) => ChallengeProvider(
             context.read<ApiService>(),
             context.read<SocketService>(),
@@ -184,7 +184,6 @@ class SmartStudentApp extends StatelessWidget {
       ),
     );
   }
-
 
   /// Determine initial route based on login status and user role
   String _getInitialRoute(AuthProvider authProvider) {

@@ -20,6 +20,7 @@ import '../screens/social_test_screen.dart';
 import '../screens/posts_screen.dart';
 import '../screens/products_screen.dart';
 import '../screens/categories_screen.dart';
+import '../screens/challenge_list_screen.dart';
 
 /// Configuration for modular navigation system
 class NavigationConfig {
@@ -147,6 +148,18 @@ class GamesHub extends StatelessWidget {
               context,
               MaterialPageRoute(
                 builder: (context) => const AchievementScreen(),
+              ),
+            ),
+          ),
+          _buildGameCard(
+            context: context,
+            title: 'PK Challenge',
+            icon: Icons.sports_esports,
+            color: Colors.red,
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const ChallengeListScreen(),
               ),
             ),
           ),
