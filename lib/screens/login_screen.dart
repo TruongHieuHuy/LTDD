@@ -346,6 +346,21 @@ class _LoginScreenState extends State<LoginScreen>
                         width: double.infinity,
                         icon: _isLoginMode ? Icons.login : Icons.app_registration,
                       ),
+                      const SizedBox(height: GamingTheme.m),
+
+                      // Guest Mode Button
+                      if (_isLoginMode)
+                        GamingButton(
+                          text: 'CHƠI THỬ',
+                          style: GamingButtonStyle.secondary,
+                          onPressed: () {
+                            Navigator.of(
+                              context,
+                            ).pushNamedAndRemoveUntil('/modular', (route) => false);
+                          },
+                          width: double.infinity,
+                          icon: Icons.gamepad,
+                        ),
                       const SizedBox(height: GamingTheme.l),
 
                       // Info Box

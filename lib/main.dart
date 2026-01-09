@@ -181,10 +181,10 @@ class SmartStudentApp extends StatelessWidget {
 
   /// Determine initial route based on login status and user role
   String _getInitialRoute(AuthProvider authProvider) {
-    // BYPASS LOGIN - Always go to modular screen
-    // if (!authProvider.isLoggedIn) {
-    //   return '/login';
-    // }
+    // Check login status
+    if (!authProvider.isLoggedIn) {
+      return '/login';
+    }
 
     // Check user role - CRITICAL: Must check role from both sources
     final role = authProvider.userRole;
