@@ -247,13 +247,18 @@ class AuthProvider with ChangeNotifier {
   /// Set clearSavedCredentials to true when user manually logs out
   Future<void> logout({bool clearSavedCredentials = true}) async {
     try {
+      // Check if we should keep the email based on "Remember Me" checks
+      final bool keepEmail = _currentAuth?.rememberMe ?? false;
+
       _currentAuth = null;
       _userProfile = null;
       await _box.delete(_authKey);
       await _box.delete(_userProfileKey);
       
-      // Only clear saved email if user explicitly logs out
-      if (clearSavedCredentials) {
+      // Only clear saved email if:
+      // 1. User is explicitly logging out (clearSavedCredentials is true)
+      // 2. AND User did NOT check "Remember Me"
+      if (clearSavedCredentials && !keepEmail) {
         _savedEmail = null;
         await _box.delete(_savedEmailKey);
       }
