@@ -15,12 +15,16 @@ class AdminDashboardScreen extends StatelessWidget {
       backgroundColor: GamingTheme.primaryDark,
       appBar: AppBar(
         title: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Icon(Icons.admin_panel_settings, color: Colors.amber),
             const SizedBox(width: 8),
-            const Text(
-              'Admin Dashboard',
-              style: TextStyle(fontWeight: FontWeight.bold),
+            Flexible(
+              child: Text(
+                'Admin Dashboard',
+                style: TextStyle(fontWeight: FontWeight.bold),
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
           ],
         ),
