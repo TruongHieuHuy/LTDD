@@ -41,7 +41,7 @@ class _ChallengeListScreenState extends State<ChallengeListScreen> with SingleTi
     return Scaffold(
       backgroundColor: GamingTheme.primaryDark,
       appBar: AppBar(
-        title: const Text('PK Challenge'),
+        title: const Text('Thách Đấu PK'),
         backgroundColor: GamingTheme.primaryDark,
         bottom: TabBar(
           controller: _tabController,
@@ -49,9 +49,9 @@ class _ChallengeListScreenState extends State<ChallengeListScreen> with SingleTi
           labelColor: GamingTheme.primaryAccent,
           unselectedLabelColor: Colors.grey,
           tabs: const [
-            Tab(text: 'Pending'),
-            Tab(text: 'Active'),
-            Tab(text: 'History'),
+            Tab(text: 'Chờ xác nhận'),
+            Tab(text: 'Đang đấu'),
+            Tab(text: 'Lịch sử'),
           ],
         ),
       ),
@@ -83,7 +83,7 @@ class _ChallengeListScreenState extends State<ChallengeListScreen> with SingleTi
 
   Widget _buildPendingTab(ChallengeProvider provider) {
     if (provider.pendingChallenges.isEmpty) {
-      return _buildEmptyState('No pending challenges');
+      return _buildEmptyState('Không có thách đấu nào');
     }
 
     return RefreshIndicator(
@@ -101,7 +101,7 @@ class _ChallengeListScreenState extends State<ChallengeListScreen> with SingleTi
 
   Widget _buildActiveTab(ChallengeProvider provider) {
     if (provider.activeChallenges.isEmpty) {
-      return _buildEmptyState('No active challenges');
+      return _buildEmptyState('Chưa có trận đấu nào');
     }
 
     return RefreshIndicator(
@@ -119,7 +119,7 @@ class _ChallengeListScreenState extends State<ChallengeListScreen> with SingleTi
 
   Widget _buildHistoryTab(ChallengeProvider provider) {
     if (provider.historyChallenges.isEmpty) {
-      return _buildEmptyState('No challenge history');
+      return _buildEmptyState('Chưa có lịch sử');
     }
 
     return RefreshIndicator(
@@ -142,7 +142,7 @@ class _ChallengeListScreenState extends State<ChallengeListScreen> with SingleTi
         children: [
           Icon(Icons.inbox_outlined, size: 64, color: Colors.grey.shade700),
           const SizedBox(height: 16),
-          Text(message, style: TextStyle(color: Colors.grey.shade600)),
+          Text(message, style: TextStyle(color: Colors.grey.shade600, fontSize: 14)),
         ],
       ),
     );
@@ -172,11 +172,11 @@ class _ChallengeListScreenState extends State<ChallengeListScreen> with SingleTi
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        isCreator ? 'Waiting for ${opponent?.username}' : 'Challenge from ${opponent?.username}',
+                        isCreator ? 'Đang chờ ${opponent?.username}' : 'Thách đấu từ ${opponent?.username}',
                         style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                       ),
                       Text(
-                        'Bet: ${challenge.betAmount} coins',
+                        'Cược: ${challenge.betAmount} xu',
                         style: const TextStyle(color: Colors.grey),
                       ),
                     ],
@@ -192,7 +192,7 @@ class _ChallengeListScreenState extends State<ChallengeListScreen> with SingleTi
                     child: ElevatedButton(
                       onPressed: () => _acceptChallenge(challenge.id),
                       style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-                      child: const Text('Accept'),
+                      child: const Text('Chấp nhận'),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -200,7 +200,7 @@ class _ChallengeListScreenState extends State<ChallengeListScreen> with SingleTi
                     child: ElevatedButton(
                       onPressed: () => _rejectChallenge(challenge.id),
                       style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                      child: const Text('Reject'),
+                      child: const Text('Từ chối'),
                     ),
                   ),
                 ],
@@ -247,7 +247,7 @@ class _ChallengeListScreenState extends State<ChallengeListScreen> with SingleTi
                           style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                         ),
                         Text(
-                          'Game ${challenge.currentGame}/3 • ${challenge.creatorWins}-${challenge.opponentWins}',
+                          'Ván ${challenge.currentGame}/3 • ${challenge.creatorWins}-${challenge.opponentWins}',
                           style: const TextStyle(color: Colors.grey),
                         ),
                       ],
@@ -291,7 +291,7 @@ class _ChallengeListScreenState extends State<ChallengeListScreen> with SingleTi
                     style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                   ),
                   Text(
-                    '${challenge.creatorWins}-${challenge.opponentWins} • ${challenge.betAmount} coins',
+                    '${challenge.creatorWins}-${challenge.opponentWins} • ${challenge.betAmount} xu',
                     style: const TextStyle(color: Colors.grey),
                   ),
                 ],
@@ -308,7 +308,7 @@ class _ChallengeListScreenState extends State<ChallengeListScreen> with SingleTi
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
-                isDraw ? 'Draw' : isWinner ? 'Won' : 'Lost',
+                isDraw ? 'Hòa' : isWinner ? 'Thắng' : 'Thua',
                 style: TextStyle(
                   color: isDraw ? Colors.grey : isWinner ? Colors.green : Colors.red,
                   fontWeight: FontWeight.bold,
@@ -326,7 +326,7 @@ class _ChallengeListScreenState extends State<ChallengeListScreen> with SingleTi
       await context.read<ChallengeProvider>().acceptChallenge(challengeId);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Challenge accepted!'), backgroundColor: Colors.green),
+          const SnackBar(content: Text('Đã chấp nhận thách đấu!'), backgroundColor: Colors.green),
         );
       }
     } catch (e) {
@@ -343,7 +343,7 @@ class _ChallengeListScreenState extends State<ChallengeListScreen> with SingleTi
       await context.read<ChallengeProvider>().rejectChallenge(challengeId);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Challenge rejected'), backgroundColor: Colors.orange),
+          const SnackBar(content: Text('Đã từ chối thách đấu'), backgroundColor: Colors.orange),
         );
       }
     } catch (e) {

@@ -102,6 +102,17 @@ class SmartStudentApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => GameProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProxyProvider<ApiService, AuthProvider>(
+          create: (context) {
+            final provider = AuthProvider(context.read<ApiService>());
+            provider.initialize(); // Initialize async
+            return provider;
+          },
+          update: (context, apiService, previous) {
+            if (previous != null) return previous;
+            final provider = AuthProvider(apiService);
+            provider.initialize(); // Initialize async
+            return provider;
+          },
           create: (context) => AuthProvider(context.read<ApiService>()),
           update: (context, apiService, previous) =>
               previous ?? AuthProvider(apiService),
@@ -129,6 +140,11 @@ class SmartStudentApp extends StatelessWidget {
       child: Consumer<AuthProvider>(
         builder: (context, authProvider, _) {
           return MaterialApp(
+            title: 'MiniGameCenter - Gaming Hub',
+            debugShowCheckedModeBanner: false,
+            theme: GamingTheme.darkTheme,
+            darkTheme: GamingTheme.darkTheme,
+            themeMode: ThemeMode.dark,
             darkTheme: GamingTheme.darkTheme,
             themeMode: ThemeMode.dark, // Force dark mode for gaming aesthetic
             // Auto-navigate based on login status and role
