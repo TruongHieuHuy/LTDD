@@ -146,6 +146,17 @@ class AuthProvider with ChangeNotifier {
         password: password,
       );
 
+      // Handle 2FA
+      if (authData.requiresTwoFactor) {
+        return LoginResult(
+          success: true, 
+          message: '2FA Required',
+          requiresTwoFactor: true,
+          userId: authData.userId,
+        );
+      }
+
+      // Normal Login
       final expiry = AuthModel.calculateExpiry(rememberMe: rememberMe);
       _currentAuth = AuthModel(
         email: trimmedEmail,
@@ -153,7 +164,7 @@ class AuthProvider with ChangeNotifier {
         lastLoginTime: DateTime.now(),
         rememberMe: rememberMe,
         sessionExpiry: expiry,
-        role: authData.user.role,
+        role: authData.user?.role ?? 'USER',
       );
 
       _userProfile = authData.user;
@@ -178,6 +189,55 @@ class AuthProvider with ChangeNotifier {
       debugPrint('Login error: $e');
       return LoginResult(success: false, message: 'An unexpected error occurred.');
     }
+  }
+
+  /// Complete Login with 2FA
+  Future<LoginResult> loginWith2FA({
+    required String userId,
+    required String code,
+    bool rememberMe = false, // Default false for now, or pass from previous screen
+  }) async {
+    try {
+      final authData = await _apiService.login2FA(userId: userId, code: code);
+
+      final expiry = AuthModel.calculateExpiry(rememberMe: rememberMe);
+      _currentAuth = AuthModel(
+        email: authData.user?.email, 
+        sessionToken: authData.token,
+        lastLoginTime: DateTime.now(),
+        rememberMe: rememberMe,
+        sessionExpiry: expiry,
+        role: authData.user?.role ?? 'USER',
+      );
+
+      _userProfile = authData.user;
+      await _saveUserProfile();
+      await _saveAuth();
+      notifyListeners();
+
+      return LoginResult(success: true, message: 'Login successful');
+    } on ApiException catch (e) {
+      return LoginResult(success: false, message: e.message);
+    } catch (e) {
+      return LoginResult(success: false, message: 'An unexpected error occurred.');
+    }
+  }
+
+  /// Enable 2FA
+  Future<Map<String, dynamic>> enable2FA() async {
+    return await _apiService.enable2FA();
+  }
+
+  /// Verify 2FA Setup
+  Future<void> verify2FASetup(String code) async {
+    await _apiService.verify2FASetup(code);
+    await _refreshUserProfile(); // Update local profile state
+  }
+
+  /// Disable 2FA
+  Future<void> disable2FA() async {
+    await _apiService.disable2FA();
+    await _refreshUserProfile();
   }
 
   /// Register new account
@@ -290,6 +350,13 @@ class AuthProvider with ChangeNotifier {
 class LoginResult {
   final bool success;
   final String message;
+  final bool requiresTwoFactor;
+  final String? userId;
 
-  LoginResult({required this.success, required this.message});
+  LoginResult({
+    required this.success,
+    required this.message,
+    this.requiresTwoFactor = false,
+    this.userId,
+  });
 }

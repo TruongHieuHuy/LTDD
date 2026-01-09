@@ -148,6 +148,60 @@ class ApiService {
         defaultErrorMessage: 'Login failed',
       );
 
+  /// Login with 2FA
+  Future<AuthResponse> login2FA({
+    required String userId,
+    required String code,
+  }) =>
+      _request(
+        'Login2FA',
+        request: () => http.post(
+          Uri.parse('$baseUrl/api/auth/login-2fa'),
+          headers: _headers,
+          body: jsonEncode({'userId': userId, 'code': code}),
+        ),
+        onSuccess: (data) {
+          final authData = AuthResponse.fromJson(data['data']);
+          setAuthToken(authData.token);
+          return authData;
+        },
+        defaultErrorMessage: '2FA Login failed',
+      );
+
+  /// Enable 2FA (Returns QR Code URL and Secret)
+  Future<Map<String, dynamic>> enable2FA() => _request(
+        'Enable2FA',
+        request: () => http.post(
+          Uri.parse('$baseUrl/api/auth/two-factor/enable'),
+          headers: _headers,
+        ),
+        onSuccess: (data) => data as Map<String, dynamic>,
+        defaultErrorMessage: 'Failed to enable 2FA',
+      );
+
+  /// Verify 2FA Setup
+  Future<void> verify2FASetup(String code) => _request(
+        'Verify2FA',
+        request: () => http.post(
+          Uri.parse('$baseUrl/api/auth/two-factor/verify'),
+          headers: _headers,
+          body: jsonEncode({'code': code}),
+        ),
+        onSuccess: (_) {},
+        defaultErrorMessage: 'Failed to verify 2FA',
+      );
+
+  /// Disable 2FA
+  Future<void> disable2FA() => _request(
+        'Disable2FA',
+        request: () => http.post(
+          Uri.parse('$baseUrl/api/auth/two-factor/disable'),
+          headers: _headers,
+        ),
+        onSuccess: (_) {},
+        defaultErrorMessage: 'Failed to disable 2FA',
+      );
+
   /// Get current user profile
   Future<UserProfile> getCurrentUser() => _request(
         'GetCurrentUser',

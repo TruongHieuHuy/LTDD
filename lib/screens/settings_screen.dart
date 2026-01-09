@@ -7,6 +7,7 @@ import '../config/gaming_theme.dart';
 import '../widgets/gaming/gaming_app_bar.dart';
 import '../widgets/gaming/gaming_card.dart';
 import '../widgets/gaming/gaming_dialog.dart';
+import 'auth/two_factor_setup_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -58,11 +59,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       onChanged: (value) {},
                     ),
                     _buildDivider(),
-                    _buildNavTile(
-                      icon: Icons.lock_outline,
-                      title: 'Đổi mật khẩu',
-                      onTap: () {},
-                    ),
+                      _buildNavTile(
+                        icon: Icons.lock_outline,
+                        title: 'Đổi mật khẩu',
+                        onTap: () {},
+                      ),
+                      _buildDivider(),
+                      _buildNavTile(
+                        icon: Icons.security,
+                        title: 'Xác thực 2 yếu tố (2FA)',
+                        subtitle: 'Bảo vệ tài khoản bằng Google Authenticator',
+                        onTap: () {
+                           Navigator.push(
+                             context, 
+                             MaterialPageRoute(builder: (_) => const TwoFactorSetupScreen())
+                           );
+                        },
+                      ),
                   ],
                 ),
               ),

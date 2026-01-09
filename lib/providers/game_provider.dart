@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import '../models/game_score_model.dart';
 import '../models/achievement_model.dart';
 import '../utils/database_service.dart';
+import '../services/api_service.dart';
 
 class GameProvider extends ChangeNotifier {
   String _playerName = 'Player';

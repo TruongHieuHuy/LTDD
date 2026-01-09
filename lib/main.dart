@@ -8,6 +8,7 @@ import 'screens/modular_navigation_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/forgot_password_screen.dart';
 import 'screens/achievements_screen.dart';
+import 'screens/settings_screen.dart';
 import 'screens/simple_home_screen.dart';
 import 'screens/admin_dashboard_screen.dart';
 import 'screens/games/guess_number_game_screen.dart';
@@ -136,6 +137,7 @@ class SmartStudentApp extends StatelessWidget {
               '/home': (context) =>
                   const SimpleHomeScreen(), // 🎯 Giao diện đơn giản
               '/profile': (context) => const ProfileScreen(),
+              '/settings': (context) => SettingsScreen(),
               '/products': (context) => const ProductsScreen(),
               '/categories': (context) => const CategoriesScreen(),
               '/translate': (context) => const TranslateScreen(),

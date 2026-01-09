@@ -5,6 +5,7 @@ import '../config/gaming_theme.dart';
 import '../widgets/gaming/gaming_button.dart';
 import '../widgets/gaming/gaming_text_field.dart';
 import '../widgets/gaming/gaming_dialog.dart';
+import 'auth/otp_verification_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -87,6 +88,19 @@ class _LoginScreenState extends State<LoginScreen>
       setState(() => _isLoading = false);
 
       if (result.success && mounted) {
+        // Check 2FA
+        if (result.requiresTwoFactor) {
+           Navigator.of(context).push(
+             MaterialPageRoute(
+               builder: (context) => OtpVerificationScreen(
+                 userId: result.userId!, 
+                 rememberMe: _rememberMe
+               ),
+             ),
+           );
+           return;
+        }
+
         // Success - Navigate based on user role
         final role = authProvider.userRole;
         debugPrint(
