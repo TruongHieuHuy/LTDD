@@ -139,6 +139,51 @@ class _ChallengeListScreenState extends State<ChallengeListScreen>
               ],
             ),
           ),
+      appBar: AppBar(
+        title: const Text('Thách Đấu PK'),
+        backgroundColor: GamingTheme.primaryDark,
+        bottom: TabBar(
+          controller: _tabController,
+          indicatorColor: GamingTheme.primaryAccent,
+          labelColor: GamingTheme.primaryAccent,
+          unselectedLabelColor: Colors.grey,
+          tabs: const [
+            Tab(text: 'Chờ xác nhận'),
+            Tab(text: 'Đang đấu'),
+            Tab(text: 'Lịch sử'),
+          ],
+        ),
+      ),
+      body: Consumer<ChallengeProvider>(
+        builder: (context, provider, _) {
+          if (provider.isLoading) {
+            return const Center(
+              child: CircularProgressIndicator(color: GamingTheme.primaryAccent),
+            );
+          }
+
+          return TabBarView(
+            controller: _tabController,
+            children: [
+              _buildPendingTab(provider),
+              _buildActiveTab(provider),
+              _buildHistoryTab(provider),
+            ],
+          );
+        },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => Navigator.pushNamed(context, '/create_challenge'),
+        backgroundColor: GamingTheme.primaryAccent,
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
+
+  Widget _buildPendingTab(ChallengeProvider provider) {
+    if (provider.pendingChallenges.isEmpty) {
+      return _buildEmptyState('Không có thách đấu nào');
+    }
 
           // Tab Content
           Expanded(
@@ -161,6 +206,22 @@ class _ChallengeListScreenState extends State<ChallengeListScreen>
               builder: (_) => const CreateChallengeScreen(),
             ),
           );
+    );
+  }
+
+  Widget _buildActiveTab(ChallengeProvider provider) {
+    if (provider.activeChallenges.isEmpty) {
+      return _buildEmptyState('Chưa có trận đấu nào');
+    }
+
+    return RefreshIndicator(
+      onRefresh: () => provider.loadActiveChallenges(),
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: provider.activeChallenges.length,
+        itemBuilder: (context, index) {
+          final challenge = provider.activeChallenges[index];
+          return _buildActiveCard(challenge);
         },
         backgroundColor: GamingTheme.accentColor,
         icon: const Icon(Icons.add_circle_outline),
@@ -180,6 +241,10 @@ class _ChallengeListScreenState extends State<ChallengeListScreen>
             ),
           );
         }
+  Widget _buildHistoryTab(ChallengeProvider provider) {
+    if (provider.historyChallenges.isEmpty) {
+      return _buildEmptyState('Chưa có lịch sử');
+    }
 
         if (provider.pendingChallenges.isEmpty) {
           return _buildEmptyState(
@@ -202,6 +267,16 @@ class _ChallengeListScreenState extends State<ChallengeListScreen>
           ),
         );
       },
+  Widget _buildEmptyState(String message) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.inbox_outlined, size: 64, color: Colors.grey.shade700),
+          const SizedBox(height: 16),
+          Text(message, style: TextStyle(color: Colors.grey.shade600, fontSize: 14)),
+        ],
+      ),
     );
   }
 
@@ -275,6 +350,12 @@ class _ChallengeListScreenState extends State<ChallengeListScreen>
                             style: const TextStyle(color: Colors.grey),
                           ),
                         ],
+                        isCreator ? 'Đang chờ ${opponent?.username}' : 'Thách đấu từ ${opponent?.username}',
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                      ),
+                      Text(
+                        'Cược: ${challenge.betAmount} xu',
+                        style: const TextStyle(color: Colors.grey),
                       ),
                     ],
                   ),
@@ -292,6 +373,10 @@ class _ChallengeListScreenState extends State<ChallengeListScreen>
                       text: 'Accept',
                       onPressed: () => _acceptChallenge(challenge),
                       icon: Icons.check_circle,
+                    child: ElevatedButton(
+                      onPressed: () => _acceptChallenge(challenge.id),
+                      style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                      child: const Text('Chấp nhận'),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -301,6 +386,10 @@ class _ChallengeListScreenState extends State<ChallengeListScreen>
                       onPressed: () => _rejectChallenge(challenge),
                       backgroundColor: Colors.red.shade700,
                       icon: Icons.cancel,
+                    child: ElevatedButton(
+                      onPressed: () => _rejectChallenge(challenge.id),
+                      style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                      child: const Text('Từ chối'),
                     ),
                   ),
                 ],
@@ -440,6 +529,20 @@ class _ChallengeListScreenState extends State<ChallengeListScreen>
                     style: TextStyle(
                       color: GamingTheme.accentColor,
                       fontWeight: FontWeight.bold,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'vs ${opponent?.username}',
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        ),
+                        Text(
+                          'Ván ${challenge.currentGame}/3 • ${challenge.creatorWins}-${challenge.opponentWins}',
+                          style: const TextStyle(color: Colors.grey),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -537,6 +640,9 @@ class _ChallengeListScreenState extends State<ChallengeListScreen>
                       const SizedBox(width: 8),
                       _buildPlayerInfo(challenge.opponent!, isYou: !isCreator, compact: true),
                     ],
+                  Text(
+                    '${challenge.creatorWins}-${challenge.opponentWins} • ${challenge.betAmount} xu',
+                    style: const TextStyle(color: Colors.grey),
                   ),
                 ),
               ],
@@ -749,6 +855,51 @@ class _ChallengeListScreenState extends State<ChallengeListScreen>
           content: Text('Challenge rejected'),
         ),
       );
+              child: Text(
+                isDraw ? 'Hòa' : isWinner ? 'Thắng' : 'Thua',
+                style: TextStyle(
+                  color: isDraw ? Colors.grey : isWinner ? Colors.green : Colors.red,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _acceptChallenge(String challengeId) async {
+    try {
+      await context.read<ChallengeProvider>().acceptChallenge(challengeId);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Đã chấp nhận thách đấu!'), backgroundColor: Colors.green),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  Future<void> _rejectChallenge(String challengeId) async {
+    try {
+      await context.read<ChallengeProvider>().rejectChallenge(challengeId);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Đã từ chối thách đấu'), backgroundColor: Colors.orange),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        );
+      }
     }
   }
 }

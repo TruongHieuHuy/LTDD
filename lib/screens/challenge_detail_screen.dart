@@ -16,10 +16,8 @@ import 'games/quick_math_game_screen.dart';
 class ChallengeDetailScreen extends StatefulWidget {
   final String challengeId;
 
-  const ChallengeDetailScreen({
-    Key? key,
-    required this.challengeId,
-  }) : super(key: key);
+  const ChallengeDetailScreen({Key? key, required this.challengeId})
+    : super(key: key);
 
   @override
   State<ChallengeDetailScreen> createState() => _ChallengeDetailScreenState();
@@ -44,7 +42,9 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
   }
 
   Future<void> _loadChallenge() async {
-    await context.read<ChallengeProvider>().loadChallengeDetails(widget.challengeId);
+    await context.read<ChallengeProvider>().loadChallengeDetails(
+      widget.challengeId,
+    );
   }
 
   @override
@@ -54,6 +54,9 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
       appBar: const GamingAppBar(
         title: 'Challenge Match',
         showBackButton: true,
+      appBar: AppBar(
+        title: const Text('Chi Tiết Trận Đấu'),
+        backgroundColor: GamingTheme.primaryDark,
       ),
       body: Consumer2<ChallengeProvider, AuthProvider>(
         builder: (context, challengeProvider, authProvider, _) {
@@ -63,6 +66,7 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
             return const Center(
               child: CircularProgressIndicator(
                 color: GamingTheme.accentColor,
+                color: GamingTheme.primaryAccent,
               ),
             );
           }
@@ -86,6 +90,13 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
 
                       // Match Progress
                       _buildMatchProgress(challenge),
+                  // Current Game Status
+                  if (challenge.status == ChallengeStatus.active)
+                    _buildCurrentGameStatus(
+                      challenge,
+                      isCreator,
+                      authProvider.userId!,
+                    ),
 
                       const SizedBox(height: 24),
 
@@ -204,6 +215,8 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
                   ),
                   const SizedBox(width: 8),
                   Text(
+                    'Giải thưởng: ${challenge.betAmount * 2} xu',
+                    style: const TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 16),
                     'Prize Pool: ${challenge.betAmount * 2} coins',
                     style: const TextStyle(
                       color: Colors.amber,
@@ -255,10 +268,21 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
                 ),
               ),
           ],
+        CircleAvatar(
+          radius: 40,
+          backgroundImage: player.avatarUrl != null
+              ? NetworkImage(player.avatarUrl!)
+              : null,
+          child: player.avatarUrl == null
+              ? Text(
+                  player.username.substring(0, 1).toUpperCase(),
+                  style: const TextStyle(fontSize: 28),
+                )
+              : null,
         ),
         const SizedBox(height: 8),
         Text(
-          isYou ? 'You' : player.username,
+          isYou ? 'Bạn' : player.username,
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
@@ -273,6 +297,8 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
             borderRadius: BorderRadius.circular(12),
           ),
           child: Text(
+            '$wins ${wins == 1 ? "thắng" : "thắng"}',
+            style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold),
             '$wins ${wins == 1 ? "win" : "wins"}',
             style: const TextStyle(
               color: Colors.green,
@@ -292,6 +318,8 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
+              'Tiến Độ Trận Đấu',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
               'Match Progress',
               style: TextStyle(
                 fontSize: 18,
@@ -349,6 +377,8 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
               : isCurrent
                   ? GamingTheme.accentColor.withOpacity(0.2)
                   : Colors.grey.shade900,
+              ? GamingTheme.primaryAccent.withOpacity(0.2)
+              : Colors.grey.shade900,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isCompleted
@@ -356,13 +386,15 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
                 : isCurrent
                     ? GamingTheme.accentColor
                     : Colors.grey.shade800,
+                ? GamingTheme.primaryAccent
+                : Colors.grey.shade800,
             width: 2,
           ),
         ),
         child: Column(
           children: [
             Text(
-              'Game $gameNumber',
+              'Ván $gameNumber',
               style: TextStyle(
                 fontSize: 12,
                 color: isCompleted || isCurrent ? Colors.white : Colors.grey,
@@ -380,6 +412,7 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
               Icon(
                 Icons.play_circle_filled,
                 color: GamingTheme.accentColor,
+                color: GamingTheme.primaryAccent,
                 size: 32,
               )
             else
@@ -416,22 +449,26 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
     );
   }
 
-  Widget _buildCurrentGameStatus(Challenge challenge, bool isCreator, String userId) {
+  Widget _buildCurrentGameStatus(
+    Challenge challenge,
+    bool isCreator,
+    String userId,
+  ) {
     final currentGame = challenge.currentGame;
     final gameType = challenge.getGameType(currentGame);
 
     // Check if user has voted
     final userVote = isCreator
         ? (currentGame == 1
-            ? challenge.game1CreatorVote
-            : currentGame == 2
-                ? challenge.game2CreatorVote
-                : challenge.game3CreatorVote)
+              ? challenge.game1CreatorVote
+              : currentGame == 2
+              ? challenge.game2CreatorVote
+              : challenge.game3CreatorVote)
         : (currentGame == 1
-            ? challenge.game1OpponentVote
-            : currentGame == 2
-                ? challenge.game2OpponentVote
-                : challenge.game3OpponentVote);
+              ? challenge.game1OpponentVote
+              : currentGame == 2
+              ? challenge.game2OpponentVote
+              : challenge.game3OpponentVote);
 
     final hasVoted = userVote != null || _votedGameType != null;
 
@@ -451,6 +488,8 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
                   ),
                   const SizedBox(width: 12),
                   Text(
+                    'Bầu Chọn Game Ván $currentGame',
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
                     'Vote for Game $currentGame',
                     style: const TextStyle(
                       fontSize: 18,
@@ -473,6 +512,7 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
                       Icon(
                         Icons.check_circle,
                         color: GamingTheme.accentColor,
+                        color: GamingTheme.primaryAccent,
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -481,6 +521,8 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
                           style: TextStyle(
                             color: GamingTheme.accentColor,
                           ),
+                          'Bạn đã bầu cho ${_getGameName(_votedGameType ?? userVote!)}. Chờ đối thủ...',
+                          style: TextStyle(color: GamingTheme.primaryAccent),
                         ),
                       ),
                     ],
@@ -520,6 +562,27 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
                   color: Colors.grey,
                 ),
               ),
+                color: GamingTheme.primaryAccent,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Ván $currentGame: ${_getGameName(gameType)}',
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+              ),
+              const SizedBox(height: 8),
+              const Text('Sẵn sàng chưa!', style: TextStyle(color: Colors.grey)),
+                'Game $currentGame: ${_getGameName(gameType)}',
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Ready to play!',
+                style: TextStyle(color: Colors.grey),
+              ),
               const SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,
@@ -527,6 +590,11 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
                   text: 'Play Now',
                   onPressed: () => _startGame(gameType, challenge, currentGame),
                   icon: Icons.play_arrow,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: GamingTheme.primaryAccent,
+                    padding: const EdgeInsets.all(16),
+                  ),
+                  child: const Text('Chơi Ngay', style: TextStyle(fontSize: 16)),
                 ),
               ),
             ],
@@ -538,10 +606,10 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
 
   Widget _buildGameVotingOptions(Challenge challenge, int gameNumber) {
     final games = [
-      {'type': 'GUESS_NUMBER', 'name': 'Guess Number', 'icon': Icons.dialpad},
-      {'type': 'COWS_BULLS', 'name': 'Cows & Bulls', 'icon': Icons.pets},
-      {'type': 'MEMORY_MATCH', 'name': 'Memory Match', 'icon': Icons.grid_on},
-      {'type': 'QUICK_MATH', 'name': 'Quick Math', 'icon': Icons.calculate},
+      {'type': 'GUESS_NUMBER', 'name': 'Đoán Số', 'icon': Icons.dialpad},
+      {'type': 'COWS_BULLS', 'name': 'Bò & Bê', 'icon': Icons.pets},
+      {'type': 'MEMORY_MATCH', 'name': 'Lật Hình', 'icon': Icons.grid_on},
+      {'type': 'QUICK_MATH', 'name': 'Toán Nhanh', 'icon': Icons.calculate},
     ];
 
     return GridView.count(
@@ -570,6 +638,30 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
+        return Card(
+          color: GamingTheme.surfaceDark,
+          child: InkWell(
+            onTap: _isVoting
+                ? null
+                : () => _voteForGame(game['type'] as String, gameNumber),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    game['icon'] as IconData,
+                    size: 40,
+                    color: GamingTheme.primaryAccent,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    game['name'] as String,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ],
@@ -602,6 +694,8 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
                   : isWinner
                       ? Icons.emoji_events
                       : Icons.sentiment_dissatisfied,
+                  ? Icons.emoji_events
+                  : Icons.sentiment_dissatisfied,
               size: 64,
               color: isDraw
                   ? Colors.grey
@@ -616,6 +710,17 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
                   : isWinner
                       ? '🎉 Victory! 🎉'
                       : 'Defeat',
+                  ? Colors.amber
+                  : Colors.red,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              isDraw ? 'Hòa!' : isWinner ? '🎉 Thắng! 🎉' : 'Thua Cuộc',
+              isDraw
+                  ? 'Match Drawn!'
+                  : isWinner
+                  ? '🎉 Victory! 🎉'
+                  : 'Defeat',
               style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
@@ -624,6 +729,8 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
                     : isWinner
                         ? Colors.amber
                         : Colors.red,
+                    ? Colors.amber
+                    : Colors.red,
               ),
             ),
             const SizedBox(height: 12),
@@ -637,6 +744,13 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
                 fontSize: 16,
                 color: Colors.white,
               ),
+                  ? 'Hòa tất cả! Xu được hoàn.'
+                  : isWinner
+                      ? 'Bạn đã thắng ${challenge.betAmount * 2} xu!'
+                      : 'Bạn đã thua ${challenge.betAmount} xu.',
+                  ? 'You won ${challenge.betAmount * 2} coins!'
+                  : 'You lost ${challenge.betAmount} coins.',
+              style: const TextStyle(fontSize: 16, color: Colors.white),
             ),
             if (!isDraw) ...[
               const SizedBox(height: 24),
@@ -646,6 +760,13 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                   color: GamingTheme.accentColor,
+                'Người thắng: ${challenge.winner?.username}',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: GamingTheme.primaryAccent),
+                'Winner: ${challenge.winner?.username}',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: GamingTheme.primaryAccent,
                 ),
               ),
             ],
@@ -658,13 +779,13 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
   String _getGameName(String gameType) {
     switch (gameType) {
       case 'GUESS_NUMBER':
-        return 'Guess Number';
+        return 'Đoán Số';
       case 'COWS_BULLS':
-        return 'Cows & Bulls';
+        return 'Bò & Bê';
       case 'MEMORY_MATCH':
-        return 'Memory Match';
+        return 'Lật Hình';
       case 'QUICK_MATH':
-        return 'Quick Math';
+        return 'Toán Nhanh';
       default:
         return gameType;
     }
@@ -687,7 +808,7 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Voted for ${_getGameName(gameType)}!'),
+            content: Text('Đã bầu cho ${_getGameName(gameType)}!'),
             backgroundColor: Colors.green,
           ),
         );
@@ -702,6 +823,7 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
             content: Text('Error: ${e.toString()}'),
             backgroundColor: Colors.red,
           ),
+          SnackBar(content: Text('Lỗi: $e'), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -718,28 +840,16 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
     
     switch (gameType) {
       case 'GUESS_NUMBER':
-        gameScreen = GuessNumberGameScreen(
-          challengeId: widget.challengeId,
-          challengeGameNumber: gameNumber,
-        );
+        gameScreen = const GuessNumberGameScreen();
         break;
       case 'COWS_BULLS':
-        gameScreen = CowsBullsGameScreen(
-          challengeId: widget.challengeId,
-          challengeGameNumber: gameNumber,
-        );
+        gameScreen = const CowsBullsGameScreen();
         break;
       case 'MEMORY_MATCH':
-        gameScreen = MemoryMatchGameScreen(
-          challengeId: widget.challengeId,
-          challengeGameNumber: gameNumber,
-        );
+        gameScreen = const MemoryMatchGameScreen();
         break;
       case 'QUICK_MATH':
-        gameScreen = QuickMathGameScreen(
-          challengeId: widget.challengeId,
-          challengeGameNumber: gameNumber,
-        );
+        gameScreen = const QuickMathGameScreen();
         break;
       default:
         return;
@@ -752,5 +862,10 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
       // Reload challenge after game
       _loadChallenge();
     });
+    Navigator.push(context, MaterialPageRoute(builder: (_) => gameScreen)).then(
+      (_) {
+        _loadChallenge();
+      },
+    );
   }
 }

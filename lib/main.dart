@@ -23,7 +23,6 @@ import 'screens/friend_requests_screen.dart';
 import 'screens/peer_chat_list_screen.dart';
 import 'screens/user_profile_screen.dart';
 import 'screens/saved_posts_screen.dart';
-import 'screens/create_post_screen.dart';
 import 'screens/products_screen.dart';
 import 'screens/categories_screen.dart';
 import 'utils/database_service.dart';
@@ -41,9 +40,12 @@ import 'providers/chatbot_provider.dart';
 import 'providers/peer_chat_provider.dart';
 import 'providers/friend_provider.dart';
 import 'providers/group_provider.dart';
+import 'providers/challenge_provider.dart';
+import 'services/socket_service.dart';
 import 'config/gaming_theme.dart';
 import 'screens/games/sudoku_screen.dart';
 import 'screens/games/puzzle_screen.dart';
+import 'screens/games/rubik_cube_game_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -89,8 +91,6 @@ class SmartStudentApp extends StatelessWidget {
               ..initialize();
           },
         ),
-        
-
 
         // Independent providers
         ChangeNotifierProvider(create: (_) => ThemeProvider()..initialize()),
@@ -98,6 +98,24 @@ class SmartStudentApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => TranslationProvider()),
         ChangeNotifierProvider(create: (_) => SettingsProvider()),
         ChangeNotifierProvider(create: (_) => GameProvider()..initialize()),
+        ChangeNotifierProvider(create: (_) => GameProvider()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProxyProvider<ApiService, AuthProvider>(
+          create: (context) {
+            final provider = AuthProvider(context.read<ApiService>());
+            provider.initialize(); // Initialize async
+            return provider;
+          },
+          update: (context, apiService, previous) {
+            if (previous != null) return previous;
+            final provider = AuthProvider(apiService);
+            provider.initialize(); // Initialize async
+            return provider;
+          },
+          create: (context) => AuthProvider(context.read<ApiService>()),
+          update: (context, apiService, previous) =>
+              previous ?? AuthProvider(apiService),
+        ),
         ChangeNotifierProvider(create: (_) => ChatbotProvider()),
         ChangeNotifierProvider(create: (_) => PeerChatProvider()),
         ChangeNotifierProvider(create: (_) => FriendProvider()),
@@ -109,6 +127,30 @@ class SmartStudentApp extends StatelessWidget {
             title: 'MiniGameCenter - Gaming Hub',
             debugShowCheckedModeBanner: false,
             theme: GamingTheme.darkTheme, // Always use Gaming Hub theme
+
+        // ChallengeProvider depends on ApiService and SocketService
+        Provider<SocketService>(create: (_) => SocketService()),
+        ChangeNotifierProxyProvider2<
+          ApiService,
+          SocketService,
+          ChallengeProvider
+        >(
+          create: (context) => ChallengeProvider(
+            context.read<ApiService>(),
+            context.read<SocketService>(),
+          ),
+          update: (context, apiService, socketService, previous) =>
+              previous ?? ChallengeProvider(apiService, socketService),
+        ),
+      ],
+      child: Consumer<AuthProvider>(
+        builder: (context, authProvider, _) {
+          return MaterialApp(
+            title: 'MiniGameCenter - Gaming Hub',
+            debugShowCheckedModeBanner: false,
+            theme: GamingTheme.darkTheme,
+            darkTheme: GamingTheme.darkTheme,
+            themeMode: ThemeMode.dark,
             darkTheme: GamingTheme.darkTheme,
             themeMode: ThemeMode.dark, // Force dark mode for gaming aesthetic
             // Auto-navigate based on login status and role
@@ -139,6 +181,7 @@ class SmartStudentApp extends StatelessWidget {
               '/saved-posts': (context) => const SavedPostsScreen(),
               '/sudoku_game': (context) => const SudokuScreen(),
                '/puzzle_game': (context) => const PuzzleScreen(),
+              '/rubik_cube_game': (context) => const RubikCubeGameScreen(),
             },
             onGenerateRoute: (settings) {
               // Handle user profile route with userId parameter
@@ -163,12 +206,12 @@ class SmartStudentApp extends StatelessWidget {
     );
   }
 
-
   /// Determine initial route based on login status and user role
   String _getInitialRoute(AuthProvider authProvider) {
-    if (!authProvider.isLoggedIn) {
-      return '/login';
-    }
+    // BYPASS LOGIN - Always go to modular screen
+    // if (!authProvider.isLoggedIn) {
+    //   return '/login';
+    // }
 
     // Check user role - CRITICAL: Must check role from both sources
     final role = authProvider.userRole;
