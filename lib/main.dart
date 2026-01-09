@@ -25,8 +25,6 @@ import 'screens/user_profile_screen.dart';
 import 'screens/saved_posts_screen.dart';
 import 'screens/products_screen.dart';
 import 'screens/categories_screen.dart';
-import 'screens/challenge_list_screen.dart';
-import 'screens/create_challenge_screen.dart';
 import 'utils/database_service.dart';
 import 'services/api_service.dart';
 import 'services/api_client.dart';
@@ -46,6 +44,7 @@ import 'providers/challenge_provider.dart';
 import 'services/socket_service.dart';
 import 'config/gaming_theme.dart';
 import 'screens/games/sudoku_screen.dart';
+import 'screens/games/puzzle_screen.dart';
 import 'screens/games/rubik_cube_game_screen.dart';
 
 void main() async {
@@ -95,10 +94,10 @@ class SmartStudentApp extends StatelessWidget {
 
         // Independent providers
         ChangeNotifierProvider(create: (_) => ThemeProvider()..initialize()),
-        // Providers
         ChangeNotifierProvider(create: (_) => AlarmProvider()),
         ChangeNotifierProvider(create: (_) => TranslationProvider()),
         ChangeNotifierProvider(create: (_) => SettingsProvider()),
+        ChangeNotifierProvider(create: (_) => GameProvider()..initialize()),
         ChangeNotifierProvider(create: (_) => GameProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProxyProvider<ApiService, AuthProvider>(
@@ -121,6 +120,13 @@ class SmartStudentApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => PeerChatProvider()),
         ChangeNotifierProvider(create: (_) => FriendProvider()),
         ChangeNotifierProvider(create: (_) => GroupProvider()),
+      ],
+      child: Consumer2<ThemeProvider, AuthProvider>(
+        builder: (context, themeProvider, authProvider, child) {
+          return MaterialApp(
+            title: 'MiniGameCenter - Gaming Hub',
+            debugShowCheckedModeBanner: false,
+            theme: GamingTheme.darkTheme, // Always use Gaming Hub theme
 
         // ChallengeProvider depends on ApiService and SocketService
         Provider<SocketService>(create: (_) => SocketService()),
@@ -168,14 +174,13 @@ class SmartStudentApp extends StatelessWidget {
               '/leaderboard': (context) => const LeaderboardScreen(),
               '/achievements': (context) => const AchievementScreen(),
               '/chatbot': (context) => const ChatbotScreen(),
-              '/challenge_list': (context) => const ChallengeListScreen(),
-              '/create_challenge': (context) => const CreateChallengeScreen(),
               '/search-friends': (context) => const SearchFriendsScreen(),
               '/friend-requests': (context) => const FriendRequestsScreen(),
               '/posts': (context) => const PostsScreen(), // Posts feed
               '/peer-chat': (context) => const PeerChatListScreen(),
               '/saved-posts': (context) => const SavedPostsScreen(),
               '/sudoku_game': (context) => const SudokuScreen(),
+               '/puzzle_game': (context) => const PuzzleScreen(),
               '/rubik_cube_game': (context) => const RubikCubeGameScreen(),
             },
             onGenerateRoute: (settings) {

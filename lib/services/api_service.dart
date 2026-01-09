@@ -17,6 +17,7 @@ import '../models/conversation_data.dart';
 import '../models/post_data.dart';
 import '../models/comment_data.dart';
 import '../models/sudoku_model.dart';
+import '../models/puzzle_model.dart';
 
 /// API Service để giao tiếp với Backend
 class ApiService {
@@ -546,6 +547,76 @@ extension SudokuAPI on ApiService {
       );
 }
 
+// ==================== PUZZLE API EXTENSION ====================
+extension PuzzleAPI on ApiService {
+  /// Generate Puzzle Game
+  Future<PuzzleGame> generatePuzzle({
+    required String difficulty,
+    required int gridSize,
+  }) async {
+    try {
+      debugPrint('🎮 Generating puzzle: difficulty=$difficulty, gridSize=$gridSize');
+      debugPrint('🌐 Request URL: ${ApiService.baseUrl}/puzzle/generate');
+      
+      final response = await http.post(
+        Uri.parse('${ApiService.baseUrl}/api/puzzle/generate'), // Không có /api
+        headers: _headers,
+        body: jsonEncode({
+          'difficulty': difficulty,
+          'gridSize': gridSize,
+        }),
+      );
+
+      debugPrint('📡 Response status: ${response.statusCode}');
+      debugPrint('📦 Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final game = PuzzleGame.fromJson(data['puzzle']);
+        debugPrint('✅ Game generated successfully!');
+        debugPrint('📷 Image URL: ${game.imageUrl}');
+        debugPrint('🧩 First tile: ${game.tilePaths.isNotEmpty ? game.tilePaths[0] : "none"}');
+        return game;
+      } else {
+        throw Exception('Failed to generate puzzle: ${response.body}');
+      }
+    } catch (e) {
+      debugPrint('❌ Error generating puzzle: $e');
+      throw Exception('Error generating puzzle: $e');
+    }
+  }
+
+  /// Calculate Puzzle Score
+  Future<int> calculatePuzzleScore({
+    required String difficulty,
+    required int timeInSeconds,
+    required int moves,
+    required int gridSize,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('${ApiService.baseUrl}/api/puzzle/calculate-score'), // Không có /api
+        headers: _headers,
+        body: jsonEncode({
+          'difficulty': difficulty,
+          'timeInSeconds': timeInSeconds,
+          'moves': moves,
+          'gridSize': gridSize,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['score'] as int;
+      } else {
+        throw Exception('Failed to calculate score: ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Error calculating score: $e');
+    }
+  }
+}
+
 // ============ POSTS API EXTENSION ============
 
 extension PostsAPI on ApiService {
@@ -806,150 +877,6 @@ extension PostsAPI on ApiService {
             .toList(),
         defaultErrorMessage: 'Failed to get achievements',
       );
-  }
-
-  
-  /// Create a new challenge
-  Future<Map<String, dynamic>> createChallenge({
-    required String opponentId,
-    int betAmount = 100,
-  }) async {
-    return _request(
-      'createChallenge',
-      request: () => http.post(
-        Uri.parse('${ApiService.baseUrl}/challenges'),
-        headers: _headers,
-        body: jsonEncode({
-          'opponentId': opponentId,
-          'betAmount': betAmount,
-        }),
-      ),
-      onSuccess: (data) => data['data'],
-      defaultErrorMessage: 'Failed to create challenge',
-    );
-  }
-
-  /// Get pending challenge invitations
-  Future<List<dynamic>> getPendingChallenges() async {
-    return _request(
-      'getPendingChallenges',
-      request: () => http.get(
-        Uri.parse('${ApiService.baseUrl}/challenges/pending'),
-        headers: _headers,
-      ),
-      onSuccess: (data) => data['data'] as List,
-      defaultErrorMessage: 'Failed to get pending challenges',
-    );
-  }
-
-  /// Accept a challenge
-  Future<Map<String, dynamic>> acceptChallenge(String challengeId) async {
-    return _request(
-      'acceptChallenge',
-      request: () => http.post(
-        Uri.parse('${ApiService.baseUrl}/challenges/$challengeId/accept'),
-        headers: _headers,
-      ),
-      onSuccess: (data) => data['data'],
-      defaultErrorMessage: 'Failed to accept challenge',
-    );
-  }
-
-  /// Reject a challenge
-  Future<Map<String, dynamic>> rejectChallenge(String challengeId) async {
-    return _request(
-      'rejectChallenge',
-      request: () => http.post(
-        Uri.parse('${ApiService.baseUrl}/challenges/$challengeId/reject'),
-        headers: _headers,
-      ),
-      onSuccess: (data) => data['data'],
-      defaultErrorMessage: 'Failed to reject challenge',
-    );
-  }
-
-  /// Vote for a game
-  Future<Map<String, dynamic>> voteForGame({
-    required String challengeId,
-    required int gameNumber,
-    required String gameType,
-  }) async {
-    return _request(
-      'voteForGame',
-      request: () => http.post(
-        Uri.parse('${ApiService.baseUrl}/challenges/$challengeId/vote'),
-        headers: _headers,
-        body: jsonEncode({
-          'gameNumber': gameNumber,
-          'gameType': gameType,
-        }),
-      ),
-      onSuccess: (data) => data['data'],
-      defaultErrorMessage: 'Failed to vote for game',
-    );
-  }
-
-  /// Submit score for a game
-  Future<Map<String, dynamic>> submitChallengeScore({
-    required String challengeId,
-    required int gameNumber,
-    required int score,
-  }) async {
-    return _request(
-      'submitChallengeScore',
-      request: () => http.post(
-        Uri.parse('${ApiService.baseUrl}/challenges/$challengeId/submit-score'),
-        headers: _headers,
-        body: jsonEncode({
-          'gameNumber': gameNumber,
-          'score': score,
-        }),
-      ),
-      onSuccess: (data) => data['data'],
-      defaultErrorMessage: 'Failed to submit score',
-    );
-  }
-
-  /// Get challenge details
-  Future<Map<String, dynamic>> getChallengeDetails(String challengeId) async {
-    return _request(
-      'getChallengeDetails',
-      request: () => http.get(
-        Uri.parse('${ApiService.baseUrl}/challenges/$challengeId'),
-        headers: _headers,
-      ),
-      onSuccess: (data) => data['data'],
-      defaultErrorMessage: 'Failed to get challenge details',
-    );
-  }
-
-  /// Get active challenges
-  Future<List<dynamic>> getActiveChallenges() async {
-    return _request(
-      'getActiveChallenges',
-      request: () => http.get(
-        Uri.parse('${ApiService.baseUrl}/challenges/active'),
-        headers: _headers,
-      ),
-      onSuccess: (data) => data['data'] as List,
-      defaultErrorMessage: 'Failed to get active challenges',
-    );
-  }
-
-  /// Get challenge history
-  Future<Map<String, dynamic>> getChallengeHistory({
-    int limit = 20,
-    int offset = 0,
-  }) async {
-    return _request(
-      'getChallengeHistory',
-      request: () => http.get(
-        Uri.parse('${ApiService.baseUrl}/challenges/history?limit=$limit&offset=$offset'),
-        headers: _headers,
-      ),
-      onSuccess: (data) => data['data'],
-      defaultErrorMessage: 'Failed to get challenge history',
-    );
   }
 }
 
