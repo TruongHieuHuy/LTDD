@@ -43,6 +43,8 @@ import 'providers/chatbot_provider.dart';
 import 'providers/peer_chat_provider.dart';
 import 'providers/friend_provider.dart';
 import 'providers/group_provider.dart';
+import 'providers/challenge_provider.dart';
+import 'services/socket_service.dart';
 import 'config/gaming_theme.dart';
 import 'screens/games/sudoku_screen.dart';
 
