@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
@@ -56,21 +57,50 @@ void main() async {
 
   // Initialize Hive database
   await DatabaseService.init();
+  debugPrint('DatabaseService initialized');
 
-  runApp(const SmartStudentApp());
+  // Initialize core services
+  final apiService = ApiService();
+  final socketService = SocketService();
+
+  // Initialize AuthProvider BEFORE runApp to ensure session data is loaded
+  final authProvider = AuthProvider(apiService);
+  await authProvider.initialize();
+  debugPrint('AuthProvider initialized, isLoggedIn=${authProvider.isLoggedIn}');
+
+  debugPrint('Starting app');
+  runApp(
+    SmartStudentApp(
+      apiService: apiService,
+      socketService: socketService,
+      authProvider: authProvider,
+    ),
+  );
 }
 
 class SmartStudentApp extends StatelessWidget {
-  const SmartStudentApp({super.key});
+  final ApiService apiService;
+  final SocketService socketService;
+  final AuthProvider authProvider;
+
+  const SmartStudentApp({
+    super.key,
+    required this.apiService,
+    required this.socketService,
+    required this.authProvider,
+  });
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        // Foundational services
+        // Provide pre-initialized services
+        Provider<ApiService>.value(value: apiService),
+        Provider<SocketService>.value(value: socketService),
+        ChangeNotifierProvider<AuthProvider>.value(value: authProvider),
+
+        // Other foundational services
         Provider<ApiClient>(create: (_) => ApiClient()),
-        Provider<ApiService>(create: (_) => ApiService()),
-        Provider<SocketService>(create: (_) => SocketService()),
 
         // PostService depends on ApiClient
         ProxyProvider<ApiClient, PostService>(
@@ -82,16 +112,6 @@ class SmartStudentApp extends StatelessWidget {
           create: (context) => PostProvider(context.read<PostService>()),
           update: (context, postService, previous) =>
               previous ?? PostProvider(postService),
-        ),
-
-        // AuthProvider depends on ApiService
-        ChangeNotifierProxyProvider<ApiService, AuthProvider>(
-          create: (context) =>
-              AuthProvider(context.read<ApiService>())..initialize(),
-          update: (context, apiService, previousAuthProvider) {
-            return previousAuthProvider ?? AuthProvider(apiService)
-              ..initialize();
-          },
         ),
 
         // ChallengeProvider depends on ApiService and SocketService
@@ -126,16 +146,14 @@ class SmartStudentApp extends StatelessWidget {
             debugShowCheckedModeBanner: false,
             theme: GamingTheme.darkTheme,
             darkTheme: GamingTheme.darkTheme,
-            themeMode: ThemeMode.dark, // Force dark mode for gaming aesthetic
-            // Auto-navigate based on login status and role
+            themeMode: ThemeMode.dark,
             initialRoute: _getInitialRoute(authProvider),
             routes: {
               '/login': (context) => const LoginScreen(),
               '/forgot-password': (context) => const ForgotPasswordScreen(),
               '/modular': (context) => const ModularNavigation(),
               '/admin-dashboard': (context) => const AdminDashboardScreen(),
-              '/home': (context) =>
-                  const SimpleHomeScreen(), // 🎯 Giao diện đơn giản
+              '/home': (context) => const SimpleHomeScreen(),
               '/profile': (context) => const ProfileScreen(),
               '/settings': (context) => SettingsScreen(),
               '/products': (context) => const ProductsScreen(),
@@ -151,22 +169,20 @@ class SmartStudentApp extends StatelessWidget {
               '/chatbot': (context) => const ChatbotScreen(),
               '/search-friends': (context) => const SearchFriendsScreen(),
               '/friend-requests': (context) => const FriendRequestsScreen(),
-              '/posts': (context) => const PostsScreen(), // Posts feed
+              '/posts': (context) => const PostsScreen(),
               '/peer-chat': (context) => const PeerChatListScreen(),
               '/saved-posts': (context) => const SavedPostsScreen(),
               '/sudoku_game': (context) => const SudokuScreen(),
-               '/puzzle_game': (context) => const PuzzleScreen(),
+              '/puzzle_game': (context) => const PuzzleScreen(),
               '/rubik_cube_game': (context) => const RubikCubeGameScreen(),
             },
             onGenerateRoute: (settings) {
-              // Handle user profile route with userId parameter
               if (settings.name == '/user-profile') {
                 final userId = settings.arguments as String;
                 return MaterialPageRoute(
                   builder: (context) => UserProfileScreen(userId: userId),
                 );
               }
-              // Handle backend achievements screen with userId
               if (settings.name == '/backend-achievements') {
                 final userId = settings.arguments as String;
                 return MaterialPageRoute(

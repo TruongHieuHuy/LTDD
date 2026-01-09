@@ -40,21 +40,35 @@ class AuthProvider with ChangeNotifier {
 
   /// Initialize Hive box and load auth state
   Future<void> initialize() async {
-    _box = await Hive.openBox(_boxName);
-    await _loadAuth();
-    _savedEmail = _box.get(_savedEmailKey) as String?;
+    try {
+      debugPrint('AuthProvider: Starting initialization');
+      _box = await Hive.openBox(_boxName);
+      debugPrint('AuthProvider: Hive box opened');
+      await _loadAuth();
+      debugPrint('AuthProvider: Auth loaded, isLoggedIn=${_currentAuth?.isLoggedIn}');
+      _savedEmail = _box.get(_savedEmailKey) as String?;
+      debugPrint('AuthProvider: Saved email loaded: $_savedEmail');
 
-    // Load user profile from cache
-    final profileJson = _box.get(_userProfileKey) as Map?;
-    if (profileJson != null) {
-      try {
-        _userProfile = UserProfile.fromJson(
-          Map<String, dynamic>.from(profileJson),
-        );
-      } catch (e) {
-        debugPrint('Error loading user profile from cache: $e');
+      // Load user profile from cache
+      final profileJson = _box.get(_userProfileKey) as Map?;
+      if (profileJson != null) {
+        try {
+          _userProfile = UserProfile.fromJson(
+            Map<String, dynamic>.from(profileJson),
+          );
+          debugPrint('AuthProvider: User profile loaded from cache');
+        } catch (e) {
+          debugPrint('Error loading user profile from cache: $e');
+        }
+      } else {
+        debugPrint('AuthProvider: No cached user profile found');
       }
+      debugPrint('AuthProvider: Initialization complete');
+    } catch (e, stack) {
+      debugPrint('AuthProvider: Initialization failed: $e');
+      debugPrint('Stack trace: $stack');
     }
+    notifyListeners();
   }
 
   /// Load authentication state from Hive
