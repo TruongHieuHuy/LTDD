@@ -199,11 +199,11 @@ class Challenge {
   // Helper methods
   bool get isExpired => DateTime.now().isAfter(expiresAt);
   
-  bool get isCreator(String userId) => creatorId == userId;
+  bool isCreator(String userId) => creatorId == userId;
   
-  bool get isOpponent(String userId) => opponentId == userId;
+  bool isOpponent(String userId) => opponentId == userId;
   
-  bool get isParticipant(String userId) => isCreator(userId) || isOpponent(userId);
+  bool isParticipant(String userId) => isCreator(userId) || isOpponent(userId);
   
   String? getGameType(int gameNumber) {
     switch (gameNumber) {

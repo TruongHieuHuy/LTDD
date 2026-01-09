@@ -880,3 +880,142 @@ extension PostsAPI on ApiService {
   }
 }
 
+// ==================== CHALLENGE API EXTENSION ====================
+extension ChallengeAPI on ApiService {
+  /// Get pending challenges
+  Future<List<Map<String, dynamic>>> getPendingChallenges() => _request(
+        'GetPendingChallenges',
+        request: () => http.get(
+          Uri.parse('${ApiService.baseUrl}/api/challenges/pending'),
+          headers: _headers,
+        ),
+        onSuccess: (data) => (data['challenges'] as List)
+            .map((e) => e as Map<String, dynamic>)
+            .toList(),
+        defaultErrorMessage: 'Failed to get pending challenges',
+      );
+
+  /// Get active challenges
+  Future<List<Map<String, dynamic>>> getActiveChallenges() => _request(
+        'GetActiveChallenges',
+        request: () => http.get(
+          Uri.parse('${ApiService.baseUrl}/api/challenges/active'),
+          headers: _headers,
+        ),
+        onSuccess: (data) => (data['challenges'] as List)
+            .map((e) => e as Map<String, dynamic>)
+            .toList(),
+        defaultErrorMessage: 'Failed to get active challenges',
+      );
+
+  /// Get challenge history
+  Future<Map<String, dynamic>> getChallengeHistory({
+    int limit = 20,
+    int offset = 0,
+  }) =>
+      _request(
+        'GetChallengeHistory',
+        request: () => http.get(
+          Uri.parse(
+            '${ApiService.baseUrl}/api/challenges/history?limit=$limit&offset=$offset',
+          ),
+          headers: _headers,
+        ),
+        onSuccess: (data) => data as Map<String, dynamic>,
+        defaultErrorMessage: 'Failed to get challenge history',
+      );
+
+  /// Create a new challenge
+  Future<Map<String, dynamic>> createChallenge({
+    required String opponentId,
+    required int betAmount,
+  }) =>
+      _request(
+        'CreateChallenge',
+        request: () => http.post(
+          Uri.parse('${ApiService.baseUrl}/api/challenges'),
+          headers: _headers,
+          body: jsonEncode({
+            'opponentId': opponentId,
+            'betAmount': betAmount,
+          }),
+        ),
+        onSuccess: (data) => data['challenge'] as Map<String, dynamic>,
+        defaultErrorMessage: 'Failed to create challenge',
+      );
+
+  /// Accept a challenge
+  Future<Map<String, dynamic>> acceptChallenge(String challengeId) => _request(
+        'AcceptChallenge',
+        request: () => http.post(
+          Uri.parse('${ApiService.baseUrl}/api/challenges/$challengeId/accept'),
+          headers: _headers,
+        ),
+        onSuccess: (data) => data['challenge'] as Map<String, dynamic>,
+        defaultErrorMessage: 'Failed to accept challenge',
+      );
+
+  /// Reject a challenge
+  Future<void> rejectChallenge(String challengeId) => _request(
+        'RejectChallenge',
+        request: () => http.post(
+          Uri.parse('${ApiService.baseUrl}/api/challenges/$challengeId/reject'),
+          headers: _headers,
+        ),
+        onSuccess: (_) {},
+        defaultErrorMessage: 'Failed to reject challenge',
+      );
+
+  /// Vote for a game
+  Future<Map<String, dynamic>> voteForGame({
+    required String challengeId,
+    required int gameNumber,
+    required String gameType,
+  }) =>
+      _request(
+        'VoteForGame',
+        request: () => http.post(
+          Uri.parse('${ApiService.baseUrl}/api/challenges/$challengeId/vote'),
+          headers: _headers,
+          body: jsonEncode({
+            'gameNumber': gameNumber,
+            'gameType': gameType,
+          }),
+        ),
+        onSuccess: (data) => data['challenge'] as Map<String, dynamic>,
+        defaultErrorMessage: 'Failed to vote for game',
+      );
+
+  /// Submit challenge score
+  Future<Map<String, dynamic>> submitChallengeScore({
+    required String challengeId,
+    required int gameNumber,
+    required int score,
+  }) =>
+      _request(
+        'SubmitChallengeScore',
+        request: () => http.post(
+          Uri.parse('${ApiService.baseUrl}/api/challenges/$challengeId/score'),
+          headers: _headers,
+          body: jsonEncode({
+            'gameNumber': gameNumber,
+            'score': score,
+          }),
+        ),
+        onSuccess: (data) => data['challenge'] as Map<String, dynamic>,
+        defaultErrorMessage: 'Failed to submit score',
+      );
+
+  /// Get challenge details
+  Future<Map<String, dynamic>> getChallengeDetails(String challengeId) =>
+      _request(
+        'GetChallengeDetails',
+        request: () => http.get(
+          Uri.parse('${ApiService.baseUrl}/api/challenges/$challengeId'),
+          headers: _headers,
+        ),
+        onSuccess: (data) => data['challenge'] as Map<String, dynamic>,
+        defaultErrorMessage: 'Failed to get challenge details',
+      );
+}
+
