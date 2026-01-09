@@ -69,6 +69,7 @@ class SmartStudentApp extends StatelessWidget {
         // Foundational services
         Provider<ApiClient>(create: (_) => ApiClient()),
         Provider<ApiService>(create: (_) => ApiService()),
+        Provider<SocketService>(create: (_) => SocketService()),
 
         // PostService depends on ApiClient
         ProxyProvider<ApiClient, PostService>(
@@ -82,7 +83,7 @@ class SmartStudentApp extends StatelessWidget {
               previous ?? PostProvider(postService),
         ),
 
-        // Providers that depend on other providers (e.g., AuthProvider depends on ApiService)
+        // AuthProvider depends on ApiService
         ChangeNotifierProxyProvider<ApiService, AuthProvider>(
           create: (context) =>
               AuthProvider(context.read<ApiService>())..initialize(),
@@ -92,44 +93,7 @@ class SmartStudentApp extends StatelessWidget {
           },
         ),
 
-        // Independent providers
-        ChangeNotifierProvider(create: (_) => ThemeProvider()..initialize()),
-        ChangeNotifierProvider(create: (_) => AlarmProvider()),
-        ChangeNotifierProvider(create: (_) => TranslationProvider()),
-        ChangeNotifierProvider(create: (_) => SettingsProvider()),
-        ChangeNotifierProvider(create: (_) => GameProvider()..initialize()),
-        ChangeNotifierProvider(create: (_) => GameProvider()),
-        ChangeNotifierProvider(create: (_) => ThemeProvider()),
-        ChangeNotifierProxyProvider<ApiService, AuthProvider>(
-          create: (context) {
-            final provider = AuthProvider(context.read<ApiService>());
-            provider.initialize(); // Initialize async
-            return provider;
-          },
-          update: (context, apiService, previous) {
-            if (previous != null) return previous;
-            final provider = AuthProvider(apiService);
-            provider.initialize(); // Initialize async
-            return provider;
-          },
-          create: (context) => AuthProvider(context.read<ApiService>()),
-          update: (context, apiService, previous) =>
-              previous ?? AuthProvider(apiService),
-        ),
-        ChangeNotifierProvider(create: (_) => ChatbotProvider()),
-        ChangeNotifierProvider(create: (_) => PeerChatProvider()),
-        ChangeNotifierProvider(create: (_) => FriendProvider()),
-        ChangeNotifierProvider(create: (_) => GroupProvider()),
-      ],
-      child: Consumer2<ThemeProvider, AuthProvider>(
-        builder: (context, themeProvider, authProvider, child) {
-          return MaterialApp(
-            title: 'MiniGameCenter - Gaming Hub',
-            debugShowCheckedModeBanner: false,
-            theme: GamingTheme.darkTheme, // Always use Gaming Hub theme
-
         // ChallengeProvider depends on ApiService and SocketService
-        Provider<SocketService>(create: (_) => SocketService()),
         ChangeNotifierProxyProvider2<
           ApiService,
           SocketService,
@@ -142,6 +106,17 @@ class SmartStudentApp extends StatelessWidget {
           update: (context, apiService, socketService, previous) =>
               previous ?? ChallengeProvider(apiService, socketService),
         ),
+
+        // Independent providers
+        ChangeNotifierProvider(create: (_) => ThemeProvider()..initialize()),
+        ChangeNotifierProvider(create: (_) => AlarmProvider()),
+        ChangeNotifierProvider(create: (_) => TranslationProvider()),
+        ChangeNotifierProvider(create: (_) => SettingsProvider()),
+        ChangeNotifierProvider(create: (_) => GameProvider()..initialize()),
+        ChangeNotifierProvider(create: (_) => ChatbotProvider()),
+        ChangeNotifierProvider(create: (_) => PeerChatProvider()),
+        ChangeNotifierProvider(create: (_) => FriendProvider()),
+        ChangeNotifierProvider(create: (_) => GroupProvider()),
       ],
       child: Consumer<AuthProvider>(
         builder: (context, authProvider, _) {
@@ -149,8 +124,6 @@ class SmartStudentApp extends StatelessWidget {
             title: 'MiniGameCenter - Gaming Hub',
             debugShowCheckedModeBanner: false,
             theme: GamingTheme.darkTheme,
-            darkTheme: GamingTheme.darkTheme,
-            themeMode: ThemeMode.dark,
             darkTheme: GamingTheme.darkTheme,
             themeMode: ThemeMode.dark, // Force dark mode for gaming aesthetic
             // Auto-navigate based on login status and role
