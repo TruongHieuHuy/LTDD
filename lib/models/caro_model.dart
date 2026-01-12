@@ -9,6 +9,8 @@ class CaroGame {
   final bool gameOver;
   final List<CaroMove> moveHistory;
 
+
+
   CaroGame({
     required this.board,
     required this.size,
