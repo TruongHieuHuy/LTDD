@@ -43,6 +43,7 @@ import 'providers/friend_provider.dart';
 import 'providers/group_provider.dart';
 import 'config/gaming_theme.dart';
 import 'screens/games/sudoku_screen.dart';
+import 'screens/games/caro_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -137,6 +138,7 @@ class SmartStudentApp extends StatelessWidget {
               '/peer-chat': (context) => const PeerChatListScreen(),
               '/saved-posts': (context) => const SavedPostsScreen(),
               '/sudoku_game': (context) => const SudokuScreen(),
+              '/caro_game': (context) => const CaroScreen(),
             },
             onGenerateRoute: (settings) {
               // Handle user profile route with userId parameter
