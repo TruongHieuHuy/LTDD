@@ -11,7 +11,14 @@ import '../../services/api_service.dart';
 import '../../utils/game_audio_service.dart';
 
 class CowsBullsGameScreen extends StatefulWidget {
-  const CowsBullsGameScreen({super.key});
+  final String? challengeId;
+  final int? challengeGameNumber;
+
+  const CowsBullsGameScreen({
+    super.key,
+    this.challengeId,
+    this.challengeGameNumber,
+  });
 
   @override
   State<CowsBullsGameScreen> createState() => _CowsBullsGameScreenState();

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../models/game_score_model.dart';
+import '../../models/leaderboard_entry.dart';
 import '../../providers/game_provider.dart';
 import '../../config/gaming_theme.dart';
+
 
 class LeaderboardScreen extends StatefulWidget {
   const LeaderboardScreen({super.key});
@@ -29,6 +30,9 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
     'puzzle': {'label': 'Puzzle', 'emoji': '🧩', 'color': GamingTheme.legendaryGold},
   };
 
+  List<LeaderboardEntry> _leaderboardData = [];
+  bool _isLoading = false;
+
   @override
   void initState() {
     super.initState();
@@ -36,6 +40,28 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
       vsync: this,
       duration: const Duration(milliseconds: 1500),
     )..forward();
+    
+    // Initial load
+    _loadLeaderboard();
+  }
+
+  Future<void> _loadLeaderboard() async {
+    setState(() => _isLoading = true);
+    
+    // Convert filter key to API format
+    // Special handling if needed, or pass directly
+    final gameType = _selectedFilter == 'all' ? 'all' : _selectedFilter;
+    
+    final data = await Provider.of<GameProvider>(context, listen: false)
+        .fetchGlobalLeaderboard(gameType: gameType, limit: 10);
+        
+    if (mounted) {
+      setState(() {
+        _leaderboardData = data.cast<LeaderboardEntry>();
+        _isLoading = false;
+        _podiumController.forward(from: 0);
+      });
+    }
   }
 
   @override
@@ -44,18 +70,13 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
     super.dispose();
   }
 
-  List<GameScoreModel> get _filteredScores {
-    final gameProvider = Provider.of<GameProvider>(context);
-    return gameProvider.getLeaderboard(
-      gameType: _selectedFilter == 'all' ? null : _selectedFilter,
-      limit: 10,
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    final topThree = _filteredScores.take(3).toList();
-    final others = _filteredScores.skip(3).take(7).toList();
+    // Top 3 for podium
+    final topThree = _leaderboardData.take(3).toList();
+    // Rest of the list
+    final others = _leaderboardData.skip(3).toList();
+
 
     return Scaffold(
       backgroundColor: GamingTheme.primaryDark,
@@ -69,7 +90,12 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
                 padding: const EdgeInsets.all(20),
                 child: Column(
                   children: [
-                    if (topThree.isNotEmpty)
+                    if (_isLoading)
+                      const Padding(
+                        padding: EdgeInsets.all(40.0),
+                        child: CircularProgressIndicator(),
+                      )
+                    else if (topThree.isNotEmpty)
                       _buildPodium(topThree)
                     else
                       _buildEmptyState(),
@@ -144,7 +170,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
       onTap: () {
         setState(() {
           _selectedFilter = value;
-          _podiumController.forward(from: 0); // Replay animation
+          _loadLeaderboard(); // Fetch new data
         });
       },
       child: ConstrainedBox(
@@ -222,7 +248,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
     );
   }
 
-  Widget _buildPodium(List<GameScoreModel> topThree) {
+  Widget _buildPodium(List<LeaderboardEntry> topThree) {
     return AnimatedBuilder(
       animation: _podiumController,
       builder: (context, child) {
@@ -243,7 +269,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
   }
 
   Widget _buildPodiumPlace(
-    GameScoreModel score,
+    LeaderboardEntry entry,
     int rank,
     double height,
     Color color,
@@ -278,17 +304,24 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
             child: CircleAvatar(
               radius: rank == 1 ? 35 : 30,
               backgroundColor: GamingTheme.surfaceDark,
-              child: Text(
-                rank == 1 ? '👑' : rank == 2 ? '🥈' : '🥉',
-                style: const TextStyle(fontSize: 30),
-              ),
+              backgroundImage: entry.user.avatarUrl != null &&
+                      entry.user.avatarUrl!.isNotEmpty
+                  ? NetworkImage(entry.user.avatarUrl!)
+                  : null,
+              child: entry.user.avatarUrl == null ||
+                      entry.user.avatarUrl!.isEmpty
+                  ? Text(
+                      rank == 1 ? '👑' : rank == 2 ? '🥈' : '🥉',
+                      style: const TextStyle(fontSize: 30),
+                    )
+                  : null,
             ),
           ),
           // Name
           SizedBox(
             width: 80,
             child: Text(
-              score.playerName,
+              entry.user.username,
               style: GamingTheme.bodyMedium.copyWith(
                 color: color,
                 fontSize: rank == 1 ? 14 : 12,
@@ -301,13 +334,14 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
           ),
           // Score
           Text(
-            '${score.score} pts',
+            '${entry.score} pts',
             style: GamingTheme.scoreDisplay.copyWith(
               fontSize: rank == 1 ? 16 : 14,
               color: Colors.white,
             ),
           ),
           const SizedBox(height: 5),
+
           // Podium block
           Container(
             width: 80,
@@ -334,8 +368,8 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
     );
   }
 
-  Widget _buildLeaderboardItem(GameScoreModel score, int rank) {
-    final gameInfo = _gameFilters[score.gameType];
+  Widget _buildLeaderboardItem(LeaderboardEntry entry, int rank) {
+    final gameInfo = _gameFilters[entry.gameType];
     final gameColor = gameInfo?['color'] ?? GamingTheme.primaryAccent;
     
     return Container(
@@ -377,7 +411,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  score.playerName,
+                  entry.user.username,
                   style: GamingTheme.bodyLarge.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -386,14 +420,15 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
                 Row(
                   children: [
                     Text(
-                      '${gameInfo?['emoji'] ?? '🎮'} ${gameInfo?['label'] ?? score.gameType}',
+                      '${gameInfo?['emoji'] ?? '🎮'} ${gameInfo?['label'] ?? entry.gameType}',
                       style: GamingTheme.bodySmall.copyWith(
                         color: GamingTheme.textSecondary,
                       ),
                     ),
                     const SizedBox(width: 10),
+                    const SizedBox(width: 10),
                     Text(
-                      '${score.attempts} lượt',
+                      _formatDate(entry.createdAt),
                       style: GamingTheme.bodySmall.copyWith(
                         color: GamingTheme.textSecondary,
                       ),
@@ -405,7 +440,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
           ),
           // Score
           Text(
-            '${score.score}',
+            '${entry.score}',
             style: GamingTheme.scoreDisplay.copyWith(
               fontSize: 20,
               color: gameColor,
@@ -414,5 +449,9 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
         ],
       ),
     );
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.day}/${date.month}';
   }
 }

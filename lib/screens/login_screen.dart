@@ -5,6 +5,7 @@ import '../config/gaming_theme.dart';
 import '../widgets/gaming/gaming_button.dart';
 import '../widgets/gaming/gaming_text_field.dart';
 import '../widgets/gaming/gaming_dialog.dart';
+import 'auth/otp_verification_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -87,6 +88,19 @@ class _LoginScreenState extends State<LoginScreen>
       setState(() => _isLoading = false);
 
       if (result.success && mounted) {
+        // Check 2FA
+        if (result.requiresTwoFactor) {
+           Navigator.of(context).push(
+             MaterialPageRoute(
+               builder: (context) => OtpVerificationScreen(
+                 userId: result.userId!, 
+                 rememberMe: _rememberMe
+               ),
+             ),
+           );
+           return;
+        }
+
         // Success - Navigate based on user role
         final role = authProvider.userRole;
         debugPrint(
@@ -346,6 +360,21 @@ class _LoginScreenState extends State<LoginScreen>
                         width: double.infinity,
                         icon: _isLoginMode ? Icons.login : Icons.app_registration,
                       ),
+                      const SizedBox(height: GamingTheme.m),
+
+                      // Guest Mode Button
+                      if (_isLoginMode)
+                        GamingButton(
+                          text: 'CHƠI THỬ',
+                          style: GamingButtonStyle.secondary,
+                          onPressed: () {
+                            Navigator.of(
+                              context,
+                            ).pushNamedAndRemoveUntil('/modular', (route) => false);
+                          },
+                          width: double.infinity,
+                          icon: Icons.gamepad,
+                        ),
                       const SizedBox(height: GamingTheme.l),
 
                       // Info Box

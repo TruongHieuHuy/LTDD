@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import '../models/game_score_model.dart';
 import '../models/achievement_model.dart';
 import '../utils/database_service.dart';
+import '../services/api_service.dart';
 
 class GameProvider extends ChangeNotifier {
   String _playerName = 'Player';
@@ -97,9 +98,38 @@ class GameProvider extends ChangeNotifier {
     return newAchievements;
   }
 
-  /// Get leaderboard with filtering
+  /// Get leaderboard with filtering (Local)
   List<GameScoreModel> getLeaderboard({String? gameType, int limit = 10}) {
     return DatabaseService.getLeaderboard(gameType: gameType, limit: limit);
+  }
+
+  /// Fetch Global Leaderboard from API
+  Future<List<dynamic>> fetchGlobalLeaderboard({
+    String gameType = 'all',
+    String difficulty = 'all',
+    int limit = 10,
+  }) async {
+    _isLoading = true;
+    notifyListeners();
+    
+    try {
+      // Use ApiService to get global data
+      // Note: ApiService returns List<LeaderboardEntry>
+      final entries = await ApiService().getLeaderboard(
+        gameType: gameType,
+        difficulty: difficulty,
+        limit: limit,
+      );
+      
+      _isLoading = false;
+      notifyListeners();
+      return entries;
+    } catch (e) {
+      debugPrint('Error fetching global leaderboard: $e');
+      _isLoading = false;
+      notifyListeners();
+      return [];
+    }
   }
 
   /// Get player's best score for a game

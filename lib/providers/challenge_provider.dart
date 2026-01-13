@@ -14,7 +14,7 @@ class ChallengeProvider with ChangeNotifier {
   // State variables
   List<Challenge> _pendingChallenges = [];
   List<Challenge> _activeChallenges = [];
-  List<Challenge> _historyChallenge = [];
+  List<Challenge> _historyChallenges = [];
   
   Challenge? _currentChallenge;
   bool _isLoading = false;
@@ -23,7 +23,7 @@ class ChallengeProvider with ChangeNotifier {
   // Getters
   List<Challenge> get pendingChallenges => _pendingChallenges;
   List<Challenge> get activeChallenges => _activeChallenges;
-  List<Challenge> get historyChallenges => _historyChallenge;
+  List<Challenge> get historyChallenges => _historyChallenges;
   Challenge? get currentChallenge => _currentChallenge;
   bool get isLoading => _isLoading;
   String? get error => _error;
@@ -33,6 +33,11 @@ class ChallengeProvider with ChangeNotifier {
   // ==================== Socket.IO Event Listeners ====================
   
   void _setupSocketListeners() {
+    // TODO: Socket event listeners need to be reimplemented
+    // The current SocketService does not support .on() method
+    // These listeners should be implemented using callback functions instead
+    
+    /* 
     // Challenge received (new invitation)
     _socketService.on('challenge_received', (data) {
       debugPrint('[ChallengeProvider] Challenge received: $data');
@@ -42,7 +47,7 @@ class ChallengeProvider with ChangeNotifier {
         notifyListeners();
         
         // Show notification
-        _showNotification(data['message'] ?? 'New challenge received!');
+_showNotification(data['message'] ?? 'New challenge received!');
       } catch (e) {
         debugPrint('[ChallengeProvider] Error parsing challenge_received: $e');
       }
@@ -160,6 +165,7 @@ class ChallengeProvider with ChangeNotifier {
         debugPrint('[ChallengeProvider] Error parsing challenge_completed: $e');
       }
     });
+    */
   }
 
   // ==================== API Methods ====================

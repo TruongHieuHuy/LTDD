@@ -40,21 +40,35 @@ class AuthProvider with ChangeNotifier {
 
   /// Initialize Hive box and load auth state
   Future<void> initialize() async {
-    _box = await Hive.openBox(_boxName);
-    await _loadAuth();
-    _savedEmail = _box.get(_savedEmailKey) as String?;
+    try {
+      debugPrint('AuthProvider: Starting initialization');
+      _box = await Hive.openBox(_boxName);
+      debugPrint('AuthProvider: Hive box opened');
+      await _loadAuth();
+      debugPrint('AuthProvider: Auth loaded, isLoggedIn=${_currentAuth?.isLoggedIn}');
+      _savedEmail = _box.get(_savedEmailKey) as String?;
+      debugPrint('AuthProvider: Saved email loaded: $_savedEmail');
 
-    // Load user profile from cache
-    final profileJson = _box.get(_userProfileKey) as Map?;
-    if (profileJson != null) {
-      try {
-        _userProfile = UserProfile.fromJson(
-          Map<String, dynamic>.from(profileJson),
-        );
-      } catch (e) {
-        debugPrint('Error loading user profile from cache: $e');
+      // Load user profile from cache
+      final profileJson = _box.get(_userProfileKey) as Map?;
+      if (profileJson != null) {
+        try {
+          _userProfile = UserProfile.fromJson(
+            Map<String, dynamic>.from(profileJson),
+          );
+          debugPrint('AuthProvider: User profile loaded from cache');
+        } catch (e) {
+          debugPrint('Error loading user profile from cache: $e');
+        }
+      } else {
+        debugPrint('AuthProvider: No cached user profile found');
       }
+      debugPrint('AuthProvider: Initialization complete');
+    } catch (e, stack) {
+      debugPrint('AuthProvider: Initialization failed: $e');
+      debugPrint('Stack trace: $stack');
     }
+    notifyListeners();
   }
 
   /// Load authentication state from Hive
@@ -146,6 +160,17 @@ class AuthProvider with ChangeNotifier {
         password: password,
       );
 
+      // Handle 2FA
+      if (authData.requiresTwoFactor) {
+        return LoginResult(
+          success: true, 
+          message: '2FA Required',
+          requiresTwoFactor: true,
+          userId: authData.userId,
+        );
+      }
+
+      // Normal Login
       final expiry = AuthModel.calculateExpiry(rememberMe: rememberMe);
       _currentAuth = AuthModel(
         email: trimmedEmail,
@@ -153,7 +178,7 @@ class AuthProvider with ChangeNotifier {
         lastLoginTime: DateTime.now(),
         rememberMe: rememberMe,
         sessionExpiry: expiry,
-        role: authData.user.role,
+        role: authData.user?.role ?? 'USER',
       );
 
       _userProfile = authData.user;
@@ -178,6 +203,55 @@ class AuthProvider with ChangeNotifier {
       debugPrint('Login error: $e');
       return LoginResult(success: false, message: 'An unexpected error occurred.');
     }
+  }
+
+  /// Complete Login with 2FA
+  Future<LoginResult> loginWith2FA({
+    required String userId,
+    required String code,
+    bool rememberMe = false, // Default false for now, or pass from previous screen
+  }) async {
+    try {
+      final authData = await _apiService.login2FA(userId: userId, code: code);
+
+      final expiry = AuthModel.calculateExpiry(rememberMe: rememberMe);
+      _currentAuth = AuthModel(
+        email: authData.user?.email, 
+        sessionToken: authData.token,
+        lastLoginTime: DateTime.now(),
+        rememberMe: rememberMe,
+        sessionExpiry: expiry,
+        role: authData.user?.role ?? 'USER',
+      );
+
+      _userProfile = authData.user;
+      await _saveUserProfile();
+      await _saveAuth();
+      notifyListeners();
+
+      return LoginResult(success: true, message: 'Login successful');
+    } on ApiException catch (e) {
+      return LoginResult(success: false, message: e.message);
+    } catch (e) {
+      return LoginResult(success: false, message: 'An unexpected error occurred.');
+    }
+  }
+
+  /// Enable 2FA
+  Future<Map<String, dynamic>> enable2FA() async {
+    return await _apiService.enable2FA();
+  }
+
+  /// Verify 2FA Setup
+  Future<void> verify2FASetup(String code) async {
+    await _apiService.verify2FASetup(code);
+    await _refreshUserProfile(); // Update local profile state
+  }
+
+  /// Disable 2FA
+  Future<void> disable2FA() async {
+    await _apiService.disable2FA();
+    await _refreshUserProfile();
   }
 
   /// Register new account
@@ -247,13 +321,18 @@ class AuthProvider with ChangeNotifier {
   /// Set clearSavedCredentials to true when user manually logs out
   Future<void> logout({bool clearSavedCredentials = true}) async {
     try {
+      // Check if we should keep the email based on "Remember Me" checks
+      final bool keepEmail = _currentAuth?.rememberMe ?? false;
+
       _currentAuth = null;
       _userProfile = null;
       await _box.delete(_authKey);
       await _box.delete(_userProfileKey);
       
-      // Only clear saved email if user explicitly logs out
-      if (clearSavedCredentials) {
+      // Only clear saved email if:
+      // 1. User is explicitly logging out (clearSavedCredentials is true)
+      // 2. AND User did NOT check "Remember Me"
+      if (clearSavedCredentials && !keepEmail) {
         _savedEmail = null;
         await _box.delete(_savedEmailKey);
       }
@@ -285,6 +364,13 @@ class AuthProvider with ChangeNotifier {
 class LoginResult {
   final bool success;
   final String message;
+  final bool requiresTwoFactor;
+  final String? userId;
 
-  LoginResult({required this.success, required this.message});
+  LoginResult({
+    required this.success,
+    required this.message,
+    this.requiresTwoFactor = false,
+    this.userId,
+  });
 }

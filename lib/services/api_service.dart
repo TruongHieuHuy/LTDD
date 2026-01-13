@@ -18,6 +18,7 @@ import '../models/conversation_data.dart';
 import '../models/post_data.dart';
 import '../models/comment_data.dart';
 import '../models/sudoku_model.dart';
+import '../models/puzzle_model.dart';
 
 /// API Service để giao tiếp với Backend
 class ApiService {
@@ -146,6 +147,60 @@ class ApiService {
           return authData;
         },
         defaultErrorMessage: 'Login failed',
+      );
+
+  /// Login with 2FA
+  Future<AuthResponse> login2FA({
+    required String userId,
+    required String code,
+  }) =>
+      _request(
+        'Login2FA',
+        request: () => http.post(
+          Uri.parse('$baseUrl/api/auth/login-2fa'),
+          headers: _headers,
+          body: jsonEncode({'userId': userId, 'code': code}),
+        ),
+        onSuccess: (data) {
+          final authData = AuthResponse.fromJson(data['data']);
+          setAuthToken(authData.token);
+          return authData;
+        },
+        defaultErrorMessage: '2FA Login failed',
+      );
+
+  /// Enable 2FA (Returns QR Code URL and Secret)
+  Future<Map<String, dynamic>> enable2FA() => _request(
+        'Enable2FA',
+        request: () => http.post(
+          Uri.parse('$baseUrl/api/auth/two-factor/enable'),
+          headers: _headers,
+        ),
+        onSuccess: (data) => data as Map<String, dynamic>,
+        defaultErrorMessage: 'Failed to enable 2FA',
+      );
+
+  /// Verify 2FA Setup
+  Future<void> verify2FASetup(String code) => _request(
+        'Verify2FA',
+        request: () => http.post(
+          Uri.parse('$baseUrl/api/auth/two-factor/verify'),
+          headers: _headers,
+          body: jsonEncode({'code': code}),
+        ),
+        onSuccess: (_) {},
+        defaultErrorMessage: 'Failed to verify 2FA',
+      );
+
+  /// Disable 2FA
+  Future<void> disable2FA() => _request(
+        'Disable2FA',
+        request: () => http.post(
+          Uri.parse('$baseUrl/api/auth/two-factor/disable'),
+          headers: _headers,
+        ),
+        onSuccess: (_) {},
+        defaultErrorMessage: 'Failed to disable 2FA',
       );
 
   /// Get current user profile
@@ -547,6 +602,76 @@ extension SudokuAPI on ApiService {
       );
 }
 
+// ==================== PUZZLE API EXTENSION ====================
+extension PuzzleAPI on ApiService {
+  /// Generate Puzzle Game
+  Future<PuzzleGame> generatePuzzle({
+    required String difficulty,
+    required int gridSize,
+  }) async {
+    try {
+      debugPrint('🎮 Generating puzzle: difficulty=$difficulty, gridSize=$gridSize');
+      debugPrint('🌐 Request URL: ${ApiService.baseUrl}/puzzle/generate');
+      
+      final response = await http.post(
+        Uri.parse('${ApiService.baseUrl}/api/puzzle/generate'), // Không có /api
+        headers: _headers,
+        body: jsonEncode({
+          'difficulty': difficulty,
+          'gridSize': gridSize,
+        }),
+      );
+
+      debugPrint('📡 Response status: ${response.statusCode}');
+      debugPrint('📦 Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final game = PuzzleGame.fromJson(data['puzzle']);
+        debugPrint('✅ Game generated successfully!');
+        debugPrint('📷 Image URL: ${game.imageUrl}');
+        debugPrint('🧩 First tile: ${game.tilePaths.isNotEmpty ? game.tilePaths[0] : "none"}');
+        return game;
+      } else {
+        throw Exception('Failed to generate puzzle: ${response.body}');
+      }
+    } catch (e) {
+      debugPrint('❌ Error generating puzzle: $e');
+      throw Exception('Error generating puzzle: $e');
+    }
+  }
+
+  /// Calculate Puzzle Score
+  Future<int> calculatePuzzleScore({
+    required String difficulty,
+    required int timeInSeconds,
+    required int moves,
+    required int gridSize,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('${ApiService.baseUrl}/api/puzzle/calculate-score'), // Không có /api
+        headers: _headers,
+        body: jsonEncode({
+          'difficulty': difficulty,
+          'timeInSeconds': timeInSeconds,
+          'moves': moves,
+          'gridSize': gridSize,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['score'] as int;
+      } else {
+        throw Exception('Failed to calculate score: ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Error calculating score: $e');
+    }
+  }
+}
+
 // ============ POSTS API EXTENSION ============
 
 extension PostsAPI on ApiService {
@@ -808,6 +933,22 @@ extension PostsAPI on ApiService {
         defaultErrorMessage: 'Failed to get achievements',
       );
   }
+}
+
+// ==================== CHALLENGE API EXTENSION ====================
+extension ChallengeAPI on ApiService {
+  /// Get pending challenges
+  Future<List<Map<String, dynamic>>> getPendingChallenges() => _request(
+        'GetPendingChallenges',
+        request: () => http.get(
+          Uri.parse('${ApiService.baseUrl}/api/challenges/pending'),
+          headers: _headers,
+        ),
+        onSuccess: (data) => (data['challenges'] as List)
+            .map((e) => e as Map<String, dynamic>)
+            .toList(),
+        defaultErrorMessage: 'Failed to get pending challenges',
+      );
 
    /// Tạo game Caro mới
   Future<CaroGame> createCaroGame({
@@ -933,5 +1074,127 @@ extension PostsAPI on ApiService {
 
   
   
+  /// Get active challenges
+  Future<List<Map<String, dynamic>>> getActiveChallenges() => _request(
+        'GetActiveChallenges',
+        request: () => http.get(
+          Uri.parse('${ApiService.baseUrl}/api/challenges/active'),
+          headers: _headers,
+        ),
+        onSuccess: (data) => (data['challenges'] as List)
+            .map((e) => e as Map<String, dynamic>)
+            .toList(),
+        defaultErrorMessage: 'Failed to get active challenges',
+      );
+
+  /// Get challenge history
+  Future<Map<String, dynamic>> getChallengeHistory({
+    int limit = 20,
+    int offset = 0,
+  }) =>
+      _request(
+        'GetChallengeHistory',
+        request: () => http.get(
+          Uri.parse(
+            '${ApiService.baseUrl}/api/challenges/history?limit=$limit&offset=$offset',
+          ),
+          headers: _headers,
+        ),
+        onSuccess: (data) => data as Map<String, dynamic>,
+        defaultErrorMessage: 'Failed to get challenge history',
+      );
+
+  /// Create a new challenge
+  Future<Map<String, dynamic>> createChallenge({
+    required String opponentId,
+    required int betAmount,
+  }) =>
+      _request(
+        'CreateChallenge',
+        request: () => http.post(
+          Uri.parse('${ApiService.baseUrl}/api/challenges'),
+          headers: _headers,
+          body: jsonEncode({
+            'opponentId': opponentId,
+            'betAmount': betAmount,
+          }),
+        ),
+        onSuccess: (data) => data['challenge'] as Map<String, dynamic>,
+        defaultErrorMessage: 'Failed to create challenge',
+      );
+
+  /// Accept a challenge
+  Future<Map<String, dynamic>> acceptChallenge(String challengeId) => _request(
+        'AcceptChallenge',
+        request: () => http.post(
+          Uri.parse('${ApiService.baseUrl}/api/challenges/$challengeId/accept'),
+          headers: _headers,
+        ),
+        onSuccess: (data) => data['challenge'] as Map<String, dynamic>,
+        defaultErrorMessage: 'Failed to accept challenge',
+      );
+
+  /// Reject a challenge
+  Future<void> rejectChallenge(String challengeId) => _request(
+        'RejectChallenge',
+        request: () => http.post(
+          Uri.parse('${ApiService.baseUrl}/api/challenges/$challengeId/reject'),
+          headers: _headers,
+        ),
+        onSuccess: (_) {},
+        defaultErrorMessage: 'Failed to reject challenge',
+      );
+
+  /// Vote for a game
+  Future<Map<String, dynamic>> voteForGame({
+    required String challengeId,
+    required int gameNumber,
+    required String gameType,
+  }) =>
+      _request(
+        'VoteForGame',
+        request: () => http.post(
+          Uri.parse('${ApiService.baseUrl}/api/challenges/$challengeId/vote'),
+          headers: _headers,
+          body: jsonEncode({
+            'gameNumber': gameNumber,
+            'gameType': gameType,
+          }),
+        ),
+        onSuccess: (data) => data['challenge'] as Map<String, dynamic>,
+        defaultErrorMessage: 'Failed to vote for game',
+      );
+
+  /// Submit challenge score
+  Future<Map<String, dynamic>> submitChallengeScore({
+    required String challengeId,
+    required int gameNumber,
+    required int score,
+  }) =>
+      _request(
+        'SubmitChallengeScore',
+        request: () => http.post(
+          Uri.parse('${ApiService.baseUrl}/api/challenges/$challengeId/score'),
+          headers: _headers,
+          body: jsonEncode({
+            'gameNumber': gameNumber,
+            'score': score,
+          }),
+        ),
+        onSuccess: (data) => data['challenge'] as Map<String, dynamic>,
+        defaultErrorMessage: 'Failed to submit score',
+      );
+
+  /// Get challenge details
+  Future<Map<String, dynamic>> getChallengeDetails(String challengeId) =>
+      _request(
+        'GetChallengeDetails',
+        request: () => http.get(
+          Uri.parse('${ApiService.baseUrl}/api/challenges/$challengeId'),
+          headers: _headers,
+        ),
+        onSuccess: (data) => data['challenge'] as Map<String, dynamic>,
+        defaultErrorMessage: 'Failed to get challenge details',
+      );
 }
 

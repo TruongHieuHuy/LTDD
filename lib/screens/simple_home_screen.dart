@@ -24,26 +24,30 @@ class SimpleHomeScreen extends StatelessWidget {
             SliverToBoxAdapter(
               child: _buildGamingHeader(context, userName, level, totalScore),
             ),
-            
+
             // Spacer
             const SliverToBoxAdapter(child: SizedBox(height: 24)),
-            
+
             // Games Section
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Row(
                   children: [
-                    Icon(Icons.sports_esports, color: GamingTheme.primaryAccent, size: 24),
+                    Icon(
+                      Icons.sports_esports,
+                      color: GamingTheme.primaryAccent,
+                      size: 24,
+                    ),
                     const SizedBox(width: 8),
                     Text('MINI GAMES', style: GamingTheme.h2),
                   ],
                 ),
               ),
             ),
-            
+
             const SliverToBoxAdapter(child: SizedBox(height: 16)),
-            
+
             // Game Grid
             SliverPadding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -92,16 +96,16 @@ class SimpleHomeScreen extends StatelessWidget {
                     title: 'Rubik',
                     icon: '🎨',
                     color: GamingTheme.rareBlue,
-                    route: null,
-                    comingSoon: true,
+                    route: '/rubik_cube_game',
+                    isNew: true,
                   ),
-  _buildGameCard(
+                  _buildGameCard(
                     context,
                     title: 'Sudoku',
                     icon: '🔢',
                     color: GamingTheme.epicPurple,
-                    route: '/sudoku_game', 
-                    isNew: true, 
+                    route: '/sudoku_game',
+                    isNew: true,
                   ),
 _buildGameCard(
   context,
@@ -116,31 +120,35 @@ _buildGameCard(
                     title: 'Puzzle',
                     icon: '🧩',
                     color: GamingTheme.mediumOrange,
-                    route: null,
-                    comingSoon: true,
+                    route: '/puzzle_game', // ← MỞ KHÓA PUZZLE
+                    isNew: true, // ← THÊM BADGE NEW
                   ),
                 ]),
               ),
             ),
-            
+
             // Utilities Section
             const SliverToBoxAdapter(child: SizedBox(height: 32)),
-            
+
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Row(
                   children: [
-                    Icon(Icons.dashboard, color: GamingTheme.secondaryAccent, size: 24),
+                    Icon(
+                      Icons.dashboard,
+                      color: GamingTheme.secondaryAccent,
+                      size: 24,
+                    ),
                     const SizedBox(width: 8),
                     Text('TIỆN ÍCH', style: GamingTheme.h2),
                   ],
                 ),
               ),
             ),
-            
+
             const SliverToBoxAdapter(child: SizedBox(height: 16)),
-            
+
             // Utility Cards
             SliverPadding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -185,7 +193,9 @@ _buildGameCard(
                   Container(
                     decoration: BoxDecoration(
                       color: GamingTheme.surfaceDark,
-                      borderRadius: BorderRadius.circular(GamingTheme.radiusMedium),
+                      borderRadius: BorderRadius.circular(
+                        GamingTheme.radiusMedium,
+                      ),
                       border: Border.all(color: GamingTheme.border),
                     ),
                     child: Material(
@@ -195,7 +205,9 @@ _buildGameCard(
                           // Navigate directly to chat screen
                           Navigator.pushNamed(context, '/peer-chat');
                         },
-                        borderRadius: BorderRadius.circular(GamingTheme.radiusMedium),
+                        borderRadius: BorderRadius.circular(
+                          GamingTheme.radiusMedium,
+                        ),
                         child: Padding(
                           padding: const EdgeInsets.all(16),
                           child: Row(
@@ -204,24 +216,45 @@ _buildGameCard(
                                 width: 48,
                                 height: 48,
                                 decoration: BoxDecoration(
-                                  color: GamingTheme.tertiaryAccent.withOpacity(0.2),
+                                  color: GamingTheme.tertiaryAccent.withOpacity(
+                                    0.2,
+                                  ),
                                   borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: GamingTheme.tertiaryAccent, width: 1.5),
+                                  border: Border.all(
+                                    color: GamingTheme.tertiaryAccent,
+                                    width: 1.5,
+                                  ),
                                 ),
-                                child: Icon(Icons.chat, color: GamingTheme.tertiaryAccent, size: 24),
+                                child: Icon(
+                                  Icons.chat,
+                                  color: GamingTheme.tertiaryAccent,
+                                  size: 24,
+                                ),
                               ),
                               const SizedBox(width: 16),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text('Trò chuyện', style: GamingTheme.h3.copyWith(fontSize: 16)),
+                                    Text(
+                                      'Trò chuyện',
+                                      style: GamingTheme.h3.copyWith(
+                                        fontSize: 16,
+                                      ),
+                                    ),
                                     const SizedBox(height: 2),
-                                    Text('Nhắn tin với bạn bè', style: GamingTheme.bodyMedium),
+                                    Text(
+                                      'Nhắn tin với bạn bè',
+                                      style: GamingTheme.bodyMedium,
+                                    ),
                                   ],
                                 ),
                               ),
-                              Icon(Icons.arrow_forward_ios, size: 16, color: GamingTheme.textSecondary),
+                              Icon(
+                                Icons.arrow_forward_ios,
+                                size: 16,
+                                color: GamingTheme.textSecondary,
+                              ),
                             ],
                           ),
                         ),
@@ -238,7 +271,12 @@ _buildGameCard(
     );
   }
 
-  Widget _buildGamingHeader(BuildContext context, String userName, int level, int totalScore) {
+  Widget _buildGamingHeader(
+    BuildContext context,
+    String userName,
+    int level,
+    int totalScore,
+  ) {
     return Container(
       margin: const EdgeInsets.all(20),
       padding: const EdgeInsets.all(20),
@@ -277,7 +315,10 @@ _buildGameCard(
                     shape: BoxShape.circle,
                     border: Border.all(color: Colors.white, width: 3),
                     gradient: LinearGradient(
-                      colors: [GamingTheme.primaryAccent, GamingTheme.tertiaryAccent],
+                      colors: [
+                        GamingTheme.primaryAccent,
+                        GamingTheme.tertiaryAccent,
+                      ],
                     ),
                   ),
                   child: Center(
@@ -293,7 +334,10 @@ _buildGameCard(
                 bottom: 0,
                 right: 0,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: GamingTheme.legendaryGold,
                     borderRadius: BorderRadius.circular(12),
@@ -338,7 +382,11 @@ _buildGameCard(
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    Icon(Icons.stars, size: 14, color: GamingTheme.legendaryGold),
+                    Icon(
+                      Icons.stars,
+                      size: 14,
+                      color: GamingTheme.legendaryGold,
+                    ),
                     const SizedBox(width: 4),
                     Text(
                       '$totalScore pts',
@@ -428,10 +476,7 @@ _buildGameCard(
                             ],
                     ),
                     child: Center(
-                      child: Text(
-                        icon,
-                        style: const TextStyle(fontSize: 32),
-                      ),
+                      child: Text(icon, style: const TextStyle(fontSize: 32)),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -453,9 +498,14 @@ _buildGameCard(
                 top: 8,
                 right: 8,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
-                    color: isNew ? GamingTheme.easyGreen : GamingTheme.mediumOrange,
+                    color: isNew
+                        ? GamingTheme.easyGreen
+                        : GamingTheme.mediumOrange,
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
@@ -524,10 +574,7 @@ _buildGameCard(
                     children: [
                       Text(title, style: GamingTheme.h3.copyWith(fontSize: 16)),
                       const SizedBox(height: 2),
-                      Text(
-                        subtitle,
-                        style: GamingTheme.bodyMedium,
-                      ),
+                      Text(subtitle, style: GamingTheme.bodyMedium),
                     ],
                   ),
                 ),

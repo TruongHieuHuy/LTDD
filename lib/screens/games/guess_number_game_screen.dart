@@ -11,7 +11,14 @@ import '../../services/api_service.dart';
 import '../../utils/game_audio_service.dart';
 
 class GuessNumberGameScreen extends StatefulWidget {
-  const GuessNumberGameScreen({super.key});
+  final String? challengeId;
+  final int? challengeGameNumber;
+
+  const GuessNumberGameScreen({
+    super.key,
+    this.challengeId,
+    this.challengeGameNumber,
+  });
 
   @override
   State<GuessNumberGameScreen> createState() => _GuessNumberGameScreenState();
