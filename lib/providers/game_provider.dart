@@ -63,6 +63,7 @@ class GameProvider extends ChangeNotifier {
     required int attempts,
     required String difficulty,
     required int timeSpent,
+    int? moves, // Optional for Rubik cube
   }) async {
     // Create score model
     final scoreModel = GameScoreModel(

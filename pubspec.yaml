@@ -72,6 +72,7 @@ dependencies:
   flutter_dotenv: ^6.0.0
   confetti: ^0.7.0               # Confetti animation for winner celebration
   flutter_cube: ^0.1.1
+  cuber: ^0.4.0                  # Rubik's Cube solver (Kociemba algorithm)
   qr_flutter: ^4.1.0
 
 dev_dependencies:

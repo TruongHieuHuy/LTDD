@@ -44,8 +44,14 @@ class GameAudioService {
       playSound(bruh, volume: volume);
 
   /// Play victory fanfare (win)
-  static Future<int?> playVictory({double volume = 1.0}) =>
-      playSound(victory, volume: volume);
+  static Future<int?> playVictory({double volume = 1.0}) async {
+    try {
+      return await playSound(victory, volume: volume);
+    } catch (e) {
+      print('Victory sound not found, skipping: $e');
+      return null;
+    }
+  }
 
   /// Play sad trombone (lose)
   static Future<int?> playSadTrombone({double volume = 1.0}) =>

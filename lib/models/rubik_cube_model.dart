@@ -444,31 +444,74 @@ class RubikCubeModel extends ChangeNotifier {
   }
 
   bool checkSolved() {
+    // Kiểm tra từng mặt: tất cả 9 ô phải cùng màu (theo màu center)
+    
+    // Up face (y=2): center at [1][2][1]
+    final upCenterColor = cubelets[1][2][1].getFaceColor('up');
+    if (upCenterColor == null) return false;
     for (int x = 0; x < 3; x++) {
-      for (int y = 0; y < 3; y++) {
-        for (int z = 0; z < 3; z++) {
-          final cubelet = cubelets[x][y][z];
-          if (x == 0 && cubelet.getFaceColor('left') != CubeColor.orange) {
-            return false;
-          }
-          if (x == 2 && cubelet.getFaceColor('right') != CubeColor.red) {
-            return false;
-          }
-          if (y == 0 && cubelet.getFaceColor('down') != CubeColor.yellow) {
-            return false;
-          }
-          if (y == 2 && cubelet.getFaceColor('up') != CubeColor.white) {
-            return false;
-          }
-          if (z == 0 && cubelet.getFaceColor('back') != CubeColor.green) {
-            return false;
-          }
-          if (z == 2 && cubelet.getFaceColor('front') != CubeColor.blue) {
-            return false;
-          }
+      for (int z = 0; z < 3; z++) {
+        if (cubelets[x][2][z].getFaceColor('up') != upCenterColor) {
+          return false;
         }
       }
     }
+
+    // Down face (y=0): center at [1][0][1]
+    final downCenterColor = cubelets[1][0][1].getFaceColor('down');
+    if (downCenterColor == null) return false;
+    for (int x = 0; x < 3; x++) {
+      for (int z = 0; z < 3; z++) {
+        if (cubelets[x][0][z].getFaceColor('down') != downCenterColor) {
+          return false;
+        }
+      }
+    }
+
+    // Right face (x=2): center at [2][1][1]
+    final rightCenterColor = cubelets[2][1][1].getFaceColor('right');
+    if (rightCenterColor == null) return false;
+    for (int y = 0; y < 3; y++) {
+      for (int z = 0; z < 3; z++) {
+        if (cubelets[2][y][z].getFaceColor('right') != rightCenterColor) {
+          return false;
+        }
+      }
+    }
+
+    // Left face (x=0): center at [0][1][1]
+    final leftCenterColor = cubelets[0][1][1].getFaceColor('left');
+    if (leftCenterColor == null) return false;
+    for (int y = 0; y < 3; y++) {
+      for (int z = 0; z < 3; z++) {
+        if (cubelets[0][y][z].getFaceColor('left') != leftCenterColor) {
+          return false;
+        }
+      }
+    }
+
+    // Front face (z=2): center at [1][1][2]
+    final frontCenterColor = cubelets[1][1][2].getFaceColor('front');
+    if (frontCenterColor == null) return false;
+    for (int x = 0; x < 3; x++) {
+      for (int y = 0; y < 3; y++) {
+        if (cubelets[x][y][2].getFaceColor('front') != frontCenterColor) {
+          return false;
+        }
+      }
+    }
+
+    // Back face (z=0): center at [1][1][0]
+    final backCenterColor = cubelets[1][1][0].getFaceColor('back');
+    if (backCenterColor == null) return false;
+    for (int x = 0; x < 3; x++) {
+      for (int y = 0; y < 3; y++) {
+        if (cubelets[x][y][0].getFaceColor('back') != backCenterColor) {
+          return false;
+        }
+      }
+    }
+
     return true;
   }
 }

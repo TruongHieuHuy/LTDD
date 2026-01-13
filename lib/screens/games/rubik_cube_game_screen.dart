@@ -8,6 +8,9 @@ import '../../providers/auth_provider.dart';
 import '../../utils/game_audio_service.dart';
 import 'dart:async';
 import 'dart:math' as math;
+import 'package:flutter/foundation.dart';
+import 'package:cuber/cuber.dart' as cuber;
+import 'setup_rubik_screen.dart';
 
 class RubikCubeGameScreen extends StatefulWidget {
   const RubikCubeGameScreen({super.key});
@@ -32,6 +35,10 @@ class _RubikCubeGameScreenState extends State<RubikCubeGameScreen>
   // Solving progress
   int _solveStep = 0;
   int _totalSolveSteps = 0;
+  
+  // Timer
+  Timer? _gameTimer;
+  int _timeSpent = 0;
 
   @override
   void initState() {
@@ -50,14 +57,41 @@ class _RubikCubeGameScreenState extends State<RubikCubeGameScreen>
     _cube.dispose();
     _celebrationController.dispose();
     _celebrationTimer?.cancel();
+    _stopTimer();
     _stopAutoOperations();
     super.dispose();
   }
 
+  void _startTimer() {
+    _stopTimer();
+    _timeSpent = 0;
+    _gameTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (mounted) {
+        setState(() {
+          _timeSpent++;
+        });
+      }
+    });
+  }
+
+  void _stopTimer() {
+    _gameTimer?.cancel();
+    _gameTimer = null;
+  }
+
   void _onCubeChanged() {
-    if (_cube.isSolved && !_showCelebration) {
-      _showWinCelebration();
-      _saveGameResult();
+    // Start timer if not solved and not auto-operating
+    if (!_cube.isSolved && !_isAutoShuffling && !_isAutoSolving && _gameTimer == null) {
+      _startTimer();
+    }
+
+    // Stop timer and check win condition
+    if (_cube.isSolved) {
+      _stopTimer();
+      if (!_showCelebration && !_isAutoSolving) { // Don't save if auto-solved
+        _showWinCelebration();
+        _saveGameResult();
+      }
     }
   }
 
@@ -82,14 +116,19 @@ class _RubikCubeGameScreenState extends State<RubikCubeGameScreen>
     final gameProvider = context.read<GameProvider>();
     final authProvider = context.read<AuthProvider>();
 
+    // Only save if logged in AND manual solve (implicit via _onCubeChanged check)
     if (authProvider.isLoggedIn) {
       try {
         await gameProvider.saveGameScore(
-          gameType: 'RUBIK_CUBE',
-          score: _cube.moveCount,
-          difficulty: 'normal',
+          gameType: 'rubik', // Lowercase to match backend
+          score: 0, // Backend calculates based on time/moves
+          difficulty: 'medium', // Default for now
           attempts: 1,
-          timeSpent: 0,
+          timeSpent: _timeSpent,
+          moves: _cube.moveCount,
+        );
+        ScaffoldMessenger.of(context).showSnackBar(
+           const SnackBar(content: Text('Score saved to leaderboard!')),
         );
       } catch (e) {
         debugPrint('Error saving Rubik Cube score: $e');
@@ -128,7 +167,7 @@ class _RubikCubeGameScreenState extends State<RubikCubeGameScreen>
 
       final move = moves[random.nextInt(moves.length)];
       _shuffleHistory.add(move);
-      await _executeMove(move);
+      await _executeMoveDirectly(move);
       await Future.delayed(const Duration(milliseconds: 350));
     }
 
@@ -139,10 +178,9 @@ class _RubikCubeGameScreenState extends State<RubikCubeGameScreen>
     }
   }
 
-  // Máy Giải - Sử dụng thuật toán lặp lại cho đến khi giải xong
+  // Máy Giải - Sử dụng thuật toán Kociemba
   Future<void> _autoSolve() async {
     if (_isAutoSolving || _isAutoShuffling) return;
-
     if (!mounted) return;
 
     setState(() {
@@ -152,15 +190,100 @@ class _RubikCubeGameScreenState extends State<RubikCubeGameScreen>
     });
 
     try {
-      if (_shuffleHistory.isNotEmpty) {
-        // Undo chính xác nếu có lịch sử
-        await _reverseShuffleHistory();
-      } else {
-        // Sử dụng thuật toán lặp cho đến khi giải xong
-        await _repeatSolveUntilComplete();
+      int maxAttempts = 3;
+      int attempt = 0;
+
+      while (!_cube.isSolved && attempt < maxAttempts) {
+        attempt++;
+        debugPrint('\n=== AutoSolve Attempt $attempt/$maxAttempts ===');
+        
+        // 1. Lấy trạng thái cube hiện tại
+        final cubeString = _getCubeStateString();
+        debugPrint('AutoSolve: Current cube state (54 chars):');
+        debugPrint('  - Full: $cubeString');
+        debugPrint('  - U: ${cubeString.substring(0, 9)}');
+        debugPrint('  - R: ${cubeString.substring(9, 18)}');
+        debugPrint('  - F: ${cubeString.substring(18, 27)}');
+        debugPrint('  - D: ${cubeString.substring(27, 36)}');
+        debugPrint('  - L: ${cubeString.substring(36, 45)}');
+        debugPrint('  - B: ${cubeString.substring(45, 54)}');
+        debugPrint('AutoSolve: isSolved before solving = ${_cube.isSolved}');
+
+        if (cubeString.length != 54) {
+          throw Exception('Invalid cube state length: ${cubeString.length}');
+        }
+
+        // 2. Giải bằng Kociemba trong background isolate
+        debugPrint('AutoSolve: Starting solver in background...');
+        final solutionMoves = await compute(_solveCube, cubeString);
+        
+        debugPrint('AutoSolve: Solution found with ${solutionMoves.length} moves');
+
+        if (solutionMoves.isEmpty) {
+           debugPrint('AutoSolve: Cube is already solved.');
+           ScaffoldMessenger.of(context).showSnackBar(
+             const SnackBar(content: Text('Cube đã được giải!')),
+           );
+           return;
+        }
+
+        if (solutionMoves.first.startsWith('ERROR:')) {
+           throw Exception(solutionMoves.first.substring(7));
+        }
+
+        setState(() {
+          _totalSolveSteps = solutionMoves.length;
+        });
+
+        // 3. Thực hiện từng bước move và update model
+        for (int i = 0; i < solutionMoves.length; i++) {
+          if (!_isAutoSolving || !mounted) return;
+
+          final moveStr = solutionMoves[i];
+          
+          if (mounted) {
+            setState(() {
+               _solveStep = i + 1;
+            });
+          }
+          
+          debugPrint('AutoSolve: Executing move ${i+1}/${solutionMoves.length}: $moveStr');
+          await _executeMoveWithCuberNotation(moveStr);
+          
+          // Đợi thêm để đảm bảo animation (500ms) + model update hoàn tất
+          await Future.delayed(const Duration(milliseconds: 600));
+          
+          // Log state sau mỗi move
+          debugPrint('AutoSolve: After move $moveStr, isSolved: ${_cube.isSolved}');
+        }
+
+        // 4. Kiểm tra xem đã solved chưa
+        await Future.delayed(const Duration(milliseconds: 500)); // Đợi thêm để chắc chắn
+        debugPrint('AutoSolve: After attempt $attempt, isSolved = ${_cube.isSolved}');
+        
+        if (_cube.isSolved) {
+          debugPrint('AutoSolve: SUCCESS! Cube solved in $attempt attempt(s)');
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('✅ Cube đã giải xong sau $attempt lần thử!')),
+          );
+          break;
+        } else if (attempt < maxAttempts) {
+          debugPrint('AutoSolve: NOT solved yet, will retry...');
+        } else {
+          debugPrint('AutoSolve: FAILED after $maxAttempts attempts');
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('⚠️ Không thể giải hoàn toàn. Hãy thử lại!')),
+          );
+        }
       }
+
     } catch (e) {
       debugPrint('Error in auto solve: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Không thể giải: ${e.toString().substring(0, math.min(50, e.toString().length))}...')),
+        );
+      }
     } finally {
       if (mounted) {
         setState(() {
@@ -172,234 +295,6 @@ class _RubikCubeGameScreenState extends State<RubikCubeGameScreen>
     }
   }
 
-  // Lặp lại thuật toán cho đến khi giải xong
-  Future<void> _repeatSolveUntilComplete() async {
-    if (!mounted) return;
-
-    int maxAttempts = 10; // Tối đa 10 lần lặp
-    int attempt = 0;
-
-    while (!_cube.isSolved &&
-        attempt < maxAttempts &&
-        _isAutoSolving &&
-        mounted) {
-      attempt++;
-      debugPrint('Solve attempt: $attempt');
-
-      // Lấy sequence giải
-      final sequence = _getCompleteSolveSequence();
-
-      if (mounted) {
-        setState(() {
-          _totalSolveSteps = sequence.length * (maxAttempts - attempt + 1);
-        });
-      }
-
-      // Thực hiện từng bước
-      for (int i = 0; i < sequence.length; i++) {
-        if (!_isAutoSolving || !mounted) return;
-
-        // Kiểm tra đã giải xong chưa
-        if (_cube.isSolved) {
-          debugPrint('Cube solved at step $i of attempt $attempt');
-          return;
-        }
-
-        if (mounted) {
-          setState(() {
-            _solveStep = (attempt - 1) * sequence.length + i + 1;
-          });
-        }
-
-        final move = sequence[i];
-        await _executeMoveDirectly(move);
-        await Future.delayed(const Duration(milliseconds: 300));
-      }
-
-      // Delay giữa các lần thử
-      if (!_cube.isSolved && attempt < maxAttempts) {
-        await Future.delayed(const Duration(milliseconds: 500));
-      }
-    }
-
-    if (!_cube.isSolved) {
-      debugPrint('Could not solve cube after $attempt attempts');
-    }
-  }
-
-  // Thực hiện move trực tiếp không qua widget
-  Future<void> _executeMoveDirectly(String move) async {
-    if (!mounted) return;
-
-    // Gọi qua widget
-    switch (move) {
-      case 'R':
-        _cube3DKey.currentState?.rotateFace('right', true);
-        break;
-      case 'R\'':
-        _cube3DKey.currentState?.rotateFace('right', false);
-        break;
-      case 'L':
-        _cube3DKey.currentState?.rotateFace('left', true);
-        break;
-      case 'L\'':
-        _cube3DKey.currentState?.rotateFace('left', false);
-        break;
-      case 'U':
-        _cube3DKey.currentState?.rotateFace('up', true);
-        break;
-      case 'U\'':
-        _cube3DKey.currentState?.rotateFace('up', false);
-        break;
-      case 'D':
-        _cube3DKey.currentState?.rotateFace('down', true);
-        break;
-      case 'D\'':
-        _cube3DKey.currentState?.rotateFace('down', false);
-        break;
-      case 'F':
-        _cube3DKey.currentState?.rotateFace('front', true);
-        break;
-      case 'F\'':
-        _cube3DKey.currentState?.rotateFace('front', false);
-        break;
-      case 'B':
-        _cube3DKey.currentState?.rotateFace('back', true);
-        break;
-      case 'B\'':
-        _cube3DKey.currentState?.rotateFace('back', false);
-        break;
-    }
-
-    // Đợi animation hoàn thành
-    await Future.delayed(const Duration(milliseconds: 150));
-  }
-
-  // Sequence giải hoàn chỉnh và đơn giản
-  List<String> _getCompleteSolveSequence() {
-    return [
-      // White Cross - Thập tự trắng dưới
-      'F', 'F', 'U', 'R', 'U\'', 'R\'', 'F\'', 'F',
-      'D', 'L', 'D\'', 'L\'',
-      'D\'', 'B', 'D', 'B\'',
-
-      // White Corners - 4 góc trắng
-      'R', 'U', 'R\'', 'U\'', 'R', 'U', 'R\'', 'U\'',
-      'U', 'R', 'U', 'R\'', 'U\'', 'R', 'U', 'R\'', 'U\'',
-      'U', 'R', 'U', 'R\'', 'U\'', 'R', 'U', 'R\'', 'U\'',
-      'U', 'R', 'U', 'R\'', 'U\'', 'R', 'U', 'R\'', 'U\'',
-
-      // Middle Layer - Tầng giữa
-      'U', 'R', 'U\'', 'R\'', 'U\'', 'F\'', 'U', 'F',
-      'U', 'U',
-      'U\'', 'L\'', 'U', 'L', 'U', 'F', 'U\'', 'F\'',
-      'U', 'U',
-
-      // Yellow Cross - Thập tự vàng
-      'F', 'R', 'U', 'R\'', 'U\'', 'F\'',
-      'U',
-      'F', 'R', 'U', 'R\'', 'U\'', 'F\'',
-
-      // Yellow Face - Mặt vàng hoàn chỉnh
-      'R', 'U', 'R\'', 'U', 'R', 'U', 'U', 'R\'',
-      'U',
-      'R', 'U', 'R\'', 'U', 'R', 'U', 'U', 'R\'',
-
-      // Position Yellow Corners - Đặt góc vàng
-      'U', 'R', 'U\'', 'L\'', 'U', 'R\'', 'U\'', 'L',
-      'U', 'U',
-
-      // Orient Yellow Corners - Xoay góc vàng
-      'R\'', 'D\'', 'R', 'D', 'R\'', 'D\'', 'R', 'D',
-      'U\'',
-      'R\'', 'D\'', 'R', 'D', 'R\'', 'D\'', 'R', 'D',
-
-      // Final positioning
-      'U', 'R', 'U\'', 'R\'', 'U\'', 'R', 'U', 'R\'',
-      'U', 'U',
-      'R', 'U', 'R\'', 'U', 'R', 'U', 'U', 'R\'',
-    ];
-  }
-
-  // Undo lịch sử xáo trộn
-  Future<void> _reverseShuffleHistory() async {
-    if (!mounted) return;
-
-    final reversedHistory = _shuffleHistory.reversed.toList();
-
-    if (mounted) {
-      setState(() {
-        _totalSolveSteps = reversedHistory.length;
-      });
-    }
-
-    for (int i = 0; i < reversedHistory.length; i++) {
-      if (!_isAutoSolving || !mounted) break;
-
-      if (mounted) {
-        setState(() {
-          _solveStep = i + 1;
-        });
-      }
-
-      await _executeMoveDirectly(_reverseMove(reversedHistory[i]));
-      await Future.delayed(const Duration(milliseconds: 250));
-    }
-  }
-
-  String _reverseMove(String move) {
-    if (move.endsWith('\'')) {
-      return move.substring(0, move.length - 1);
-    } else if (move.endsWith('2')) {
-      return move;
-    } else {
-      return '$move\'';
-    }
-  }
-
-  Future<void> _executeMove(String move) async {
-    if (!mounted) return;
-
-    switch (move) {
-      case 'R':
-        _cube3DKey.currentState?.rotateFace('right', true);
-        break;
-      case 'R\'':
-        _cube3DKey.currentState?.rotateFace('right', false);
-        break;
-      case 'L':
-        _cube3DKey.currentState?.rotateFace('left', true);
-        break;
-      case 'L\'':
-        _cube3DKey.currentState?.rotateFace('left', false);
-        break;
-      case 'U':
-        _cube3DKey.currentState?.rotateFace('up', true);
-        break;
-      case 'U\'':
-        _cube3DKey.currentState?.rotateFace('up', false);
-        break;
-      case 'D':
-        _cube3DKey.currentState?.rotateFace('down', true);
-        break;
-      case 'D\'':
-        _cube3DKey.currentState?.rotateFace('down', false);
-        break;
-      case 'F':
-        _cube3DKey.currentState?.rotateFace('front', true);
-        break;
-      case 'F\'':
-        _cube3DKey.currentState?.rotateFace('front', false);
-        break;
-      case 'B':
-        _cube3DKey.currentState?.rotateFace('back', true);
-        break;
-      case 'B\'':
-        _cube3DKey.currentState?.rotateFace('back', false);
-        break;
-    }
-    await Future.delayed(const Duration(milliseconds: 100));
-  }
 
   void _stopAutoOperations() {
     setState(() {
@@ -545,6 +440,21 @@ class _RubikCubeGameScreenState extends State<RubikCubeGameScreen>
             color: GamingTheme.textPrimary,
             onPressed: () => Navigator.pop(context),
           ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.camera_alt),
+              color: GamingTheme.textPrimary,
+              tooltip: 'Setup Real Cube',
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const SetupRubikScreen(),
+                  ),
+                );
+              },
+            ),
+          ],
         ),
         body: Consumer<RubikCubeModel>(
           builder: (context, cube, child) {
@@ -1033,5 +943,146 @@ class _RubikCubeGameScreenState extends State<RubikCubeGameScreen>
         ),
       ),
     );
+  }
+
+  Future<void> _executeMoveWithCuberNotation(String move) async {
+      if (move.endsWith('2')) {
+          final baseMove = move.substring(0, 1);
+          await _executeMoveDirectly(baseMove); // 1
+          // Đợi animation + model update hoàn tất (500ms animation)
+          await Future.delayed(const Duration(milliseconds: 600));
+          await _executeMoveDirectly(baseMove); // 2
+      } else {
+          await _executeMoveDirectly(move);
+      }
+  }
+
+  // Thực hiện move trực tiếp qua 3D widget (sẽ update cả model)
+  Future<void> _executeMoveDirectly(String move) async {
+    if (!mounted) return;
+
+    // Gọi qua widget - widget sẽ update model sau khi animation xong
+    switch (move) {
+      case 'R':
+        _cube3DKey.currentState?.rotateFace('right', true);
+        break;
+      case 'R\'':
+        _cube3DKey.currentState?.rotateFace('right', false);
+        break;
+      case 'L':
+        _cube3DKey.currentState?.rotateFace('left', true);
+        break;
+      case 'L\'':
+        _cube3DKey.currentState?.rotateFace('left', false);
+        break;
+      case 'U':
+        _cube3DKey.currentState?.rotateFace('up', true);
+        break;
+      case 'U\'':
+        _cube3DKey.currentState?.rotateFace('up', false);
+        break;
+      case 'D':
+        _cube3DKey.currentState?.rotateFace('down', true);
+        break;
+      case 'D\'':
+        _cube3DKey.currentState?.rotateFace('down', false);
+        break;
+      case 'F':
+        _cube3DKey.currentState?.rotateFace('front', true);
+        break;
+      case 'F\'':
+        _cube3DKey.currentState?.rotateFace('front', false);
+        break;
+      case 'B':
+        _cube3DKey.currentState?.rotateFace('back', true);
+        break;
+      case 'B\'':
+        _cube3DKey.currentState?.rotateFace('back', false);
+        break;
+    }
+
+    // Đợi để animation bắt đầu (avoid race condition)
+    await Future.delayed(const Duration(milliseconds: 50));
+  }
+
+  String _getCubeStateString() {
+    final buffer = StringBuffer();
+    
+    // U (Up) - y=2, z:0->2, x:0->2
+    for (int z = 0; z <= 2; z++) {
+      for (int x = 0; x <= 2; x++) {
+        buffer.write(_getColorChar(_cube.cubelets[x][2][z].getFaceColor('up')));
+      }
+    }
+
+    // R (Right) - x=2, y:2->0, z:2->0
+    for (int y = 2; y >= 0; y--) {
+      for (int z = 2; z >= 0; z--) {
+        buffer.write(_getColorChar(_cube.cubelets[2][y][z].getFaceColor('right')));
+      }
+    }
+
+    // F (Front) - z=2, y:2->0, x:0->2
+    for (int y = 2; y >= 0; y--) {
+      for (int x = 0; x <= 2; x++) {
+        buffer.write(_getColorChar(_cube.cubelets[x][y][2].getFaceColor('front')));
+      }
+    }
+
+    // D (Down) - y=0, z:2->0, x:0->2
+    for (int z = 2; z >= 0; z--) {
+      for (int x = 0; x <= 2; x++) {
+        buffer.write(_getColorChar(_cube.cubelets[x][0][z].getFaceColor('down')));
+      }
+    }
+
+    // L (Left) - x=0, y:2->0, z:0->2
+    for (int y = 2; y >= 0; y--) {
+      for (int z = 0; z <= 2; z++) {
+        buffer.write(_getColorChar(_cube.cubelets[0][y][z].getFaceColor('left')));
+      }
+    }
+
+    // B (Back) - z=0, y:2->0, x:2->0
+    for (int y = 2; y >= 0; y--) {
+      for (int x = 2; x >= 0; x--) {
+        buffer.write(_getColorChar(_cube.cubelets[x][y][0].getFaceColor('back')));
+      }
+    }
+
+    return buffer.toString();
+  }
+
+  String _getColorChar(CubeColor? color) {
+    if (color == null) return 'U'; // Should not happen for face-colored cubelets
+    switch (color) {
+      case CubeColor.white: return 'U';
+      case CubeColor.red: return 'R';
+      case CubeColor.blue: return 'F';
+      case CubeColor.yellow: return 'D';
+      case CubeColor.orange: return 'L';
+      case CubeColor.green: return 'B';
+    }
+  }
+}
+
+// Top-level function for compute
+List<String> _solveCube(String cubeString) {
+  try {
+    final cube = cuber.Cube.from(cubeString);
+    
+    if (cube.isSolved) return [];
+
+    final solution = cube.solve(maxDepth: 30);
+    final moves = solution?.algorithm.moves.map((m) => m.toString()).toList() ?? [];
+    
+    if (moves.isEmpty && !cube.isSolved) {
+      return ['ERROR: Solver returned no moves but cube is not solved.'];
+    }
+    
+    return moves;
+  } catch (e) {
+    debugPrint('_solveCube error: $e');
+    return ['ERROR: ${e.toString()}'];
   }
 }
