@@ -7,6 +7,8 @@ import '../services/api_service.dart';
 import 'peer_chat_screen.dart';
 import '../models/friend_data.dart';
 import '../config/gaming_theme.dart';
+import '../config/config_url.dart';
+import '../utils/url_helper.dart';
 
 /// Screen showing list of P2P chat conversations
 class PeerChatListScreen extends StatefulWidget {
@@ -38,8 +40,6 @@ class _PeerChatListScreenState extends State<PeerChatListScreen> {
       await context.read<PeerChatProvider>().initialize(userId);
     }
   }
-
-
 
   @override
   Widget build(BuildContext context) {

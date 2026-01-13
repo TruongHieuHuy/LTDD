@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'dart:io';
 import '../providers/auth_provider.dart';
+import '../services/api_service.dart';
 import '../config/gaming_theme.dart';
+import '../utils/url_helper.dart';
 import '../widgets/gaming/gaming_card.dart';
 import '../widgets/gaming/gaming_avatar.dart';
 import '../widgets/gaming/gaming_button.dart';
@@ -107,6 +110,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                             children: [
                               // Avatar with neon glow
                               GamingAvatar(
+                                imageUrl: authProvider.userProfile?.avatarUrl,
                                 username: username,
                                 size: 100,
                                 hasGlow: true,
@@ -121,16 +125,17 @@ class _ProfileScreenState extends State<ProfileScreen>
                                     horizontal: 10,
                                     vertical: 4,
                                   ),
-                                  decoration: GamingTheme.neonBorder(
-                                    color: GamingTheme.legendaryGold,
-                                  ).copyWith(
-                                    gradient: LinearGradient(
-                                      colors: [
-                                        GamingTheme.legendaryGold,
-                                        GamingTheme.primaryAccent,
-                                      ],
-                                    ),
-                                  ),
+                                  decoration:
+                                      GamingTheme.neonBorder(
+                                        color: GamingTheme.legendaryGold,
+                                      ).copyWith(
+                                        gradient: LinearGradient(
+                                          colors: [
+                                            GamingTheme.legendaryGold,
+                                            GamingTheme.primaryAccent,
+                                          ],
+                                        ),
+                                      ),
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
@@ -177,7 +182,9 @@ class _ProfileScreenState extends State<ProfileScreen>
                               color: Colors.white.withOpacity(0.2),
                               borderRadius: BorderRadius.circular(20),
                               border: Border.all(
-                                color: GamingTheme.primaryAccent.withOpacity(0.3),
+                                color: GamingTheme.primaryAccent.withOpacity(
+                                  0.3,
+                                ),
                               ),
                             ),
                             child: Text(
@@ -199,7 +206,10 @@ class _ProfileScreenState extends State<ProfileScreen>
                   IconButton(
                     icon: const Icon(Icons.swap_horiz),
                     onPressed: () {
-                      Navigator.pushReplacementNamed(context, '/admin-dashboard');
+                      Navigator.pushReplacementNamed(
+                        context,
+                        '/admin-dashboard',
+                      );
                     },
                     tooltip: 'Chuyển sang giao diện Admin',
                   ),
@@ -267,10 +277,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                     color: GamingTheme.primaryAccent,
                   ),
                 ),
-                Text(
-                  'Cấp ${level + 1}',
-                  style: GamingTheme.bodyMedium,
-                ),
+                Text('Cấp ${level + 1}', style: GamingTheme.bodyMedium),
               ],
             ),
             const SizedBox(height: GamingTheme.s),
@@ -313,10 +320,7 @@ class _ProfileScreenState extends State<ProfileScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'THỐNG KÊ GAME',
-            style: GamingTheme.h3,
-          ),
+          Text('THỐNG KÊ GAME', style: GamingTheme.h3),
           const SizedBox(height: GamingTheme.m),
           Row(
             children: [
@@ -413,10 +417,7 @@ class _ProfileScreenState extends State<ProfileScreen>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'THÀNH TỰU',
-                style: GamingTheme.h3,
-              ),
+              Text('THÀNH TỰU', style: GamingTheme.h3),
               TextButton(
                 onPressed: () {
                   Navigator.pushNamed(context, '/achievements');
@@ -467,7 +468,8 @@ class _ProfileScreenState extends State<ProfileScreen>
                           boxShadow: isUnlocked
                               ? [
                                   BoxShadow(
-                                    color: GamingTheme.legendaryGold.withOpacity(0.5),
+                                    color: GamingTheme.legendaryGold
+                                        .withOpacity(0.5),
                                     blurRadius: 12,
                                     spreadRadius: 2,
                                   ),
@@ -479,7 +481,9 @@ class _ProfileScreenState extends State<ProfileScreen>
                             achievement['icon'] as String,
                             style: TextStyle(
                               fontSize: 32,
-                              color: isUnlocked ? null : Colors.white.withOpacity(0.3),
+                              color: isUnlocked
+                                  ? null
+                                  : Colors.white.withOpacity(0.3),
                             ),
                           ),
                         ),
@@ -518,10 +522,7 @@ class _ProfileScreenState extends State<ProfileScreen>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'THÔNG TIN LIÊN HỆ',
-              style: GamingTheme.h3,
-            ),
+            Text('THÔNG TIN LIÊN HỆ', style: GamingTheme.h3),
             const SizedBox(height: GamingTheme.m),
             _buildInfoRow(Icons.email_outlined, 'Email', email),
           ],
@@ -535,7 +536,7 @@ class _ProfileScreenState extends State<ProfileScreen>
       padding: const EdgeInsets.symmetric(vertical: GamingTheme.xs),
       child: Row(
         children: [
- Container(
+          Container(
             padding: const EdgeInsets.all(GamingTheme.xs),
             decoration: BoxDecoration(
               color: GamingTheme.primaryAccent.withOpacity(0.2),
@@ -551,10 +552,7 @@ class _ProfileScreenState extends State<ProfileScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  label,
-                  style: GamingTheme.bodySmall,
-                ),
+                Text(label, style: GamingTheme.bodySmall),
                 Text(
                   value,
                   style: GamingTheme.bodyMedium.copyWith(
@@ -575,10 +573,7 @@ class _ProfileScreenState extends State<ProfileScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'TIỆN ÍCH NHANH',
-            style: GamingTheme.h3,
-          ),
+          Text('TIỆN ÍCH NHANH', style: GamingTheme.h3),
           const SizedBox(height: GamingTheme.m),
           Row(
             children: [
@@ -685,9 +680,25 @@ class _EditProfileDialogState extends State<_EditProfileDialog> {
         maxWidth: 512,
         maxHeight: 512,
         imageQuality: 85,
+        preferredCameraDevice: CameraDevice.front,
       );
 
       if (image != null) {
+        // Validate file extension
+        final extension = image.path.toLowerCase();
+        if (!extension.endsWith('.jpg') &&
+            !extension.endsWith('.jpeg') &&
+            !extension.endsWith('.png')) {
+          if (mounted) {
+            await GamingDialog.showError(
+              context,
+              title: 'Lỗi',
+              message: 'Chỉ chấp nhận file ảnh JPG, JPEG hoặc PNG',
+            );
+          }
+          return;
+        }
+
         setState(() {
           _selectedImage = File(image.path);
         });
@@ -712,7 +723,7 @@ class _EditProfileDialogState extends State<_EditProfileDialog> {
         decoration: BoxDecoration(
           color: GamingTheme.surfaceDark,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        border: Border.all(color: GamingTheme.border),
+          border: Border.all(color: GamingTheme.border),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -726,10 +737,7 @@ class _EditProfileDialogState extends State<_EditProfileDialog> {
               ),
             ),
             const SizedBox(height: GamingTheme.l),
-            Text(
-              'Chọn nguồn ảnh',
-              style: GamingTheme.h3,
-            ),
+            Text('Chọn nguồn ảnh', style: GamingTheme.h3),
             const SizedBox(height: GamingTheme.l),
             ListTile(
               leading: Container(
@@ -741,10 +749,7 @@ class _EditProfileDialogState extends State<_EditProfileDialog> {
                 ),
                 child: Icon(Icons.camera_alt, color: GamingTheme.primaryAccent),
               ),
-              title: Text(
-                'Camera',
-                style: GamingTheme.bodyLarge,
-              ),
+              title: Text('Camera', style: GamingTheme.bodyLarge),
               onTap: () {
                 Navigator.pop(context);
                 _pickImage(ImageSource.camera);
@@ -758,12 +763,12 @@ class _EditProfileDialogState extends State<_EditProfileDialog> {
                   shape: BoxShape.circle,
                   border: Border.all(color: GamingTheme.secondaryAccent),
                 ),
-                child: Icon(Icons.photo_library, color: GamingTheme.secondaryAccent),
+                child: Icon(
+                  Icons.photo_library,
+                  color: GamingTheme.secondaryAccent,
+                ),
               ),
-              title: Text(
-                'Thư viện',
-                style: GamingTheme.bodyLarge,
-              ),
+              title: Text('Thư viện', style: GamingTheme.bodyLarge),
               onTap: () {
                 Navigator.pop(context);
                 _pickImage(ImageSource.gallery);
@@ -777,7 +782,7 @@ class _EditProfileDialogState extends State<_EditProfileDialog> {
   }
 
   Future<void> _saveProfile() async {
-    if (widget.nameController.text.isEmpty || 
+    if (widget.nameController.text.isEmpty ||
         widget.emailController.text.isEmpty) {
       await GamingDialog.showError(
         context,
@@ -790,10 +795,37 @@ class _EditProfileDialogState extends State<_EditProfileDialog> {
     setState(() => _isLoading = true);
 
     try {
-      // TODO: Implement actual API call to update profile
-      await Future.delayed(const Duration(milliseconds: 500)); // Simulate API call
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final apiService = ApiService();
+
+      // 1. Upload avatar if selected
+      if (_selectedImage != null) {
+        debugPrint('Uploading avatar...');
+        final newAvatarUrl = await apiService.uploadAvatar(
+          _selectedImage!.path,
+        );
+        debugPrint('Avatar uploaded successfully: $newAvatarUrl');
+
+        // Clear image cache to force reload new avatar
+        await CachedNetworkImage.evictFromCache(
+          UrlHelper.getFullImageUrl(authProvider.userProfile?.avatarUrl),
+        );
+      }
+
+      // 2. Update username if changed
+      if (widget.nameController.text != widget.initialUsername) {
+        debugPrint('Updating username...');
+        await apiService.updateProfile(username: widget.nameController.text);
+        debugPrint('Username updated successfully');
+      }
+
+      // 3. Refresh user profile to get latest data
+      await authProvider.refreshUserProfile();
 
       if (mounted) {
+        // Force rebuild the entire screen
+        setState(() {});
+
         await GamingDialog.showSuccess(
           context,
           title: 'Thành công',
@@ -802,6 +834,7 @@ class _EditProfileDialogState extends State<_EditProfileDialog> {
         Navigator.pop(context);
       }
     } catch (e) {
+      debugPrint('Error saving profile: $e');
       if (mounted) {
         await GamingDialog.showError(
           context,
@@ -837,10 +870,7 @@ class _EditProfileDialogState extends State<_EditProfileDialog> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                'CHỈNH SỬA PROFILE',
-                style: GamingTheme.h3,
-              ),
+              Text('CHỈNH SỬA PROFILE', style: GamingTheme.h3),
               const SizedBox(height: GamingTheme.l),
 
               // Avatar Section
@@ -848,11 +878,34 @@ class _EditProfileDialogState extends State<_EditProfileDialog> {
                 onTap: _showImageSourceDialog,
                 child: Stack(
                   children: [
-                    GamingAvatar(
-                      username: widget.initialUsername,
-                      imageUrl: _selectedImage != null ? _selectedImage!.path : null,
-                      size: 100,
-                      hasGlow: true,
+                    // Show local image preview or current avatar
+                    Container(
+                      width: 100,
+                      height: 100,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: GamingTheme.primaryAccent,
+                          width: 2,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: GamingTheme.primaryAccent.withOpacity(0.5),
+                            blurRadius: 12,
+                            spreadRadius: 2,
+                          ),
+                        ],
+                      ),
+                      child: ClipOval(
+                        child: _selectedImage != null
+                            ? Image.file(_selectedImage!, fit: BoxFit.cover)
+                            : GamingAvatar(
+                                username: widget.initialUsername,
+                                size: 100,
+                                hasGlow:
+                                    false, // No glow since outer container has it
+                              ),
+                      ),
                     ),
                     Positioned(
                       bottom: 0,
@@ -875,10 +928,7 @@ class _EditProfileDialogState extends State<_EditProfileDialog> {
                 ),
               ),
               const SizedBox(height: GamingTheme.xs),
-              Text(
-                'Nhấn để đổi ảnh đại diện',
-                style: GamingTheme.bodySmall,
-              ),
+              Text('Nhấn để đổi ảnh đại diện', style: GamingTheme.bodySmall),
               const SizedBox(height: GamingTheme.l),
 
               // Name Field
@@ -934,7 +984,9 @@ class _EditProfileDialogState extends State<_EditProfileDialog> {
                     child: GamingButton(
                       text: 'Hủy',
                       style: GamingButtonStyle.outline,
-                      onPressed: _isLoading ? null : () => Navigator.pop(context),
+                      onPressed: _isLoading
+                          ? null
+                          : () => Navigator.pop(context),
                     ),
                   ),
                   const SizedBox(width: GamingTheme.s),

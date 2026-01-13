@@ -9,6 +9,8 @@ import '../widgets/animations/animation_widgets.dart';
 import '../models/post_data.dart';
 import '../models/comment_data.dart';
 import '../config/gaming_theme.dart';
+import '../config/config_url.dart';
+import '../utils/url_helper.dart';
 
 /// Màn hình hiển thị danh sách posts (giống Facebook feed)
 class PostsScreen extends StatefulWidget {
