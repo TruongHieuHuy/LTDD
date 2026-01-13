@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
+import 'package:minigamecenter/models/caro_model.dart';
 
 import '../models/achievement_model.dart';
 import '../config/config_url.dart';
@@ -949,6 +950,130 @@ extension ChallengeAPI on ApiService {
         defaultErrorMessage: 'Failed to get pending challenges',
       );
 
+   /// Tạo game Caro mới
+  Future<CaroGame> createCaroGame({
+    required int size,
+    required String mode,
+    required String difficulty,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('${ApiService.baseUrl}/api/caro/new-game'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'size': size,
+          'mode': mode,
+          'difficulty': difficulty,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return CaroGame.fromJson(data['game']);
+      } else {
+        throw Exception('Failed to create caro game: ${response.body}');
+      }
+    } catch (e) {
+      debugPrint('❌ Error creating caro game: $e');
+      rethrow;
+    }
+  }
+
+  /// Lấy nước đi của AI
+  Future<Map<String, dynamic>> getCaroAiMove({
+    required List<List<String?>> board,
+    required int size,
+    required String difficulty,
+  }) async {
+    try {
+      final response = await http.post(
+         Uri.parse('${ApiService.baseUrl}/api/caro/ai-move'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'board': board,
+          'size': size,
+          'difficulty': difficulty,
+          'aiPlayer': 'O',
+          'humanPlayer': 'X',
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data as Map<String, dynamic>;
+      } else {
+        throw Exception('Failed to get AI move: ${response.body}');
+      }
+    } catch (e) {
+      debugPrint('❌ Error getting AI move: $e');
+      rethrow;
+    }
+  }
+
+  /// Kiểm tra thắng thua
+  Future<Map<String, dynamic>> checkCaroWinner({
+    required List<List<String?>> board,
+    required int size,
+    required Map<String, dynamic> lastMove,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('${ApiService.baseUrl}/api/caro/check-winner'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'board': board,
+          'size': size,
+          'lastMove': lastMove,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data as Map<String, dynamic>;
+      } else {
+        throw Exception('Failed to check winner: ${response.body}');
+      }
+    } catch (e) {
+      debugPrint('❌ Error checking winner: $e');
+      rethrow;
+    }
+  }
+
+  /// Tính điểm Caro
+  Future<int> calculateCaroScore({
+    required String mode,
+    required String difficulty,
+    required int timeInSeconds,
+    required String? winner,
+    required int totalMoves,
+  }) async {
+    try {
+      final response = await http.post(
+         Uri.parse('${ApiService.baseUrl}/api/caro/calculate-score'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'mode': mode,
+          'difficulty': difficulty,
+          'timeInSeconds': timeInSeconds,
+          'winner': winner,
+          'totalMoves': totalMoves,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['score'] as int;
+      } else {
+        throw Exception('Failed to calculate score: ${response.body}');
+      }
+    } catch (e) {
+      debugPrint('❌ Error calculating score: $e');
+      rethrow;
+    }
+  }
+
+  
+  
   /// Get active challenges
   Future<List<Map<String, dynamic>>> getActiveChallenges() => _request(
         'GetActiveChallenges',

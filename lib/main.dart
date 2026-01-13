@@ -46,6 +46,7 @@ import 'providers/challenge_provider.dart';
 import 'services/socket_service.dart';
 import 'config/gaming_theme.dart';
 import 'screens/games/sudoku_screen.dart';
+import 'screens/games/caro_screen.dart';
 import 'screens/games/puzzle_screen.dart';
 import 'screens/games/rubik_cube_game_screen.dart';
 
@@ -173,6 +174,7 @@ class SmartStudentApp extends StatelessWidget {
               '/peer-chat': (context) => const PeerChatListScreen(),
               '/saved-posts': (context) => const SavedPostsScreen(),
               '/sudoku_game': (context) => const SudokuScreen(),
+              '/caro_game': (context) => const CaroScreen(),
               '/puzzle_game': (context) => const PuzzleScreen(),
               '/rubik_cube_game': (context) => const RubikCubeGameScreen(),
             },
