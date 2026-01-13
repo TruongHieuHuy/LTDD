@@ -7,7 +7,7 @@ import '../widgets/chatbot/chat_bubble_bot.dart';
 import '../widgets/chatbot/typing_indicator.dart';
 import '../widgets/chatbot/chat_input_field.dart';
 import '../widgets/chatbot/quick_action_buttons.dart';
-import '../models/chat_suggestions_model.dart';
+import '../models/chat_suggestions_modular.dart';
 import '../widgets/chatbot/suggestion_chip_widget.dart';
 
 class ChatbotScreen extends StatefulWidget {
