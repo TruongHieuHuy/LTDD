@@ -4,6 +4,8 @@ import '../providers/challenge_provider.dart';
 import '../providers/auth_provider.dart';
 import '../models/challenge.dart';
 import '../config/gaming_theme.dart';
+import '../config/config_url.dart';
+import '../utils/url_helper.dart';
 import '../widgets/gaming/gaming_app_bar.dart';
 import '../widgets/gaming/gaming_card.dart';
 import '../widgets/gaming/gaming_button.dart';
@@ -156,9 +158,7 @@ class _ChallengeListScreenState extends State<ChallengeListScreen>
         onPressed: () {
           Navigator.push(
             context,
-            MaterialPageRoute(
-              builder: (_) => const CreateChallengeScreen(),
-            ),
+            MaterialPageRoute(builder: (_) => const CreateChallengeScreen()),
           );
         },
         backgroundColor: GamingTheme.primaryAccent,
@@ -174,9 +174,7 @@ class _ChallengeListScreenState extends State<ChallengeListScreen>
       builder: (context, provider, _) {
         if (provider.isLoading) {
           return const Center(
-            child: CircularProgressIndicator(
-              color: GamingTheme.primaryAccent,
-            ),
+            child: CircularProgressIndicator(color: GamingTheme.primaryAccent),
           );
         }
 
@@ -226,7 +224,8 @@ class _ChallengeListScreenState extends State<ChallengeListScreen>
                       : null,
                   child: opponent?.avatarUrl == null
                       ? Text(
-                          opponent?.username.substring(0, 1).toUpperCase() ?? '?',
+                          opponent?.username.substring(0, 1).toUpperCase() ??
+                              '?',
                           style: const TextStyle(fontSize: 20),
                         )
                       : null,
@@ -326,9 +325,7 @@ class _ChallengeListScreenState extends State<ChallengeListScreen>
       builder: (context, provider, _) {
         if (provider.isLoading) {
           return const Center(
-            child: CircularProgressIndicator(
-              color: GamingTheme.primaryAccent,
-            ),
+            child: CircularProgressIndicator(color: GamingTheme.primaryAccent),
           );
         }
 
@@ -392,10 +389,7 @@ class _ChallengeListScreenState extends State<ChallengeListScreen>
                     ),
                     Text(
                       '${challenge.creatorWins} - ${challenge.opponentWins}',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        color: Colors.white,
-                      ),
+                      style: const TextStyle(fontSize: 16, color: Colors.white),
                     ),
                   ],
                 ),
@@ -458,9 +452,7 @@ class _ChallengeListScreenState extends State<ChallengeListScreen>
       builder: (context, provider, _) {
         if (provider.isLoading) {
           return const Center(
-            child: CircularProgressIndicator(
-              color: GamingTheme.primaryAccent,
-            ),
+            child: CircularProgressIndicator(color: GamingTheme.primaryAccent),
           );
         }
 
@@ -506,7 +498,11 @@ class _ChallengeListScreenState extends State<ChallengeListScreen>
                 Expanded(
                   child: Row(
                     children: [
-                      _buildPlayerInfo(challenge.creator!, isYou: isCreator, compact: true),
+                      _buildPlayerInfo(
+                        challenge.creator!,
+                        isYou: isCreator,
+                        compact: true,
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         '${challenge.creatorWins}',
@@ -519,10 +515,7 @@ class _ChallengeListScreenState extends State<ChallengeListScreen>
                     ],
                   ),
                 ),
-                const Text(
-                  ' - ',
-                  style: TextStyle(color: Colors.grey),
-                ),
+                const Text(' - ', style: TextStyle(color: Colors.grey)),
                 Expanded(
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.end,
@@ -536,7 +529,11 @@ class _ChallengeListScreenState extends State<ChallengeListScreen>
                         ),
                       ),
                       const SizedBox(width: 8),
-                      _buildPlayerInfo(challenge.opponent!, isYou: !isCreator, compact: true),
+                      _buildPlayerInfo(
+                        challenge.opponent!,
+                        isYou: !isCreator,
+                        compact: true,
+                      ),
                     ],
                   ),
                 ),
@@ -552,8 +549,8 @@ class _ChallengeListScreenState extends State<ChallengeListScreen>
                 color: isDraw
                     ? Colors.grey.shade800
                     : isWinner
-                        ? Colors.green.shade900
-                        : Colors.red.shade900,
+                    ? Colors.green.shade900
+                    : Colors.red.shade900,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
@@ -562,13 +559,13 @@ class _ChallengeListScreenState extends State<ChallengeListScreen>
                     isDraw
                         ? Icons.handshake
                         : isWinner
-                            ? Icons.emoji_events
-                            : Icons.sentiment_dissatisfied,
+                        ? Icons.emoji_events
+                        : Icons.sentiment_dissatisfied,
                     color: isDraw
                         ? Colors.grey
                         : isWinner
-                            ? Colors.amber
-                            : Colors.red,
+                        ? Colors.amber
+                        : Colors.red,
                   ),
                   const SizedBox(width: 8),
                   Expanded(
@@ -576,8 +573,8 @@ class _ChallengeListScreenState extends State<ChallengeListScreen>
                       isDraw
                           ? 'Draw - Coins Refunded'
                           : isWinner
-                              ? 'Victory! +${challenge.betAmount * 2} coins'
-                              : 'Defeat - ${challenge.betAmount} coins',
+                          ? 'Victory! +${challenge.betAmount * 2} coins'
+                          : 'Defeat - ${challenge.betAmount} coins',
                       style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -595,7 +592,11 @@ class _ChallengeListScreenState extends State<ChallengeListScreen>
 
   // ==================== HELPER WIDGETS ====================
 
-  Widget _buildPlayerInfo(ChallengeUser player, {required bool isYou, bool compact = false}) {
+  Widget _buildPlayerInfo(
+    ChallengeUser player, {
+    required bool isYou,
+    bool compact = false,
+  }) {
     return Column(
       children: [
         CircleAvatar(
@@ -626,7 +627,7 @@ class _ChallengeListScreenState extends State<ChallengeListScreen>
   Widget _buildGameProgress(int gameNumber, Challenge challenge) {
     final isCompleted = challenge.isGameCompleted(gameNumber);
     final isCurrent = challenge.currentGame == gameNumber;
-    
+
     return Column(
       children: [
         Container(
@@ -636,8 +637,8 @@ class _ChallengeListScreenState extends State<ChallengeListScreen>
             color: isCompleted
                 ? Colors.green.shade700
                 : isCurrent
-                    ? GamingTheme.primaryAccent
-                    : Colors.grey.shade800,
+                ? GamingTheme.primaryAccent
+                : Colors.grey.shade800,
             shape: BoxShape.circle,
           ),
           child: Center(
@@ -655,10 +656,7 @@ class _ChallengeListScreenState extends State<ChallengeListScreen>
         const SizedBox(height: 4),
         Text(
           'Game $gameNumber',
-          style: const TextStyle(
-            fontSize: 10,
-            color: Colors.grey,
-          ),
+          style: const TextStyle(fontSize: 10, color: Colors.grey),
         ),
       ],
     );
@@ -675,11 +673,7 @@ class _ChallengeListScreenState extends State<ChallengeListScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              icon,
-              size: 80,
-              color: Colors.grey.shade700,
-            ),
+            Icon(icon, size: 80, color: Colors.grey.shade700),
             const SizedBox(height: 16),
             Text(
               title,
@@ -693,9 +687,7 @@ class _ChallengeListScreenState extends State<ChallengeListScreen>
             Text(
               subtitle,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Colors.grey,
-              ),
+              style: const TextStyle(color: Colors.grey),
             ),
           ],
         ),
@@ -708,7 +700,7 @@ class _ChallengeListScreenState extends State<ChallengeListScreen>
   String _formatTimeLeft(DateTime expiresAt) {
     final remaining = expiresAt.difference(DateTime.now());
     if (remaining.isNegative) return 'Expired';
-    
+
     if (remaining.inHours > 0) {
       return '${remaining.inHours}h left';
     } else {
@@ -728,7 +720,7 @@ class _ChallengeListScreenState extends State<ChallengeListScreen>
   Future<void> _acceptChallenge(Challenge challenge) async {
     final provider = context.read<ChallengeProvider>();
     final success = await provider.acceptChallenge(challenge.id);
-    
+
     if (success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -743,13 +735,11 @@ class _ChallengeListScreenState extends State<ChallengeListScreen>
   Future<void> _rejectChallenge(Challenge challenge) async {
     final provider = context.read<ChallengeProvider>();
     final success = await provider.rejectChallenge(challenge.id);
-    
+
     if (success && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Challenge rejected'),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Challenge rejected')));
     }
   }
 }

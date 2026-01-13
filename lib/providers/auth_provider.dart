@@ -16,7 +16,7 @@ class AuthProvider with ChangeNotifier {
   AuthModel? _currentAuth;
   String? _savedEmail;
   UserProfile? _userProfile;
-  
+
   // Dependency is now injected
   final ApiService _apiService;
 
@@ -45,7 +45,9 @@ class AuthProvider with ChangeNotifier {
       _box = await Hive.openBox(_boxName);
       debugPrint('AuthProvider: Hive box opened');
       await _loadAuth();
-      debugPrint('AuthProvider: Auth loaded, isLoggedIn=${_currentAuth?.isLoggedIn}');
+      debugPrint(
+        'AuthProvider: Auth loaded, isLoggedIn=${_currentAuth?.isLoggedIn}',
+      );
       _savedEmail = _box.get(_savedEmailKey) as String?;
       debugPrint('AuthProvider: Saved email loaded: $_savedEmail');
 
@@ -144,6 +146,11 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
+  /// Public method to refresh user profile (can be called from UI)
+  Future<void> refreshUserProfile() async {
+    await _refreshUserProfile();
+  }
+
   /// Validate email format
   bool isValidEmail(String email) {
     final emailRegex = RegExp(
@@ -173,7 +180,7 @@ class AuthProvider with ChangeNotifier {
       // Handle 2FA
       if (authData.requiresTwoFactor) {
         return LoginResult(
-          success: true, 
+          success: true,
           message: '2FA Required',
           requiresTwoFactor: true,
           userId: authData.userId,
@@ -211,7 +218,10 @@ class AuthProvider with ChangeNotifier {
       return LoginResult(success: false, message: e.message);
     } catch (e) {
       debugPrint('Login error: $e');
-      return LoginResult(success: false, message: 'An unexpected error occurred.');
+      return LoginResult(
+        success: false,
+        message: 'An unexpected error occurred.',
+      );
     }
   }
 
@@ -219,14 +229,15 @@ class AuthProvider with ChangeNotifier {
   Future<LoginResult> loginWith2FA({
     required String userId,
     required String code,
-    bool rememberMe = false, // Default false for now, or pass from previous screen
+    bool rememberMe =
+        false, // Default false for now, or pass from previous screen
   }) async {
     try {
       final authData = await _apiService.login2FA(userId: userId, code: code);
 
       final expiry = AuthModel.calculateExpiry(rememberMe: rememberMe);
       _currentAuth = AuthModel(
-        email: authData.user?.email, 
+        email: authData.user?.email,
         sessionToken: authData.token,
         lastLoginTime: DateTime.now(),
         rememberMe: rememberMe,
@@ -243,7 +254,10 @@ class AuthProvider with ChangeNotifier {
     } on ApiException catch (e) {
       return LoginResult(success: false, message: e.message);
     } catch (e) {
-      return LoginResult(success: false, message: 'An unexpected error occurred.');
+      return LoginResult(
+        success: false,
+        message: 'An unexpected error occurred.',
+      );
     }
   }
 
@@ -274,13 +288,19 @@ class AuthProvider with ChangeNotifier {
       final trimmedEmail = email.toLowerCase().trim();
 
       if (username.length < 3 || username.length > 20) {
-        return LoginResult(success: false, message: 'Username must be 3-20 characters');
+        return LoginResult(
+          success: false,
+          message: 'Username must be 3-20 characters',
+        );
       }
       if (!isValidEmail(trimmedEmail)) {
         return LoginResult(success: false, message: 'Invalid email format');
       }
       if (password.length < 6) {
-        return LoginResult(success: false, message: 'Password must be at least 6 characters');
+        return LoginResult(
+          success: false,
+          message: 'Password must be at least 6 characters',
+        );
       }
 
       final authData = await _apiService.register(
@@ -309,7 +329,10 @@ class AuthProvider with ChangeNotifier {
       return LoginResult(success: false, message: e.message);
     } catch (e) {
       debugPrint('Register error: $e');
-      return LoginResult(success: false, message: 'An unexpected error occurred.');
+      return LoginResult(
+        success: false,
+        message: 'An unexpected error occurred.',
+      );
     }
   }
 
@@ -338,7 +361,7 @@ class AuthProvider with ChangeNotifier {
       _userProfile = null;
       await _box.delete(_authKey);
       await _box.delete(_userProfileKey);
-      
+
       // Only clear saved email if:
       // 1. User is explicitly logging out (clearSavedCredentials is true)
       // 2. AND User did NOT check "Remember Me"
@@ -346,7 +369,7 @@ class AuthProvider with ChangeNotifier {
         _savedEmail = null;
         await _box.delete(_savedEmailKey);
       }
-      
+
       _apiService.clearAuthToken();
       notifyListeners();
     } catch (e) {

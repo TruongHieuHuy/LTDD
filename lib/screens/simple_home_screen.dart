@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../config/gaming_theme.dart';
+import '../widgets/gaming/gaming_avatar.dart';
 
 /// Gaming Hub - Main Dashboard
 /// Cyber-themed gaming center with neon aesthetics
@@ -12,6 +13,7 @@ class SimpleHomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
     final userName = authProvider.username ?? 'Guest';
+    final avatarUrl = authProvider.userProfile?.avatarUrl;
     final totalScore = authProvider.userProfile?.totalScore ?? 0;
     final level = (totalScore / 1000).floor() + 1;
 
@@ -22,7 +24,13 @@ class SimpleHomeScreen extends StatelessWidget {
           slivers: [
             // Gaming Header with user stats
             SliverToBoxAdapter(
-              child: _buildGamingHeader(context, userName, level, totalScore),
+              child: _buildGamingHeader(
+                context,
+                userName,
+                level,
+                totalScore,
+                avatarUrl,
+              ),
             ),
 
             // Spacer
@@ -107,14 +115,14 @@ class SimpleHomeScreen extends StatelessWidget {
                     route: '/sudoku_game',
                     isNew: true,
                   ),
-_buildGameCard(
-  context,
-  title: 'Caro',
-  icon: '⭕',
-  color: GamingTheme.rareBlue, 
-  route: '/caro_game',
-  isNew: true, 
-),
+                  _buildGameCard(
+                    context,
+                    title: 'Caro',
+                    icon: '⭕',
+                    color: GamingTheme.rareBlue,
+                    route: '/caro_game',
+                    isNew: true,
+                  ),
                   _buildGameCard(
                     context,
                     title: 'Puzzle',
@@ -285,6 +293,7 @@ _buildGameCard(
     String userName,
     int level,
     int totalScore,
+    String? avatarUrl,
   ) {
     return Container(
       margin: const EdgeInsets.all(20),
@@ -299,43 +308,15 @@ _buildGameCard(
           // Avatar with level badge
           Stack(
             children: [
-              // Glow effect
-              Container(
-                width: 70,
-                height: 70,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: GamingTheme.primaryAccent.withOpacity(0.6),
-                      blurRadius: 20,
-                      spreadRadius: 4,
-                    ),
-                  ],
-                ),
-              ),
               // Avatar
               GestureDetector(
                 onTap: () => Navigator.pushNamed(context, '/profile'),
-                child: Container(
-                  width: 70,
-                  height: 70,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 3),
-                    gradient: LinearGradient(
-                      colors: [
-                        GamingTheme.primaryAccent,
-                        GamingTheme.tertiaryAccent,
-                      ],
-                    ),
-                  ),
-                  child: Center(
-                    child: Text(
-                      userName.substring(0, 1).toUpperCase(),
-                      style: GamingTheme.h1.copyWith(fontSize: 28),
-                    ),
-                  ),
+                child: GamingAvatar(
+                  imageUrl: avatarUrl,
+                  username: userName,
+                  size: 70,
+                  hasGlow: true,
+                  glowColor: GamingTheme.primaryAccent,
                 ),
               ),
               // Level badge

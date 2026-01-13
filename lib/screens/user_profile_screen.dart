@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../providers/auth_provider.dart';
 import 'package:provider/provider.dart';
+import '../config/config_url.dart';
+import '../utils/url_helper.dart';
 
 import '../models/user_profile.dart';
 import '../models/post_data.dart';
@@ -216,7 +218,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 CircleAvatar(
                   radius: 50,
                   backgroundImage: _userProfile!.avatarUrl != null
-                      ? NetworkImage(_userProfile!.avatarUrl!)
+                      ? NetworkImage(
+                          UrlHelper.getFullImageUrl(_userProfile!.avatarUrl),
+                        )
                       : null,
                   child: _userProfile!.avatarUrl == null
                       ? Text(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../config/gaming_theme.dart';
+import '../../utils/url_helper.dart';
 
 /// Gaming-themed avatar with optional neon glow
 class GamingAvatar extends StatelessWidget {
@@ -23,6 +24,9 @@ class GamingAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Convert relative URL to absolute URL if needed
+    final fullImageUrl = UrlHelper.getFullImageUrl(imageUrl);
+
     final avatar = Container(
       width: size,
       height: size,
@@ -37,8 +41,9 @@ class GamingAvatar extends StatelessWidget {
         boxShadow: hasGlow
             ? [
                 BoxShadow(
-                  color: (glowColor ?? GamingTheme.primaryAccent)
-                      .withOpacity(0.5),
+                  color: (glowColor ?? GamingTheme.primaryAccent).withOpacity(
+                    0.5,
+                  ),
                   blurRadius: 12,
                   spreadRadius: 2,
                 ),
@@ -46,9 +51,10 @@ class GamingAvatar extends StatelessWidget {
             : null,
       ),
       child: ClipOval(
-        child: imageUrl != null && imageUrl!.isNotEmpty
+        child: fullImageUrl.isNotEmpty
             ? CachedNetworkImage(
-                imageUrl: imageUrl!,
+                imageUrl: fullImageUrl,
+                key: ValueKey(fullImageUrl), // Force reload when URL changes
                 fit: BoxFit.cover,
                 placeholder: (context, url) => Container(
                   color: GamingTheme.surfaceDark,
@@ -62,16 +68,17 @@ class GamingAvatar extends StatelessWidget {
                   ),
                 ),
                 errorWidget: (context, url, error) => _buildInitials(),
+                // Force cache refresh
+                cacheKey: fullImageUrl,
+                maxHeightDiskCache: 200,
+                maxWidthDiskCache: 200,
               )
             : _buildInitials(),
       ),
     );
 
     if (onTap != null) {
-      return GestureDetector(
-        onTap: onTap,
-        child: avatar,
-      );
+      return GestureDetector(onTap: onTap, child: avatar);
     }
 
     return avatar;
@@ -96,12 +103,12 @@ class GamingAvatar extends StatelessWidget {
 
   String _getInitials() {
     if (username == null || username!.isEmpty) return '?';
-    
+
     final parts = username!.trim().split(' ');
     if (parts.length >= 2) {
       return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
     }
-    
+
     return username!.substring(0, username!.length >= 2 ? 2 : 1).toUpperCase();
   }
 }

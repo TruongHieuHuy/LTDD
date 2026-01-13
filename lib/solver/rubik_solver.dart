@@ -228,7 +228,7 @@ class RubikSolver {
       'first_layer_solved': _isFirstLayerSolved(),
       'second_layer_solved': _isSecondLayerSolved(),
       'last_layer_cross_solved': _isLastLayerCrossSolved(),
-      'fully_solved': cube.isSolved(),
+      'fully_solved': cube.isSolved,
     };
   }
 

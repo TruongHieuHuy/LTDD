@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../config/config_url.dart';
+import '../utils/url_helper.dart';
 
 import '../providers/auth_provider.dart';
 import '../services/api_service.dart';
@@ -21,6 +23,7 @@ class _SearchFriendsScreenState extends State<SearchFriendsScreen> {
 
   List<UserProfile> _searchResults = [];
   List<FriendRequestData> _sentRequests = [];
+  List<FriendRequestData> _receivedRequests = [];
   List<FriendData> _friends = [];
   bool _isLoading = false;
   bool _isInitializing = true;
@@ -40,8 +43,20 @@ class _SearchFriendsScreenState extends State<SearchFriendsScreen> {
   Future<void> _loadInitialData() async {
     setState(() => _isInitializing = true);
     try {
-      // Load sent requests and friends list
-      _sentRequests = await _apiService.getFriendRequests();
+      // Load sent requests, received requests and friends list
+      final allRequests = await _apiService.getFriendRequests();
+      final authProvider = context.read<AuthProvider>();
+      final myUserId = authProvider.userId;
+
+      // Separate sent and received requests
+      _sentRequests = allRequests
+          .where((req) => req.senderId == myUserId && req.status == 'pending')
+          .toList();
+
+      _receivedRequests = allRequests
+          .where((req) => req.receiverId == myUserId && req.status == 'pending')
+          .toList();
+
       _friends = await _apiService.getFriends();
     } catch (e) {
       if (mounted) {
@@ -111,12 +126,28 @@ class _SearchFriendsScreenState extends State<SearchFriendsScreen> {
       }
     } catch (e) {
       if (mounted) {
+        String errorMessage = 'Gửi lời mời thất bại';
+
+        // Handle specific error cases
+        if (e.toString().contains('already exists') ||
+            e.toString().contains('400')) {
+          errorMessage =
+              'Bạn đã gửi lời mời kết bạn cho người này rồi hoặc đã là bạn bè';
+        } else if (e.toString().contains('not found') ||
+            e.toString().contains('404')) {
+          errorMessage = 'Không tìm thấy người dùng';
+        }
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Gửi lời mời thất bại: $e'),
-            backgroundColor: Colors.red,
+            content: Text(errorMessage),
+            backgroundColor: Colors.orange,
+            duration: const Duration(seconds: 3),
           ),
         );
+
+        // Reload to get latest state
+        await _loadInitialData();
       }
     }
   }
@@ -126,9 +157,36 @@ class _SearchFriendsScreenState extends State<SearchFriendsScreen> {
   }
 
   bool _hasRequestSent(String userId) {
-    return _sentRequests.any(
+    // Check if we sent a request to them
+    final sentToUser = _sentRequests.any(
       (req) => req.receiverId == userId && req.status == 'pending',
     );
+
+    // Check if they sent a request to us
+    final receivedFromUser = _receivedRequests.any(
+      (req) => req.senderId == userId && req.status == 'pending',
+    );
+
+    return sentToUser || receivedFromUser;
+  }
+
+  String _getRequestStatusLabel(String userId) {
+    // Check if we sent a request to them
+    final sentToUser = _sentRequests.any(
+      (req) => req.receiverId == userId && req.status == 'pending',
+    );
+
+    // Check if they sent a request to us
+    final receivedFromUser = _receivedRequests.any(
+      (req) => req.senderId == userId && req.status == 'pending',
+    );
+
+    if (receivedFromUser) {
+      return 'Đã nhận lời mời';
+    } else if (sentToUser) {
+      return 'Đã gửi';
+    }
+    return 'Pending';
   }
 
   @override
@@ -231,7 +289,7 @@ class _SearchFriendsScreenState extends State<SearchFriendsScreen> {
                             child: user.avatarUrl != null
                                 ? ClipOval(
                                     child: Image.network(
-                                      user.avatarUrl!,
+                                      UrlHelper.getFullImageUrl(user.avatarUrl),
                                       fit: BoxFit.cover,
                                       errorBuilder: (_, __, ___) => Text(
                                         user.username[0].toUpperCase(),
@@ -279,8 +337,10 @@ class _SearchFriendsScreenState extends State<SearchFriendsScreen> {
                                   backgroundColor: Colors.green,
                                 )
                               : hasRequestSent
-                              ? const Chip(
-                                  label: Text('Đã gửi'),
+                              ? Chip(
+                                  label: Text(
+                                    _getRequestStatusLabel(user.id.toString()),
+                                  ),
                                   backgroundColor: Colors.orange,
                                 )
                               : ElevatedButton.icon(

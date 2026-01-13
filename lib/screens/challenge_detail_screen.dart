@@ -5,6 +5,8 @@ import '../providers/challenge_provider.dart';
 import '../providers/auth_provider.dart';
 import '../models/challenge.dart';
 import '../config/gaming_theme.dart';
+import '../config/config_url.dart';
+import '../utils/url_helper.dart';
 import '../widgets/gaming/gaming_app_bar.dart';
 import '../widgets/gaming/gaming_card.dart';
 import '../widgets/gaming/gaming_button.dart';
@@ -31,7 +33,9 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
   @override
   void initState() {
     super.initState();
-    _confettiController = ConfettiController(duration: const Duration(seconds: 3));
+    _confettiController = ConfettiController(
+      duration: const Duration(seconds: 3),
+    );
     _loadChallenge();
   }
 
@@ -51,9 +55,7 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: GamingTheme.primaryDark,
-      appBar: const GamingAppBar(
-        title: 'Challenge Match',
-      ),
+      appBar: const GamingAppBar(title: 'Challenge Match'),
       body: Consumer2<ChallengeProvider, AuthProvider>(
         builder: (context, challengeProvider, authProvider, _) {
           final challenge = challengeProvider.currentChallenge;
@@ -90,11 +92,18 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
 
                       // Current Game Status
                       if (challenge.status == ChallengeStatus.active)
-                        _buildCurrentGameStatus(challenge, isCreator, authProvider.userId!),
+                        _buildCurrentGameStatus(
+                          challenge,
+                          isCreator,
+                          authProvider.userId!,
+                        ),
 
                       // Winner Announcement
                       if (challenge.status == ChallengeStatus.completed)
-                        _buildWinnerAnnouncement(challenge, authProvider.userId!),
+                        _buildWinnerAnnouncement(
+                          challenge,
+                          authProvider.userId!,
+                        ),
                     ],
                   ),
                 ),
@@ -346,15 +355,15 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
           color: isCompleted
               ? Colors.green.shade900
               : isCurrent
-                  ? GamingTheme.primaryAccent.withOpacity(0.2)
-                  : Colors.grey.shade900,
+              ? GamingTheme.primaryAccent.withOpacity(0.2)
+              : Colors.grey.shade900,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isCompleted
                 ? Colors.green
                 : isCurrent
-                    ? GamingTheme.primaryAccent
-                    : Colors.grey.shade800,
+                ? GamingTheme.primaryAccent
+                : Colors.grey.shade800,
             width: 2,
           ),
         ),
@@ -370,11 +379,7 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
             ),
             const SizedBox(height: 8),
             if (isCompleted)
-              const Icon(
-                Icons.check_circle,
-                color: Colors.green,
-                size: 32,
-              )
+              const Icon(Icons.check_circle, color: Colors.green, size: 32)
             else if (isCurrent)
               const Icon(
                 Icons.play_circle_filled,
@@ -382,20 +387,13 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
                 size: 32,
               )
             else
-              const Icon(
-                Icons.lock,
-                color: Colors.grey,
-                size: 32,
-              ),
+              const Icon(Icons.lock, color: Colors.grey, size: 32),
             if (gameType != null) ...[
               const SizedBox(height: 8),
               Text(
                 _getGameName(gameType),
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 10,
-                  color: Colors.white,
-                ),
+                style: const TextStyle(fontSize: 10, color: Colors.white),
               ),
             ],
             if (isCompleted) ...[
@@ -481,7 +479,9 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
                       Expanded(
                         child: Text(
                           'You voted for ${_getGameName(_votedGameType ?? userVote!)}. Waiting for opponent...',
-                          style: const TextStyle(color: GamingTheme.primaryAccent),
+                          style: const TextStyle(
+                            color: GamingTheme.primaryAccent,
+                          ),
                         ),
                       ),
                     ],
@@ -551,7 +551,9 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
       crossAxisSpacing: 12,
       children: games.map((game) {
         return GamingCard(
-          onTap: _isVoting ? null : () => _voteForGame(game['type'] as String, gameNumber),
+          onTap: _isVoting
+              ? null
+              : () => _voteForGame(game['type'] as String, gameNumber),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -599,30 +601,30 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
               isDraw
                   ? Icons.handshake
                   : isWinner
-                      ? Icons.emoji_events
-                      : Icons.sentiment_dissatisfied,
+                  ? Icons.emoji_events
+                  : Icons.sentiment_dissatisfied,
               size: 64,
               color: isDraw
                   ? Colors.grey
                   : isWinner
-                      ? Colors.amber
-                      : Colors.red,
+                  ? Colors.amber
+                  : Colors.red,
             ),
             const SizedBox(height: 16),
             Text(
               isDraw
                   ? 'Match Drawn!'
                   : isWinner
-                      ? '🎉 Victory! 🎉'
-                      : 'Defeat',
+                  ? '🎉 Victory! 🎉'
+                  : 'Defeat',
               style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
                 color: isDraw
                     ? Colors.grey
                     : isWinner
-                        ? Colors.amber
-                        : Colors.red,
+                    ? Colors.amber
+                    : Colors.red,
               ),
             ),
             const SizedBox(height: 12),
@@ -630,12 +632,9 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
               isDraw
                   ? 'All games tied! Coins refunded to both players.'
                   : isWinner
-                      ? 'You won ${challenge.betAmount * 2} coins!'
-                      : 'You lost ${challenge.betAmount} coins.',
-              style: const TextStyle(
-                fontSize: 16,
-                color: Colors.white,
-              ),
+                  ? 'You won ${challenge.betAmount * 2} coins!'
+                  : 'You lost ${challenge.betAmount} coins.',
+              style: const TextStyle(fontSize: 16, color: Colors.white),
             ),
             if (!isDraw) ...[
               const SizedBox(height: 24),
@@ -714,7 +713,7 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
 
   void _startGame(String gameType, Challenge challenge, int gameNumber) {
     Widget gameScreen;
-    
+
     switch (gameType) {
       case 'GUESS_NUMBER':
         gameScreen = const GuessNumberGameScreen();
@@ -732,12 +731,11 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
         return;
     }
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => gameScreen),
-    ).then((_) {
-      // Reload challenge after game
-      _loadChallenge();
-    });
+    Navigator.push(context, MaterialPageRoute(builder: (_) => gameScreen)).then(
+      (_) {
+        // Reload challenge after game
+        _loadChallenge();
+      },
+    );
   }
 }

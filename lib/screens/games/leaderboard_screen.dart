@@ -3,7 +3,8 @@ import 'package:provider/provider.dart';
 import '../../models/leaderboard_entry.dart';
 import '../../providers/game_provider.dart';
 import '../../config/gaming_theme.dart';
-
+import '../../config/config_url.dart';
+import '../../utils/url_helper.dart';
 
 class LeaderboardScreen extends StatefulWidget {
   const LeaderboardScreen({super.key});
@@ -19,15 +20,43 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
 
   // 8 games mapping
   final Map<String, Map<String, dynamic>> _gameFilters = {
-    'all': {'label': 'Tất cả', 'emoji': '🎮', 'color': GamingTheme.primaryAccent},
-    'guess_number': {'label': 'Đoán Số', 'emoji': '🎲', 'color': GamingTheme.easyGreen},
-    'cows_bulls': {'label': 'Bò & Bê', 'emoji': '🐮', 'color': GamingTheme.mediumOrange},
-    'memory_match': {'label': 'Memory', 'emoji': '🧠', 'color': GamingTheme.hardRed},
-    'quick_math': {'label': 'Quick Math', 'emoji': '⚡', 'color': GamingTheme.expertPurple},
+    'all': {
+      'label': 'Tất cả',
+      'emoji': '🎮',
+      'color': GamingTheme.primaryAccent,
+    },
+    'guess_number': {
+      'label': 'Đoán Số',
+      'emoji': '🎲',
+      'color': GamingTheme.easyGreen,
+    },
+    'cows_bulls': {
+      'label': 'Bò & Bê',
+      'emoji': '🐮',
+      'color': GamingTheme.mediumOrange,
+    },
+    'memory_match': {
+      'label': 'Memory',
+      'emoji': '🧠',
+      'color': GamingTheme.hardRed,
+    },
+    'quick_math': {
+      'label': 'Quick Math',
+      'emoji': '⚡',
+      'color': GamingTheme.expertPurple,
+    },
     'rubik': {'label': 'Rubik', 'emoji': '🎨', 'color': GamingTheme.rareBlue},
-    'sudoku': {'label': 'Sudoku', 'emoji': '🔢', 'color': GamingTheme.epicPurple},
+    'sudoku': {
+      'label': 'Sudoku',
+      'emoji': '🔢',
+      'color': GamingTheme.epicPurple,
+    },
     'caro': {'label': 'Caro', 'emoji': '⭕', 'color': GamingTheme.easyGreen},
-    'puzzle': {'label': 'Puzzle', 'emoji': '🧩', 'color': GamingTheme.legendaryGold},
+    'puzzle': {
+      'label': 'Puzzle',
+      'emoji': '🧩',
+      'color': GamingTheme.legendaryGold,
+    },
   };
 
   List<LeaderboardEntry> _leaderboardData = [];
@@ -40,21 +69,23 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
       vsync: this,
       duration: const Duration(milliseconds: 1500),
     )..forward();
-    
+
     // Initial load
     _loadLeaderboard();
   }
 
   Future<void> _loadLeaderboard() async {
     setState(() => _isLoading = true);
-    
+
     // Convert filter key to API format
     // Special handling if needed, or pass directly
     final gameType = _selectedFilter == 'all' ? 'all' : _selectedFilter;
-    
-    final data = await Provider.of<GameProvider>(context, listen: false)
-        .fetchGlobalLeaderboard(gameType: gameType, limit: 10);
-        
+
+    final data = await Provider.of<GameProvider>(
+      context,
+      listen: false,
+    ).fetchGlobalLeaderboard(gameType: gameType, limit: 10);
+
     if (mounted) {
       setState(() {
         _leaderboardData = data.cast<LeaderboardEntry>();
@@ -76,7 +107,6 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
     final topThree = _leaderboardData.take(3).toList();
     // Rest of the list
     final others = _leaderboardData.skip(3).toList();
-
 
     return Scaffold(
       backgroundColor: GamingTheme.primaryDark,
@@ -148,7 +178,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
           final key = _gameFilters.keys.elementAt(index);
           final filter = _gameFilters[key]!;
           final isSelected = _selectedFilter == key;
-          
+
           return Padding(
             padding: const EdgeInsets.only(right: 12),
             child: _buildFilterChip(
@@ -163,9 +193,14 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
     );
   }
 
-  Widget _buildFilterChip(String label, String value, String emoji, Color color) {
+  Widget _buildFilterChip(
+    String label,
+    String value,
+    String emoji,
+    Color color,
+  ) {
     final isSelected = _selectedFilter == value;
-    
+
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -174,36 +209,27 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
         });
       },
       child: ConstrainedBox(
-        constraints: const BoxConstraints(
-          minWidth: 70,
-          maxWidth: 120,
-        ),
+        constraints: const BoxConstraints(minWidth: 70, maxWidth: 120),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
-            color: isSelected ? color.withOpacity(0.2) : GamingTheme.surfaceDark,
+            color: isSelected
+                ? color.withOpacity(0.2)
+                : GamingTheme.surfaceDark,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: isSelected ? color : GamingTheme.border,
               width: 2,
             ),
             boxShadow: isSelected
-                ? [
-                    BoxShadow(
-                      color: color.withOpacity(0.3),
-                      blurRadius: 12,
-                    ),
-                  ]
+                ? [BoxShadow(color: color.withOpacity(0.3), blurRadius: 12)]
                 : null,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(
-                emoji,
-                style: const TextStyle(fontSize: 20),
-              ),
+              Text(emoji, style: const TextStyle(fontSize: 20)),
               const SizedBox(height: 4),
               Text(
                 label,
@@ -257,9 +283,21 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             if (topThree.length > 1)
-              _buildPodiumPlace(topThree[1], 2, 120, GamingTheme.commonGray, 0.3),
+              _buildPodiumPlace(
+                topThree[1],
+                2,
+                120,
+                GamingTheme.commonGray,
+                0.3,
+              ),
             if (topThree.isNotEmpty)
-              _buildPodiumPlace(topThree[0], 1, 150, GamingTheme.legendaryGold, 0.0),
+              _buildPodiumPlace(
+                topThree[0],
+                1,
+                150,
+                GamingTheme.legendaryGold,
+                0.0,
+              ),
             if (topThree.length > 2)
               _buildPodiumPlace(topThree[2], 3, 100, Color(0xFFCD7F32), 0.6),
           ],
@@ -304,14 +342,19 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
             child: CircleAvatar(
               radius: rank == 1 ? 35 : 30,
               backgroundColor: GamingTheme.surfaceDark,
-              backgroundImage: entry.user.avatarUrl != null &&
+              backgroundImage:
+                  entry.user.avatarUrl != null &&
                       entry.user.avatarUrl!.isNotEmpty
                   ? NetworkImage(entry.user.avatarUrl!)
                   : null,
-              child: entry.user.avatarUrl == null ||
-                      entry.user.avatarUrl!.isEmpty
+              child:
+                  entry.user.avatarUrl == null || entry.user.avatarUrl!.isEmpty
                   ? Text(
-                      rank == 1 ? '👑' : rank == 2 ? '🥈' : '🥉',
+                      rank == 1
+                          ? '👑'
+                          : rank == 2
+                          ? '🥈'
+                          : '🥉',
                       style: const TextStyle(fontSize: 30),
                     )
                   : null,
@@ -371,17 +414,14 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
   Widget _buildLeaderboardItem(LeaderboardEntry entry, int rank) {
     final gameInfo = _gameFilters[entry.gameType];
     final gameColor = gameInfo?['color'] ?? GamingTheme.primaryAccent;
-    
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: GamingTheme.surfaceDark,
         borderRadius: BorderRadius.circular(GamingTheme.radiusMedium),
-        border: Border.all(
-          color: GamingTheme.border,
-          width: 1,
-        ),
+        border: Border.all(color: GamingTheme.border, width: 1),
       ),
       child: Row(
         children: [
