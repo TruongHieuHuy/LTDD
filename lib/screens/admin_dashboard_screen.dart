@@ -2,10 +2,54 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../config/gaming_theme.dart';
+import '../services/api_service.dart';
 
 /// Admin Dashboard Screen - Chỉ dành cho ADMIN và MODERATOR
-class AdminDashboardScreen extends StatelessWidget {
+class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
+
+  @override
+  State<AdminDashboardScreen> createState() => _AdminDashboardScreenState();
+}
+
+class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
+  bool _isLoading = true;
+  Map<String, dynamic>? _stats;
+  List<dynamic>? _activities;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchData();
+  }
+
+  Future<void> _fetchData() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final stats = await ApiService().getAdminStats();
+      final activities = await ApiService().getRecentActivities();
+
+      if (mounted) {
+        setState(() {
+          _stats = stats;
+          _activities = activities;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = e.toString();
+          _isLoading = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,6 +73,11 @@ class AdminDashboardScreen extends StatelessWidget {
           ],
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _fetchData,
+            tooltip: 'Làm mới',
+          ),
           // Switch to User View
           IconButton(
             icon: const Icon(Icons.swap_horiz),
@@ -45,33 +94,68 @@ class AdminDashboardScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Welcome Header
-            _buildWelcomeHeader(authProvider),
-            const SizedBox(height: 24),
+      body: _isLoading
+          ? Center(
+              child: CircularProgressIndicator(
+                color: GamingTheme.primaryAccent,
+              ),
+            )
+          : _errorMessage != null
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.error_outline,
+                          color: GamingTheme.hardRed, size: 48),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Đã xảy ra lỗi tải dữ liệu',
+                        style: GamingTheme.h3,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        _errorMessage!,
+                        style: GamingTheme.bodyMedium,
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 24),
+                      ElevatedButton(
+                        onPressed: _fetchData,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: GamingTheme.primaryAccent,
+                        ),
+                        child: const Text('Thử lại'),
+                      ),
+                    ],
+                  ),
+                )
+              : SingleChildScrollView(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Welcome Header
+                      _buildWelcomeHeader(authProvider),
+                      const SizedBox(height: 24),
 
-            // Statistics Cards
-            _buildStatisticsCards(),
-            const SizedBox(height: 24),
+                      // Statistics Cards
+                      _buildStatisticsCards(),
+                      const SizedBox(height: 24),
 
-            // Quick Actions
-            Text(
-              'Quản lý',
-              style: GamingTheme.h2,
-            ),
-            const SizedBox(height: 16),
-            _buildQuickActions(context),
-            const SizedBox(height: 24),
+                      // Quick Actions
+                      Text(
+                        'Quản lý',
+                        style: GamingTheme.h2,
+                      ),
+                      const SizedBox(height: 16),
+                      _buildQuickActions(context),
+                      const SizedBox(height: 24),
 
-            // Recent Activity
-            _buildRecentActivity(),
-          ],
-        ),
-      ),
+                      // Recent Activity
+                      _buildRecentActivity(),
+                    ],
+                  ),
+                ),
     );
   }
 
@@ -145,33 +229,52 @@ class AdminDashboardScreen extends StatelessWidget {
   }
 
   Widget _buildStatisticsCards() {
-    return Row(
+    if (_stats == null) return const SizedBox.shrink();
+
+    return Column(
       children: [
-        Expanded(
-          child: _buildStatCard(
-            'Tổng User',
-            '1,234',
-            Icons.people,
-            GamingTheme.primaryAccent,
-          ),
+        Row(
+          children: [
+            Expanded(
+              child: _buildStatCard(
+                'Tổng User',
+                '${_stats!['totalUsers']}',
+                Icons.people,
+                GamingTheme.primaryAccent,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildStatCard(
+                'Games Played',
+                '${_stats!['totalGameSessions']}',
+                Icons.sports_esports,
+                GamingTheme.easyGreen,
+              ),
+            ),
+          ],
         ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _buildStatCard(
-            'Games',
-            '4',
-            Icons.sports_esports,
-            GamingTheme.easyGreen,
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _buildStatCard(
-            'Reports',
-            '23',
-            Icons.report,
-            GamingTheme.mediumOrange,
-          ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _buildStatCard(
+                'Challenges',
+                '${_stats!['totalChallenges']}',
+                Icons.flash_on,
+                GamingTheme.hardRed,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildStatCard(
+                'Bài viết',
+                '${_stats!['totalPosts']}',
+                Icons.article,
+                GamingTheme.mediumOrange,
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -304,12 +407,33 @@ class AdminDashboardScreen extends StatelessWidget {
   }
 
   Widget _buildRecentActivity() {
+    if (_activities == null || _activities!.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Text(
+            'Chưa có hoạt động nào gần đây',
+            style: GamingTheme.bodySmall,
+          ),
+        ),
+      );
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Hoạt động gần đây',
-          style: GamingTheme.h2,
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Hoạt động gần đây',
+              style: GamingTheme.h2,
+            ),
+            TextButton(
+              onPressed: _fetchData,
+              child: const Text('Làm mới'),
+            ),
+          ],
         ),
         const SizedBox(height: 16),
         Container(
@@ -317,31 +441,73 @@ class AdminDashboardScreen extends StatelessWidget {
             color: GamingTheme.surfaceDark,
             borderRadius: BorderRadius.circular(12),
           ),
-          child: Column(
-            children: [
-              _buildActivityItem(
-                'User123 đạt 1000 điểm',
-                '2 phút trước',
-                Icons.star,
-                GamingTheme.legendaryGold,
-              ),
-              _buildActivityItem(
-                'Admin đã thêm game mới',
-                '15 phút trước',
-                Icons.add_circle,
-                GamingTheme.easyGreen,
-              ),
-              _buildActivityItem(
-                'Report mới từ User456',
-                '1 giờ trước',
-                Icons.report,
-                GamingTheme.hardRed,
-              ),
-            ],
+          child: ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: _activities!.length,
+            separatorBuilder: (_, __) => const Divider(
+              height: 1,
+              color: Colors.white10,
+            ),
+            itemBuilder: (context, index) {
+              final activity = _activities![index];
+              return _buildActivityItem(
+                activity['message'] ?? '',
+                _formatTime(activity['timestamp']),
+                _getIconForType(activity['type']),
+                _getColorForType(activity['color']),
+              );
+            },
           ),
         ),
       ],
     );
+  }
+
+  IconData _getIconForType(String? type) {
+    switch (type) {
+      case 'high_score':
+        return Icons.star;
+      case 'challenge':
+        return Icons.flash_on;
+      case 'post':
+        return Icons.article;
+      case 'new_user':
+        return Icons.person_add;
+      default:
+        return Icons.notifications;
+    }
+  }
+
+  Color _getColorForType(String? colorName) {
+    switch (colorName) {
+      case 'gold':
+        return GamingTheme.legendaryGold;
+      case 'red':
+        return GamingTheme.hardRed;
+      case 'blue':
+        return GamingTheme.rareBlue;
+      case 'green':
+        return GamingTheme.easyGreen;
+      default:
+        return GamingTheme.primaryAccent;
+    }
+  }
+
+  String _formatTime(String? timestamp) {
+    if (timestamp == null) return '';
+    try {
+      final date = DateTime.parse(timestamp).toLocal();
+      final now = DateTime.now();
+      final difference = now.difference(date);
+
+      if (difference.inMinutes < 1) return 'Vừa xong';
+      if (difference.inMinutes < 60) return '${difference.inMinutes} phút trước';
+      if (difference.inHours < 24) return '${difference.inHours} giờ trước';
+      return '${difference.inDays} ngày trước';
+    } catch (e) {
+      return '';
+    }
   }
 
   Widget _buildActivityItem(

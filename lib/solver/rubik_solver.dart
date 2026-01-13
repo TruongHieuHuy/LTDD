@@ -1,7 +1,7 @@
-import '../models/rubik_cube.dart';
+import '../models/rubik_cube_model.dart';
 
 class RubikSolver {
-  final RubikCube cube;
+  final RubikCubeModel cube;
 
   RubikSolver(this.cube);
 

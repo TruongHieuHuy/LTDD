@@ -11,6 +11,7 @@ class GamingButton extends StatelessWidget {
   final IconData? icon;
   final bool isLoading;
   final double? width;
+  final Color? backgroundColor;
 
   const GamingButton({
     super.key,
@@ -20,6 +21,7 @@ class GamingButton extends StatelessWidget {
     this.icon,
     this.isLoading = false,
     this.width,
+    this.backgroundColor,
   });
 
   @override
@@ -88,6 +90,15 @@ class GamingButton extends StatelessWidget {
   }
 
   BoxDecoration _getDecoration() {
+    // If backgroundColor is provided, use it
+    if (backgroundColor != null) {
+      return BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(GamingTheme.radiusMedium),
+        boxShadow: onPressed != null ? GamingTheme.buttonShadow : [],
+      );
+    }
+
     switch (style) {
       case GamingButtonStyle.primary:
         return BoxDecoration(

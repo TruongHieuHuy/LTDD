@@ -7,6 +7,7 @@ class UserProfile {
   final int totalGamesPlayed;
   final int totalScore;
   final String role; // USER, ADMIN, MODERATOR
+  final int coins;
 
   UserProfile({
     required this.id,
@@ -16,6 +17,7 @@ class UserProfile {
     this.totalGamesPlayed = 0,
     this.totalScore = 0,
     this.role = 'USER',
+    this.coins = 1000,
   });
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
@@ -28,6 +30,7 @@ class UserProfile {
         totalGamesPlayed: json['totalGamesPlayed'] ?? 0,
         totalScore: json['totalScore'] ?? 0,
         role: json['role']?.toString() ?? 'USER',
+        coins: json['coins'] ?? 1000,
       );
     } catch (e) {
       print('Error parsing UserProfile: $e');
@@ -45,6 +48,7 @@ class UserProfile {
       'totalGamesPlayed': totalGamesPlayed,
       'totalScore': totalScore,
       'role': role,
+      'coins': coins,
     };
   }
 }

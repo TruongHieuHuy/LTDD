@@ -25,6 +25,7 @@ import 'screens/friend_requests_screen.dart';
 import 'screens/peer_chat_list_screen.dart';
 import 'screens/user_profile_screen.dart';
 import 'screens/saved_posts_screen.dart';
+import 'screens/challenge_list_screen.dart';
 import 'screens/products_screen.dart';
 import 'screens/categories_screen.dart';
 import 'utils/database_service.dart';
@@ -130,15 +131,48 @@ class SmartStudentApp extends StatelessWidget {
         ),
 
         // Independent providers
-        ChangeNotifierProvider(create: (_) => ThemeProvider()..initialize()),
-        ChangeNotifierProvider(create: (_) => AlarmProvider()),
-        ChangeNotifierProvider(create: (_) => TranslationProvider()),
-        ChangeNotifierProvider(create: (_) => SettingsProvider()),
-        ChangeNotifierProvider(create: (_) => GameProvider()..initialize()),
-        ChangeNotifierProvider(create: (_) => ChatbotProvider()),
-        ChangeNotifierProvider(create: (_) => PeerChatProvider()),
-        ChangeNotifierProvider(create: (_) => FriendProvider()),
-        ChangeNotifierProvider(create: (_) => GroupProvider()),
+        ChangeNotifierProvider(create: (_) {
+          debugPrint('Creating ThemeProvider');
+          final provider = ThemeProvider();
+          provider.initialize();
+          debugPrint('ThemeProvider created');
+          return provider;
+        }),
+        ChangeNotifierProvider(create: (_) {
+          debugPrint('Creating AlarmProvider');
+          return AlarmProvider();
+        }),
+        ChangeNotifierProvider(create: (_) {
+          debugPrint('Creating TranslationProvider');
+          return TranslationProvider();
+        }),
+        ChangeNotifierProvider(create: (_) {
+          debugPrint('Creating SettingsProvider');
+          return SettingsProvider();
+        }),
+        ChangeNotifierProvider(create: (_) {
+          debugPrint('Creating GameProvider');
+          final provider = GameProvider();
+          provider.initialize();
+          debugPrint('GameProvider created');
+          return provider;
+        }),
+        ChangeNotifierProvider(create: (_) {
+          debugPrint('Creating ChatbotProvider');
+          return ChatbotProvider();
+        }),
+        ChangeNotifierProvider(create: (_) {
+          debugPrint('Creating PeerChatProvider');
+          return PeerChatProvider();
+        }),
+        ChangeNotifierProvider(create: (_) {
+          debugPrint('Creating FriendProvider');
+          return FriendProvider();
+        }),
+        ChangeNotifierProvider(create: (_) {
+          debugPrint('Creating GroupProvider');
+          return GroupProvider();
+        }),
       ],
       child: Consumer<AuthProvider>(
         builder: (context, authProvider, _) {
@@ -167,6 +201,7 @@ class SmartStudentApp extends StatelessWidget {
               '/quick_math_game': (context) => const QuickMathGameScreen(),
               '/leaderboard': (context) => const LeaderboardScreen(),
               '/achievements': (context) => const AchievementScreen(),
+              '/challenges': (context) => const ChallengeListScreen(),
               '/chatbot': (context) => const ChatbotScreen(),
               '/search-friends': (context) => const SearchFriendsScreen(),
               '/friend-requests': (context) => const FriendRequestsScreen(),

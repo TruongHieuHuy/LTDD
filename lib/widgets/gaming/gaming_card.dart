@@ -7,6 +7,7 @@ class GamingCard extends StatelessWidget {
   final bool hasBorder;
   final bool hasGlow;
   final EdgeInsetsGeometry? padding;
+  final EdgeInsetsGeometry? margin;
   final VoidCallback? onTap;
   final Color? backgroundColor;
   final double? width;
@@ -18,6 +19,7 @@ class GamingCard extends StatelessWidget {
     this.hasBorder = true,
     this.hasGlow = false,
     this.padding,
+    this.margin,
     this.onTap,
     this.backgroundColor,
     this.width,
@@ -29,6 +31,7 @@ class GamingCard extends StatelessWidget {
     final cardContent = Container(
       width: width,
       height: height,
+      margin: margin,
       decoration: BoxDecoration(
         color: backgroundColor ?? GamingTheme.surfaceDark,
         borderRadius: BorderRadius.circular(GamingTheme.radiusMedium),

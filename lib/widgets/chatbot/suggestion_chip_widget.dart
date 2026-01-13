@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../models/chat_suggestions_model.dart';
+import '../../models/chat_suggestions_modular.dart';
 
 /// Widget cho suggestion chip với animation
 class SuggestionChip extends StatelessWidget {
