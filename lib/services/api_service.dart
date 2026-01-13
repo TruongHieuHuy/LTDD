@@ -611,7 +611,7 @@ extension PuzzleAPI on ApiService {
   }) async {
     try {
       debugPrint('🎮 Generating puzzle: difficulty=$difficulty, gridSize=$gridSize');
-      debugPrint('🌐 Request URL: ${ApiService.baseUrl}/puzzle/generate');
+      debugPrint('🌐 Request URL: ${ApiService.baseUrl}/api/puzzle/generate');
       
       final response = await http.post(
         Uri.parse('${ApiService.baseUrl}/api/puzzle/generate'), // Không có /api

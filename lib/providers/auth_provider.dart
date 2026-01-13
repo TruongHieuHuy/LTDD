@@ -64,6 +64,7 @@ class AuthProvider with ChangeNotifier {
         debugPrint('AuthProvider: No cached user profile found');
       }
       debugPrint('AuthProvider: Initialization complete');
+      debugPrint('AuthProvider: Initialization complete');
     } catch (e, stack) {
       debugPrint('AuthProvider: Initialization failed: $e');
       debugPrint('Stack trace: $stack');
@@ -78,7 +79,10 @@ class AuthProvider with ChangeNotifier {
       if (savedAuth != null && savedAuth.isSessionValid) {
         _currentAuth = savedAuth;
         _apiService.setAuthToken(savedAuth.sessionToken);
-        await _refreshUserProfile();
+        // Don't await - refresh profile in background to not block app startup
+        _refreshUserProfile().catchError((e) {
+          debugPrint('Background profile refresh failed: $e');
+        });
       } else if (savedAuth != null) {
         // Session expired - clear auth but keep saved email for "remember me"
         await _clearSession();
@@ -119,7 +123,13 @@ class AuthProvider with ChangeNotifier {
   /// Refresh user profile from server
   Future<void> _refreshUserProfile() async {
     try {
-      final user = await _apiService.getCurrentUser();
+      // Add timeout to prevent blocking
+      final user = await _apiService.getCurrentUser().timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          throw Exception('Profile refresh timeout');
+        },
+      );
       _userProfile = user;
       await _saveUserProfile();
       notifyListeners();
