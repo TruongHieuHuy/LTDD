@@ -1196,5 +1196,29 @@ extension ChallengeAPI on ApiService {
         onSuccess: (data) => data['challenge'] as Map<String, dynamic>,
         defaultErrorMessage: 'Failed to get challenge details',
       );
+  // ==================== ADMIN API ====================
+
+  /// Get admin dashboard statistics
+  Future<Map<String, dynamic>> getAdminStats() async {
+    return _request(
+      'Get Admin Stats',
+      request: () => http.get(Uri.parse('${ApiService.baseUrl}/api/admin/stats'), headers: _headers),
+      onSuccess: (data) => data['data'] as Map<String, dynamic>,
+      defaultErrorMessage: 'Could not fetch admin stats',
+    );
+  }
+
+  /// Get recent activities for admin dashboard
+  Future<List<dynamic>> getRecentActivities({int limit = 10}) async {
+    return _request(
+      'Get Recent Activities',
+      request: () => http.get(
+        Uri.parse('${ApiService.baseUrl}/api/admin/recent-activities?limit=$limit'),
+        headers: _headers,
+      ),
+      onSuccess: (data) => data['data']['activities'] as List<dynamic>,
+      defaultErrorMessage: 'Could not fetch recent activities',
+    );
+  }
 }
 
