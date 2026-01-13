@@ -25,6 +25,7 @@ import 'screens/friend_requests_screen.dart';
 import 'screens/peer_chat_list_screen.dart';
 import 'screens/user_profile_screen.dart';
 import 'screens/saved_posts_screen.dart';
+import 'screens/challenge_list_screen.dart';
 import 'screens/products_screen.dart';
 import 'screens/categories_screen.dart';
 import 'utils/database_service.dart';
@@ -200,6 +201,7 @@ class SmartStudentApp extends StatelessWidget {
               '/quick_math_game': (context) => const QuickMathGameScreen(),
               '/leaderboard': (context) => const LeaderboardScreen(),
               '/achievements': (context) => const AchievementScreen(),
+              '/challenges': (context) => const ChallengeListScreen(),
               '/chatbot': (context) => const ChatbotScreen(),
               '/search-friends': (context) => const SearchFriendsScreen(),
               '/friend-requests': (context) => const FriendRequestsScreen(),

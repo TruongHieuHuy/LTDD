@@ -174,6 +174,15 @@ _buildGameCard(
                   const SizedBox(height: 12),
                   _buildUtilityCard(
                     context,
+                    icon: Icons.flash_on,
+                    title: 'Challenge PK',
+                    subtitle: 'Thách đấu bạn bè 1v1',
+                    color: GamingTheme.hardRed,
+                    route: '/challenges',
+                  ),
+                  const SizedBox(height: 12),
+                  _buildUtilityCard(
+                    context,
                     icon: Icons.chat_bubble_outline,
                     title: 'Chatbot AI',
                     subtitle: 'Trò chuyện với Gemini',
